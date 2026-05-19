@@ -329,6 +329,22 @@ footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:38
 @keyframes rayRot{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 @keyframes heatHz{0%,100%{transform:scaleX(1)}50%{transform:scaleX(1.015)}}
 
+/* ── WORLD MAP SELECTOR ── */
+.worldmap-container{position:relative;width:100%;height:100vh;min-height:560px;overflow:hidden;background:radial-gradient(ellipse at 50% 60%,#071428 0%,#030810 100%);}
+.wm-ocean{position:absolute;inset:0;width:100%;height:100%;}
+#wm-overlay{position:fixed;inset:0;z-index:9000;background:#04060d;opacity:0;pointer-events:none;}
+.wm-hint{position:absolute;bottom:38px;left:50%;transform:translateX(-50%);font-family:'Space Mono',monospace;font-size:0.62rem;letter-spacing:0.22em;text-transform:uppercase;color:rgba(237,240,250,0.3);text-align:center;white-space:nowrap;animation:wmHint 2.8s ease-in-out infinite;}
+@keyframes wmHint{0%,100%{opacity:0.3}50%{opacity:0.7}}
+.wm-territory{cursor:pointer;transition:filter 0.3s;}
+.wm-territory .wm-fill{transition:opacity 0.35s;}
+.wm-territory .wm-label-g{opacity:0;transition:opacity 0.3s;}
+.wm-enter-cta{font-family:'Space Mono',monospace;font-size:13px;letter-spacing:0.08em;fill:white;text-anchor:middle;pointer-events:none;opacity:0;transition:opacity 0.2s;}
+.wm-tname{font-family:'Syne',sans-serif;font-size:16px;font-weight:800;letter-spacing:0.04em;fill:white;text-anchor:middle;pointer-events:none;}
+.wm-nations-title{position:absolute;top:52px;left:50%;transform:translateX(-50%);text-align:center;pointer-events:none;z-index:2;}
+.wm-nations-title .eye{font-family:'Space Mono',monospace;font-size:0.62rem;letter-spacing:0.22em;text-transform:uppercase;color:var(--gold);display:block;margin-bottom:8px;}
+.wm-nations-title h2{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(1.6rem,4vw,2.8rem);letter-spacing:-0.02em;color:var(--ink);}
+.wm-nations-title h2 em{color:var(--gold);font-style:italic;}
+
 /* ── RESPONSIVE ── */
 @media(max-width:1100px){.ngrid{grid-template-columns:repeat(3,1fr)}.ncard{border-bottom:1px solid var(--border)}.hinner{grid-template-columns:1fr}.hright{display:none}}
 @media(max-width:900px){nav{padding:0 24px}.nlinks{display:none}.hero{padding:120px 24px 0}.wrap{padding:0 24px}.about-grid{grid-template-columns:1fr;gap:40px}.ngrid{grid-template-columns:1fr 1fr}.rlayout{grid-template-columns:1fr;gap:40px}.rsticky{position:static}.rgrid{grid-template-columns:1fr}.mgrid{grid-template-columns:1fr}.mtop{flex-direction:column;align-items:flex-start}.rlyt{grid-template-columns:1fr}footer{padding:28px 24px}.nd-stats{grid-template-columns:1fr 1fr}.nd-wrap{padding:0 24px 60px}}
@@ -493,11 +509,155 @@ footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:38
 </section>
 
 <!-- NATIONS -->
-<section id="nations" class="nations" data-section="nations" style="display:none;padding-top:82px;">
-  <div class="wrap">
+<section id="nations" class="nations" data-section="nations" style="display:none;">
+
+  <!-- WORLD MAP TERRITORY SELECTOR -->
+  <div class="worldmap-container">
+    <div class="wm-nations-title">
+      <span class="eye">The Nations</span>
+      <h2>Five Territories. <em>One World.</em></h2>
+    </div>
+    <svg class="wm-ocean" viewBox="0 0 1200 660" preserveAspectRatio="xMidYMid meet" id="wm-svg">
+      <defs>
+        <!-- Ocean gradient -->
+        <radialGradient id="wmocn" cx="50%" cy="55%" r="70%">
+          <stop offset="0%" stop-color="#0c2044"/>
+          <stop offset="60%" stop-color="#071428"/>
+          <stop offset="100%" stop-color="#030810"/>
+        </radialGradient>
+        <!-- Subtle grid lines for "map" feel -->
+        <pattern id="wmgrid" width="60" height="60" patternUnits="userSpaceOnUse">
+          <path d="M 60 0 L 0 0 0 60" fill="none" stroke="rgba(255,255,255,0.025)" stroke-width="0.5"/>
+        </pattern>
+        <!-- Glow filter -->
+        <filter id="wmglow" x="-40%" y="-40%" width="180%" height="180%">
+          <feGaussianBlur stdDeviation="14" result="blur"/>
+          <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+        </filter>
+        <!-- Soft glow only -->
+        <filter id="wmglow2" x="-60%" y="-60%" width="220%" height="220%">
+          <feGaussianBlur stdDeviation="22"/>
+        </filter>
+        <!-- Nation fill gradients -->
+        <radialGradient id="wmaz" cx="40%" cy="35%" r="65%">
+          <stop offset="0%" stop-color="#60a5fa"/><stop offset="100%" stop-color="#1e40af"/>
+        </radialGradient>
+        <radialGradient id="wmsyn" cx="40%" cy="35%" r="65%">
+          <stop offset="0%" stop-color="#f87171"/><stop offset="100%" stop-color="#991b1b"/>
+        </radialGradient>
+        <radialGradient id="wmiv" cx="40%" cy="35%" r="65%">
+          <stop offset="0%" stop-color="#cbd5e1"/><stop offset="100%" stop-color="#475569"/>
+        </radialGradient>
+        <radialGradient id="wmvd" cx="40%" cy="35%" r="65%">
+          <stop offset="0%" stop-color="#4ade80"/><stop offset="100%" stop-color="#15803d"/>
+        </radialGradient>
+        <radialGradient id="wmnv" cx="40%" cy="35%" r="65%">
+          <stop offset="0%" stop-color="#fb923c"/><stop offset="100%" stop-color="#c2410c"/>
+        </radialGradient>
+        <!-- Vignette -->
+        <radialGradient id="wmvig" cx="50%" cy="50%" r="70%">
+          <stop offset="50%" stop-color="transparent"/>
+          <stop offset="100%" stop-color="rgba(3,8,16,0.85)"/>
+        </radialGradient>
+      </defs>
+
+      <!-- Ocean background -->
+      <rect width="1200" height="660" fill="url(#wmocn)"/>
+      <rect width="1200" height="660" fill="url(#wmgrid)"/>
+
+      <!-- Subtle latitude lines -->
+      <line x1="0" y1="220" x2="1200" y2="220" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>
+      <line x1="0" y1="330" x2="1200" y2="330" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+      <line x1="0" y1="440" x2="1200" y2="440" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>
+      <line x1="300" y1="0" x2="300" y2="660" stroke="rgba(255,255,255,0.02)" stroke-width="1"/>
+      <line x1="600" y1="0" x2="600" y2="660" stroke="rgba(255,255,255,0.025)" stroke-width="1"/>
+      <line x1="900" y1="0" x2="900" y2="660" stroke="rgba(255,255,255,0.02)" stroke-width="1"/>
+
+      <!-- IRONVALE — upper-left, mountain nation (gray) -->
+      <g class="wm-territory" id="wmt-ironvale" data-nation="ironvale" data-color="#94a3b8" data-cx="164" data-cy="208">
+        <!-- Glow layer -->
+        <path d="M95,108 C125,72 185,78 228,112 C271,146 272,208 248,258 C224,308 180,340 138,337 C96,334 68,300 60,256 C52,212 62,170 82,140 C88,124 95,108Z" fill="#94a3b8" opacity="0.18" filter="url(#wmglow2)"/>
+        <!-- Main fill -->
+        <path class="wm-fill" d="M95,108 C125,72 185,78 228,112 C271,146 272,208 248,258 C224,308 180,340 138,337 C96,334 68,300 60,256 C52,212 62,170 82,140 C88,124 95,108Z" fill="url(#wmiv)" opacity="0.82"/>
+        <!-- Terrain texture lines -->
+        <path d="M120,160 L160,130 L200,160 M110,200 L155,165 L205,200 M100,240 L150,205 L200,240" stroke="rgba(255,255,255,0.12)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+        <!-- Highlight -->
+        <path d="M95,108 C125,72 185,78 228,112 C200,95 160,90 128,108Z" fill="rgba(255,255,255,0.1)"/>
+        <!-- Border -->
+        <path d="M95,108 C125,72 185,78 228,112 C271,146 272,208 248,258 C224,308 180,340 138,337 C96,334 68,300 60,256 C52,212 62,170 82,140 C88,124 95,108Z" fill="none" stroke="#94a3b8" stroke-width="1.5" opacity="0.7"/>
+        <!-- Label group (shown on hover) -->
+        <g class="wm-label-g">
+          <text class="wm-tname" x="164" y="198" fill="white">IRONVALE</text>
+          <text class="wm-enter-cta" x="164" y="218" fill="rgba(255,255,255,0.7)" font-size="11" font-family="'Space Mono',monospace" letter-spacing="0.06em">ENTER NATION →</text>
+        </g>
+      </g>
+
+      <!-- AZURE — lower-left, coastal trade hub (blue) -->
+      <g class="wm-territory" id="wmt-azure" data-nation="azure" data-color="#3b82f6" data-cx="162" data-cy="520">
+        <path d="M72,438 C104,400 170,396 218,422 C266,448 282,508 268,562 C254,616 212,646 168,644 C124,642 80,612 62,564 C44,516 50,472 72,438Z" fill="#3b82f6" opacity="0.18" filter="url(#wmglow2)"/>
+        <path class="wm-fill" d="M72,438 C104,400 170,396 218,422 C266,448 282,508 268,562 C254,616 212,646 168,644 C124,642 80,612 62,564 C44,516 50,472 72,438Z" fill="url(#wmaz)" opacity="0.82"/>
+        <!-- Wave lines -->
+        <path d="M88,480 Q130,470 172,482 M80,510 Q125,498 175,512 M88,540 Q135,528 180,542" stroke="rgba(255,255,255,0.14)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+        <path d="M72,438 C104,400 170,396 218,422 C185,405 140,402 110,422Z" fill="rgba(255,255,255,0.1)"/>
+        <path d="M72,438 C104,400 170,396 218,422 C266,448 282,508 268,562 C254,616 212,646 168,644 C124,642 80,612 62,564 C44,516 50,472 72,438Z" fill="none" stroke="#3b82f6" stroke-width="1.5" opacity="0.7"/>
+        <g class="wm-label-g">
+          <text class="wm-tname" x="162" y="512" fill="white">AZURE</text>
+          <text class="wm-enter-cta" x="162" y="532" fill="rgba(255,255,255,0.7)" font-size="11" font-family="'Space Mono',monospace" letter-spacing="0.06em">ENTER NATION →</text>
+        </g>
+      </g>
+
+      <!-- SYNAPSE — upper-center, tech city (red) -->
+      <g class="wm-territory" id="wmt-synapse" data-nation="synapse" data-color="#ef4444" data-cx="499" data-cy="185">
+        <path d="M395,85 C438,52 520,58 576,95 C632,132 642,197 610,246 C578,295 510,314 450,292 C390,270 356,214 356,158 C356,110 368,108 395,85Z" fill="#ef4444" opacity="0.18" filter="url(#wmglow2)"/>
+        <path class="wm-fill" d="M395,85 C438,52 520,58 576,95 C632,132 642,197 610,246 C578,295 510,314 450,292 C390,270 356,214 356,158 C356,110 368,108 395,85Z" fill="url(#wmsyn)" opacity="0.82"/>
+        <!-- Circuit lines -->
+        <path d="M420,120 L470,120 L470,150 L520,150 M450,170 L450,200 M480,130 L480,180 L440,180" stroke="rgba(255,255,255,0.12)" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M395,85 C438,52 520,58 576,95 C540,72 480,68 440,85Z" fill="rgba(255,255,255,0.1)"/>
+        <path d="M395,85 C438,52 520,58 576,95 C632,132 642,197 610,246 C578,295 510,314 450,292 C390,270 356,214 356,158 C356,110 368,108 395,85Z" fill="none" stroke="#ef4444" stroke-width="1.5" opacity="0.7"/>
+        <g class="wm-label-g">
+          <text class="wm-tname" x="499" y="176" fill="white">SYNAPSE</text>
+          <text class="wm-enter-cta" x="499" y="196" fill="rgba(255,255,255,0.7)" font-size="11" font-family="'Space Mono',monospace" letter-spacing="0.06em">ENTER NATION →</text>
+        </g>
+      </g>
+
+      <!-- VERDANTIA — right, forest republic (green) -->
+      <g class="wm-territory" id="wmt-verdantia" data-nation="verdantia" data-color="#22c55e" data-cx="857" data-cy="265">
+        <path d="M715,95 C778,60 890,70 962,118 C1034,166 1057,260 1026,342 C995,424 922,464 845,458 C768,452 708,400 688,320 C668,240 658,164 715,95Z" fill="#22c55e" opacity="0.18" filter="url(#wmglow2)"/>
+        <path class="wm-fill" d="M715,95 C778,60 890,70 962,118 C1034,166 1057,260 1026,342 C995,424 922,464 845,458 C768,452 708,400 688,320 C668,240 658,164 715,95Z" fill="url(#wmvd)" opacity="0.82"/>
+        <!-- Tree silhouette lines -->
+        <path d="M740,200 L740,260 M760,180 L760,260 M780,195 L780,260 M800,175 L800,265 M820,190 L820,268 M840,172 L840,268 M860,188 L860,270 M880,178 L880,270 M900,195 L900,268" stroke="rgba(255,255,255,0.08)" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M720,320 Q810,305 900,320 Q990,335 1020,310" stroke="rgba(255,255,255,0.1)" stroke-width="2" fill="none"/>
+        <path d="M715,95 C778,60 890,70 962,118 C910,80 840,72 790,95Z" fill="rgba(255,255,255,0.1)"/>
+        <path d="M715,95 C778,60 890,70 962,118 C1034,166 1057,260 1026,342 C995,424 922,464 845,458 C768,452 708,400 688,320 C668,240 658,164 715,95Z" fill="none" stroke="#22c55e" stroke-width="1.5" opacity="0.7"/>
+        <g class="wm-label-g">
+          <text class="wm-tname" x="857" y="256" fill="white">VERDANTIA</text>
+          <text class="wm-enter-cta" x="857" y="276" fill="rgba(255,255,255,0.7)" font-size="11" font-family="'Space Mono',monospace" letter-spacing="0.06em">ENTER NATION →</text>
+        </g>
+      </g>
+
+      <!-- NOVAN — lower-right, plains wild card (orange) -->
+      <g class="wm-territory" id="wmt-novan" data-nation="novan" data-color="#f97316" data-cx="952" data-cy="548">
+        <path d="M812,448 C862,410 958,402 1028,438 C1098,474 1142,547 1124,610 C1106,673 1036,694 962,684 C888,674 830,630 806,572 C782,514 770,482 812,448Z" fill="#f97316" opacity="0.18" filter="url(#wmglow2)"/>
+        <path class="wm-fill" d="M812,448 C862,410 958,402 1028,438 C1098,474 1142,547 1124,610 C1106,673 1036,694 962,684 C888,674 830,630 806,572 C782,514 770,482 812,448Z" fill="url(#wmnv)" opacity="0.82"/>
+        <!-- Plains horizon lines -->
+        <path d="M840,510 Q900,500 962,510 Q1020,520 1080,510 M835,540 Q900,528 965,540 Q1030,552 1085,540 M840,570 Q900,560 965,570 Q1025,580 1080,570" stroke="rgba(255,255,255,0.1)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+        <path d="M812,448 C862,410 958,402 1028,438 C990,418 940,412 905,428Z" fill="rgba(255,255,255,0.1)"/>
+        <path d="M812,448 C862,410 958,402 1028,438 C1098,474 1142,547 1124,610 C1106,673 1036,694 962,684 C888,674 830,630 806,572 C782,514 770,482 812,448Z" fill="none" stroke="#f97316" stroke-width="1.5" opacity="0.7"/>
+        <g class="wm-label-g">
+          <text class="wm-tname" x="952" y="539" fill="white">NOVAN</text>
+          <text class="wm-enter-cta" x="952" y="559" fill="rgba(255,255,255,0.7)" font-size="11" font-family="'Space Mono',monospace" letter-spacing="0.06em">ENTER NATION →</text>
+        </g>
+      </g>
+
+      <!-- Edge vignette -->
+      <rect width="1200" height="660" fill="url(#wmvig)" pointer-events="none"/>
+    </svg>
+    <div class="wm-hint">Click a territory to explore</div>
+  </div>
+  <div id="wm-overlay"></div>
+
+  <div class="wrap" style="padding-top:80px;">
     <div class="nhdr rev">
-      <div class="eye">The Nations</div>
-      <h2 class="sh">Five Territories. <em>One World.</em></h2>
       <p class="sp" style="margin:0 auto;text-align:center;">Each nation brings a unique identity, set of resources, and strategic position. Every choice shapes your destiny — and your neighbors'.</p>
     </div>
     <div class="ngrid">
@@ -1111,6 +1271,110 @@ ScrollTrigger.create({
   onEnter:()=>gsap.from('.ctain',{opacity:0,y:55,duration:1.1,ease:'power3.out'})
 });
 
+// WORLD MAP TERRITORY SELECTOR
+(function(){
+  const svg = document.getElementById('wm-svg');
+  if(!svg) return;
+  const territories = svg.querySelectorAll('.wm-territory');
+  const overlay = document.getElementById('wm-overlay');
+
+  territories.forEach(terr=>{
+    const nation = terr.dataset.nation;
+    const color  = terr.dataset.color;
+    const cx     = parseFloat(terr.dataset.cx);
+    const cy     = parseFloat(terr.dataset.cy);
+    const label  = terr.querySelector('.wm-label-g');
+
+    // --- HOVER IN ---
+    terr.addEventListener('mouseenter',()=>{
+      // Dim all others
+      territories.forEach(t=>{ if(t!==terr) gsap.to(t,{opacity:0.28,duration:0.3}); });
+      // Brighten self: scale up fill opacity, show label
+      gsap.to(terr.querySelector('.wm-fill'),{attr:{opacity:1},duration:0.3});
+      if(label){
+        gsap.to(label,{opacity:1,duration:0.25});
+        gsap.fromTo(label,{y:6},{y:0,duration:0.35,ease:'power2.out'});
+      }
+      // Pulse glow on the territory border
+      gsap.to(terr.querySelectorAll('path[stroke]'),{attr:{opacity:1},strokeWidth:2.5,duration:0.25});
+    });
+
+    // --- HOVER OUT ---
+    terr.addEventListener('mouseleave',()=>{
+      territories.forEach(t=>gsap.to(t,{opacity:1,duration:0.35}));
+      gsap.to(terr.querySelector('.wm-fill'),{attr:{opacity:0.82},duration:0.3});
+      if(label) gsap.to(label,{opacity:0,duration:0.2});
+      gsap.to(terr.querySelectorAll('path[stroke]'),{attr:{opacity:0.7},strokeWidth:1.5,duration:0.25});
+    });
+
+    // --- CLICK: door-open animation → navigate ---
+    terr.addEventListener('click',()=>{
+      // 1) Hide all other territories fast
+      territories.forEach(t=>{ if(t!==terr) gsap.to(t,{opacity:0,duration:0.25}); });
+      // 2) Scale territory up from its center to fill viewport (door-open)
+      gsap.to(terr,{
+        scale:22,
+        svgOrigin: cx+' '+cy,
+        duration:0.7,
+        ease:'power2.in'
+      });
+      // 3) Color flash overlay kicks in partway through
+      if(overlay){
+        overlay.style.background = color;
+        overlay.style.pointerEvents = 'all';
+        gsap.to(overlay,{
+          opacity:1,
+          duration:0.35,
+          delay:0.32,
+          onComplete(){
+            // Navigate
+            showPage('nation-'+nation);
+            window.scrollTo(0,0);
+            // Entrance animations for detail page (fromTo avoids stale opacity reads)
+            const scene   = document.querySelector('[data-section="nation-'+nation+'"] .nl-scene');
+            const content = document.querySelector('[data-section="nation-'+nation+'"] .nd-wrap');
+            if(scene)   gsap.fromTo(scene,  {opacity:0,scale:1.04},{opacity:1,scale:1,duration:1.2,ease:'power2.out'});
+            if(content){
+              gsap.fromTo(content.querySelector('.nd-back-btn'),  {opacity:0,x:-20},{opacity:1,x:0,duration:0.5,ease:'power2.out',delay:0.3});
+              gsap.fromTo([content.querySelector('.nd-flag2'),content.querySelector('.nd-name2'),content.querySelector('.nd-tagline')],{opacity:0,y:30},{opacity:1,y:0,stagger:0.12,duration:0.7,ease:'power3.out',delay:0.25});
+              gsap.fromTo(content.querySelector('.nd-lore'),       {opacity:0,y:20},{opacity:1,y:0,duration:0.7,ease:'power2.out',delay:0.55});
+              gsap.fromTo(content.querySelectorAll('.nd-stat'),    {opacity:0,y:20},{opacity:1,y:0,stagger:0.1,duration:0.6,ease:'back.out(1.5)',delay:0.7});
+              gsap.fromTo(content.querySelector('.nd-strat'),      {opacity:0,y:20},{opacity:1,y:0,duration:0.7,ease:'power2.out',delay:0.95});
+            }
+            // Fade overlay out, then reset map for when user returns
+            gsap.to(overlay,{
+              opacity:0,duration:0.55,delay:0.18,
+              onComplete(){
+                overlay.style.pointerEvents='none';
+                // Reset map territories for next visit
+                gsap.set(territories,{opacity:1,scale:1,clearProps:'svgOrigin'});
+                territories.forEach(t=>{ const lb=t.querySelector('.wm-label-g'); if(lb) gsap.set(lb,{opacity:0,y:0}); });
+              }
+            });
+          }
+        });
+      }
+    });
+  });
+
+  // Entrance animation when Nations section becomes visible
+  const ngrid = document.getElementById('nations');
+  if(ngrid){
+    const existingObs = new MutationObserver(mutations=>{
+      const visible = mutations.some(m=>m.attributeName==='style') && ngrid.style.display!=='none';
+      if(visible){
+        // Animate the territories in one by one
+        gsap.fromTo(territories,
+          {opacity:0,scale:0.88,svgOrigin:function(i){ const t=territories[i]; return t.dataset.cx+' '+t.dataset.cy; }},
+          {opacity:1,scale:1,stagger:0.1,duration:0.9,ease:'back.out(1.4)',overwrite:true,
+           svgOrigin:function(i){ const t=territories[i]; return t.dataset.cx+' '+t.dataset.cy; }}
+        );
+      }
+    });
+    existingObs.observe(ngrid,{attributes:true,attributeFilter:['style']});
+  }
+})();
+
 // NATION CARD CLICK → DETAIL PAGE
 const nationMap={'azure':'nation-azure','synapse':'nation-synapse','ironvale':'nation-ironvale','verdantia':'nation-verdantia','novan':'nation-novan'};
 document.querySelectorAll('.ncard').forEach(card=>{
@@ -1121,13 +1385,13 @@ document.querySelectorAll('.ncard').forEach(card=>{
     // GSAP entrance for detail page
     const scene=document.querySelector('[data-section="'+nationMap[id]+'"] .nl-scene');
     const content=document.querySelector('[data-section="'+nationMap[id]+'"] .nd-wrap');
-    if(scene) gsap.from(scene,{opacity:0,scale:1.04,duration:1.2,ease:'power2.out'});
+    if(scene) gsap.fromTo(scene,{opacity:0,scale:1.04},{opacity:1,scale:1,duration:1.2,ease:'power2.out'});
     if(content){
-      gsap.from(content.querySelector('.nd-back-btn'),{opacity:0,x:-20,duration:0.5,ease:'power2.out',delay:0.3});
-      gsap.from([content.querySelector('.nd-flag2'),content.querySelector('.nd-name2'),content.querySelector('.nd-tagline')],{opacity:0,y:30,stagger:0.12,duration:0.7,ease:'power3.out',delay:0.25});
-      gsap.from(content.querySelector('.nd-lore'),{opacity:0,y:20,duration:0.7,ease:'power2.out',delay:0.55});
-      gsap.from(content.querySelectorAll('.nd-stat'),{opacity:0,y:20,stagger:0.1,duration:0.6,ease:'back.out(1.5)',delay:0.7});
-      gsap.from(content.querySelector('.nd-strat'),{opacity:0,y:20,duration:0.7,ease:'power2.out',delay:0.95});
+      gsap.fromTo(content.querySelector('.nd-back-btn'),{opacity:0,x:-20},{opacity:1,x:0,duration:0.5,ease:'power2.out',delay:0.3});
+      gsap.fromTo([content.querySelector('.nd-flag2'),content.querySelector('.nd-name2'),content.querySelector('.nd-tagline')],{opacity:0,y:30},{opacity:1,y:0,stagger:0.12,duration:0.7,ease:'power3.out',delay:0.25});
+      gsap.fromTo(content.querySelector('.nd-lore'),{opacity:0,y:20},{opacity:1,y:0,duration:0.7,ease:'power2.out',delay:0.55});
+      gsap.fromTo(content.querySelectorAll('.nd-stat'),{opacity:0,y:20},{opacity:1,y:0,stagger:0.1,duration:0.6,ease:'back.out(1.5)',delay:0.7});
+      gsap.fromTo(content.querySelector('.nd-strat'),{opacity:0,y:20},{opacity:1,y:0,duration:0.7,ease:'power2.out',delay:0.95});
     }
   });
 });
