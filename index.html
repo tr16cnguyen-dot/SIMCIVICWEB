@@ -585,6 +585,8 @@ footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:38
   <div class="fcopy">PBL City &amp; Nation Simulation</div>
 </footer>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
 <script>
 // LOADING
 const ls=document.getElementById('loading-screen'),lstat=document.getElementById('loader-status');
@@ -634,35 +636,13 @@ document.querySelectorAll('[data-page]').forEach(el=>{el.addEventListener('click
 window.addEventListener('popstate',()=>showPage(location.hash.slice(1)||'home'));
 showPage(location.hash.slice(1)||'home');
 
-// PARALLAX + SCROLL PROGRESS
-const hbgEl=document.getElementById('hbg');
+// SCROLL PROGRESS (parallax handled by GSAP below)
 const pbar=document.getElementById('nav-progress');
 window.addEventListener('scroll',()=>{
   const sy=window.scrollY;
-  if(hbgEl) hbgEl.style.transform=`translate(-52%,calc(-52% + ${sy*0.28}px)) rotate(-5deg)`;
   if(pbar){const tot=document.documentElement.scrollHeight-window.innerHeight;pbar.style.width=tot>0?Math.min(sy/tot*100,100)+'%':'0%';}
 },{passive:true});
 
-// ANIMATED COUNTERS
-function animCount(el,target,dur){
-  const s=performance.now();
-  (function step(now){
-    const p=Math.min((now-s)/dur,1),ease=1-Math.pow(1-p,3);
-    el.textContent=Math.round(ease*target);
-    if(p<1)requestAnimationFrame(step);
-    else{const stat=el.closest('.hstat');if(stat){stat.classList.add('just-counted');setTimeout(()=>stat.classList.remove('just-counted'),500);}}
-  })(s);
-}
-setTimeout(()=>{
-  document.querySelectorAll('.hstat').forEach(stat=>{
-    const v=stat.querySelector('.hsv');
-    if(v&&/^\d+$/.test(v.textContent.trim())){
-      const t=parseInt(v.textContent.trim());
-      v.textContent='0';
-      animCount(v,t,900);
-    }
-  });
-},4300);
 
 // CARD TILT
 document.querySelectorAll('.ncard,.mc').forEach(card=>{
@@ -676,6 +656,80 @@ document.querySelectorAll('.ncard,.mc').forEach(card=>{
     card.style.transform='';
     card.style.transition='';
   });
+});
+
+// ── GSAP ──────────────────────────────────────────────────────────────
+gsap.registerPlugin(ScrollTrigger);
+
+// HERO ENTRANCE — fires as loading screen fades, far more fluid than CSS riseIn
+setTimeout(()=>{
+  // CSS riseIn animations finished while loading screen was visible; reset + replay with GSAP
+  gsap.set(['.hlabel','.hh1','.hp','.hactions','.hnations','.hright'],
+    {opacity:0, y:26, clearProps:'animation'});
+
+  const tl=gsap.timeline({defaults:{ease:'power3.out'}});
+  tl.to('.hlabel',   {opacity:1,y:0,duration:0.6})
+    .to('.hh1',      {opacity:1,y:0,duration:0.9},'-=0.3')
+    .to('.hp',       {opacity:1,y:0,duration:0.65,ease:'power2.out'},'-=0.52')
+    .to('.hactions', {opacity:1,y:0,duration:0.65,ease:'back.out(1.5)'},'-=0.4')
+    .to('.hnations', {opacity:1,y:0,duration:0.55},'-=0.35')
+    .to('.hright',   {opacity:1,y:0,duration:0.9},'-=0.42');
+
+  // Stat counter tweens — run while right panel is sliding in
+  tl.call(()=>{
+    document.querySelectorAll('.hstat').forEach(stat=>{
+      const v=stat.querySelector('.hsv');
+      if(v&&/^\d+$/.test((v.textContent||'').trim())){
+        const target=parseInt(v.textContent.trim());
+        const obj={n:0};
+        gsap.to(obj,{n:target,duration:0.95,ease:'power2.out',
+          onUpdate(){v.textContent=Math.round(obj.n);},
+          onComplete(){stat.classList.add('just-counted');setTimeout(()=>stat.classList.remove('just-counted'),500);}
+        });
+      }
+    });
+  },null,'-=0.2');
+},4050);
+
+// SMOOTH PARALLAX — ScrollTrigger scrubs the watermark at 28% scroll speed
+gsap.to('#hbg',{
+  y:()=>(document.querySelector('.hero')||{offsetHeight:900}).offsetHeight*0.28,
+  ease:'none',
+  scrollTrigger:{trigger:'.hero',start:'top top',end:'bottom top',scrub:1.5}
+});
+
+// SECTION STAGGER — nation cards fly in with a wave when the section is entered
+const ngrid=document.getElementById('nations');
+if(ngrid){
+  new MutationObserver(mutations=>{
+    if(mutations.some(m=>m.attributeName==='style')&&ngrid.style.display!=='none'){
+      gsap.fromTo(ngrid.querySelectorAll('.ncard'),
+        {opacity:0,y:42,rotateY:-8},
+        {opacity:1,y:0,rotateY:0,stagger:0.09,duration:0.75,ease:'power3.out',overwrite:true}
+      );
+    }
+  }).observe(ngrid,{attributes:true,attributeFilter:['style']});
+}
+
+// MECHANIC NUMBERS — big italic numerals scale-bounce in on scroll
+ScrollTrigger.batch('.mc .mn',{
+  onEnter:batch=>gsap.fromTo(batch,
+    {opacity:0,scale:0.35},
+    {opacity:0.1,scale:1,stagger:0.1,duration:0.85,ease:'back.out(2)'}
+  ),
+  once:true, start:'top 88%'
+});
+
+// ABOUT QUOTE — slides in from the left like a pull-quote reveal
+ScrollTrigger.create({
+  trigger:'.about-q', start:'top 88%', once:true,
+  onEnter:()=>gsap.from('.about-q',{opacity:0,x:-36,duration:0.8,ease:'power3.out'})
+});
+
+// CTA SECTION — whole panel scales and rises dramatically
+ScrollTrigger.create({
+  trigger:'.ctain', start:'top 80%', once:true,
+  onEnter:()=>gsap.from('.ctain',{opacity:0,y:55,duration:1.1,ease:'power3.out'})
 });
 </script>
 </body>
