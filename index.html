@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -332,6 +332,8 @@ footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:38
 /* ── WORLD MAP SELECTOR ── */
 .worldmap-container{position:relative;width:100%;height:100vh;min-height:560px;overflow:hidden;background:radial-gradient(ellipse at 50% 60%,#071428 0%,#030810 100%);}
 .wm-ocean{position:absolute;inset:0;width:100%;height:100%;}
+#wm-globe{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:grab;}
+#wm-globe:active{cursor:grabbing;}
 #wm-overlay{position:fixed;inset:0;z-index:9000;background:#04060d;opacity:0;pointer-events:none;}
 .wm-hint{position:absolute;bottom:38px;left:50%;transform:translateX(-50%);font-family:'Space Mono',monospace;font-size:0.62rem;letter-spacing:0.22em;text-transform:uppercase;color:rgba(237,240,250,0.3);text-align:center;white-space:nowrap;animation:wmHint 2.8s ease-in-out infinite;}
 @keyframes wmHint{0%,100%{opacity:0.3}50%{opacity:0.7}}
@@ -340,7 +342,7 @@ footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:38
 .wm-territory .wm-label-g{opacity:0;transition:opacity 0.3s;}
 .wm-enter-cta{font-family:'Space Mono',monospace;font-size:13px;letter-spacing:0.08em;fill:white;text-anchor:middle;pointer-events:none;opacity:0;transition:opacity 0.2s;}
 .wm-tname{font-family:'Syne',sans-serif;font-size:16px;font-weight:800;letter-spacing:0.04em;fill:white;text-anchor:middle;pointer-events:none;}
-.wm-nations-title{position:absolute;top:52px;left:50%;transform:translateX(-50%);text-align:center;pointer-events:none;z-index:2;}
+.wm-nations-title{position:absolute;top:52px;left:50%;transform:translateX(-50%);text-align:center;pointer-events:none;z-index:4;}
 .wm-nations-title .eye{font-family:'Space Mono',monospace;font-size:0.62rem;letter-spacing:0.22em;text-transform:uppercase;color:var(--gold);display:block;margin-bottom:8px;}
 .wm-nations-title h2{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(1.6rem,4vw,2.8rem);letter-spacing:-0.02em;color:var(--ink);}
 .wm-nations-title h2 em{color:var(--gold);font-style:italic;}
@@ -517,142 +519,8 @@ footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:38
       <span class="eye">The Nations</span>
       <h2>Five Territories. <em>One World.</em></h2>
     </div>
-    <svg class="wm-ocean" viewBox="0 0 1200 660" preserveAspectRatio="xMidYMid meet" id="wm-svg">
-      <defs>
-        <!-- Ocean gradient -->
-        <radialGradient id="wmocn" cx="50%" cy="55%" r="70%">
-          <stop offset="0%" stop-color="#0c2044"/>
-          <stop offset="60%" stop-color="#071428"/>
-          <stop offset="100%" stop-color="#030810"/>
-        </radialGradient>
-        <!-- Subtle grid lines for "map" feel -->
-        <pattern id="wmgrid" width="60" height="60" patternUnits="userSpaceOnUse">
-          <path d="M 60 0 L 0 0 0 60" fill="none" stroke="rgba(255,255,255,0.025)" stroke-width="0.5"/>
-        </pattern>
-        <!-- Glow filter -->
-        <filter id="wmglow" x="-40%" y="-40%" width="180%" height="180%">
-          <feGaussianBlur stdDeviation="14" result="blur"/>
-          <feComposite in="SourceGraphic" in2="blur" operator="over"/>
-        </filter>
-        <!-- Soft glow only -->
-        <filter id="wmglow2" x="-60%" y="-60%" width="220%" height="220%">
-          <feGaussianBlur stdDeviation="22"/>
-        </filter>
-        <!-- Nation fill gradients -->
-        <radialGradient id="wmaz" cx="40%" cy="35%" r="65%">
-          <stop offset="0%" stop-color="#60a5fa"/><stop offset="100%" stop-color="#1e40af"/>
-        </radialGradient>
-        <radialGradient id="wmsyn" cx="40%" cy="35%" r="65%">
-          <stop offset="0%" stop-color="#f87171"/><stop offset="100%" stop-color="#991b1b"/>
-        </radialGradient>
-        <radialGradient id="wmiv" cx="40%" cy="35%" r="65%">
-          <stop offset="0%" stop-color="#cbd5e1"/><stop offset="100%" stop-color="#475569"/>
-        </radialGradient>
-        <radialGradient id="wmvd" cx="40%" cy="35%" r="65%">
-          <stop offset="0%" stop-color="#4ade80"/><stop offset="100%" stop-color="#15803d"/>
-        </radialGradient>
-        <radialGradient id="wmnv" cx="40%" cy="35%" r="65%">
-          <stop offset="0%" stop-color="#fb923c"/><stop offset="100%" stop-color="#c2410c"/>
-        </radialGradient>
-        <!-- Vignette -->
-        <radialGradient id="wmvig" cx="50%" cy="50%" r="70%">
-          <stop offset="50%" stop-color="transparent"/>
-          <stop offset="100%" stop-color="rgba(3,8,16,0.85)"/>
-        </radialGradient>
-      </defs>
-
-      <!-- Ocean background -->
-      <rect width="1200" height="660" fill="url(#wmocn)"/>
-      <rect width="1200" height="660" fill="url(#wmgrid)"/>
-
-      <!-- Subtle latitude lines -->
-      <line x1="0" y1="220" x2="1200" y2="220" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>
-      <line x1="0" y1="330" x2="1200" y2="330" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
-      <line x1="0" y1="440" x2="1200" y2="440" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>
-      <line x1="300" y1="0" x2="300" y2="660" stroke="rgba(255,255,255,0.02)" stroke-width="1"/>
-      <line x1="600" y1="0" x2="600" y2="660" stroke="rgba(255,255,255,0.025)" stroke-width="1"/>
-      <line x1="900" y1="0" x2="900" y2="660" stroke="rgba(255,255,255,0.02)" stroke-width="1"/>
-
-      <!-- IRONVALE — upper-left, mountain nation (gray) -->
-      <g class="wm-territory" id="wmt-ironvale" data-nation="ironvale" data-color="#94a3b8" data-cx="164" data-cy="208">
-        <!-- Glow layer -->
-        <path d="M95,108 C125,72 185,78 228,112 C271,146 272,208 248,258 C224,308 180,340 138,337 C96,334 68,300 60,256 C52,212 62,170 82,140 C88,124 95,108Z" fill="#94a3b8" opacity="0.18" filter="url(#wmglow2)"/>
-        <!-- Main fill -->
-        <path class="wm-fill" d="M95,108 C125,72 185,78 228,112 C271,146 272,208 248,258 C224,308 180,340 138,337 C96,334 68,300 60,256 C52,212 62,170 82,140 C88,124 95,108Z" fill="url(#wmiv)" opacity="0.82"/>
-        <!-- Terrain texture lines -->
-        <path d="M120,160 L160,130 L200,160 M110,200 L155,165 L205,200 M100,240 L150,205 L200,240" stroke="rgba(255,255,255,0.12)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-        <!-- Highlight -->
-        <path d="M95,108 C125,72 185,78 228,112 C200,95 160,90 128,108Z" fill="rgba(255,255,255,0.1)"/>
-        <!-- Border -->
-        <path d="M95,108 C125,72 185,78 228,112 C271,146 272,208 248,258 C224,308 180,340 138,337 C96,334 68,300 60,256 C52,212 62,170 82,140 C88,124 95,108Z" fill="none" stroke="#94a3b8" stroke-width="1.5" opacity="0.7"/>
-        <!-- Label group (shown on hover) -->
-        <g class="wm-label-g">
-          <text class="wm-tname" x="164" y="198" fill="white">IRONVALE</text>
-          <text class="wm-enter-cta" x="164" y="218" fill="rgba(255,255,255,0.7)" font-size="11" font-family="'Space Mono',monospace" letter-spacing="0.06em">ENTER NATION →</text>
-        </g>
-      </g>
-
-      <!-- AZURE — lower-left, coastal trade hub (blue) -->
-      <g class="wm-territory" id="wmt-azure" data-nation="azure" data-color="#3b82f6" data-cx="162" data-cy="520">
-        <path d="M72,438 C104,400 170,396 218,422 C266,448 282,508 268,562 C254,616 212,646 168,644 C124,642 80,612 62,564 C44,516 50,472 72,438Z" fill="#3b82f6" opacity="0.18" filter="url(#wmglow2)"/>
-        <path class="wm-fill" d="M72,438 C104,400 170,396 218,422 C266,448 282,508 268,562 C254,616 212,646 168,644 C124,642 80,612 62,564 C44,516 50,472 72,438Z" fill="url(#wmaz)" opacity="0.82"/>
-        <!-- Wave lines -->
-        <path d="M88,480 Q130,470 172,482 M80,510 Q125,498 175,512 M88,540 Q135,528 180,542" stroke="rgba(255,255,255,0.14)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-        <path d="M72,438 C104,400 170,396 218,422 C185,405 140,402 110,422Z" fill="rgba(255,255,255,0.1)"/>
-        <path d="M72,438 C104,400 170,396 218,422 C266,448 282,508 268,562 C254,616 212,646 168,644 C124,642 80,612 62,564 C44,516 50,472 72,438Z" fill="none" stroke="#3b82f6" stroke-width="1.5" opacity="0.7"/>
-        <g class="wm-label-g">
-          <text class="wm-tname" x="162" y="512" fill="white">AZURE</text>
-          <text class="wm-enter-cta" x="162" y="532" fill="rgba(255,255,255,0.7)" font-size="11" font-family="'Space Mono',monospace" letter-spacing="0.06em">ENTER NATION →</text>
-        </g>
-      </g>
-
-      <!-- SYNAPSE — upper-center, tech city (red) -->
-      <g class="wm-territory" id="wmt-synapse" data-nation="synapse" data-color="#ef4444" data-cx="499" data-cy="185">
-        <path d="M395,85 C438,52 520,58 576,95 C632,132 642,197 610,246 C578,295 510,314 450,292 C390,270 356,214 356,158 C356,110 368,108 395,85Z" fill="#ef4444" opacity="0.18" filter="url(#wmglow2)"/>
-        <path class="wm-fill" d="M395,85 C438,52 520,58 576,95 C632,132 642,197 610,246 C578,295 510,314 450,292 C390,270 356,214 356,158 C356,110 368,108 395,85Z" fill="url(#wmsyn)" opacity="0.82"/>
-        <!-- Circuit lines -->
-        <path d="M420,120 L470,120 L470,150 L520,150 M450,170 L450,200 M480,130 L480,180 L440,180" stroke="rgba(255,255,255,0.12)" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M395,85 C438,52 520,58 576,95 C540,72 480,68 440,85Z" fill="rgba(255,255,255,0.1)"/>
-        <path d="M395,85 C438,52 520,58 576,95 C632,132 642,197 610,246 C578,295 510,314 450,292 C390,270 356,214 356,158 C356,110 368,108 395,85Z" fill="none" stroke="#ef4444" stroke-width="1.5" opacity="0.7"/>
-        <g class="wm-label-g">
-          <text class="wm-tname" x="499" y="176" fill="white">SYNAPSE</text>
-          <text class="wm-enter-cta" x="499" y="196" fill="rgba(255,255,255,0.7)" font-size="11" font-family="'Space Mono',monospace" letter-spacing="0.06em">ENTER NATION →</text>
-        </g>
-      </g>
-
-      <!-- VERDANTIA — right, forest republic (green) -->
-      <g class="wm-territory" id="wmt-verdantia" data-nation="verdantia" data-color="#22c55e" data-cx="857" data-cy="265">
-        <path d="M715,95 C778,60 890,70 962,118 C1034,166 1057,260 1026,342 C995,424 922,464 845,458 C768,452 708,400 688,320 C668,240 658,164 715,95Z" fill="#22c55e" opacity="0.18" filter="url(#wmglow2)"/>
-        <path class="wm-fill" d="M715,95 C778,60 890,70 962,118 C1034,166 1057,260 1026,342 C995,424 922,464 845,458 C768,452 708,400 688,320 C668,240 658,164 715,95Z" fill="url(#wmvd)" opacity="0.82"/>
-        <!-- Tree silhouette lines -->
-        <path d="M740,200 L740,260 M760,180 L760,260 M780,195 L780,260 M800,175 L800,265 M820,190 L820,268 M840,172 L840,268 M860,188 L860,270 M880,178 L880,270 M900,195 L900,268" stroke="rgba(255,255,255,0.08)" stroke-width="3" fill="none" stroke-linecap="round"/>
-        <path d="M720,320 Q810,305 900,320 Q990,335 1020,310" stroke="rgba(255,255,255,0.1)" stroke-width="2" fill="none"/>
-        <path d="M715,95 C778,60 890,70 962,118 C910,80 840,72 790,95Z" fill="rgba(255,255,255,0.1)"/>
-        <path d="M715,95 C778,60 890,70 962,118 C1034,166 1057,260 1026,342 C995,424 922,464 845,458 C768,452 708,400 688,320 C668,240 658,164 715,95Z" fill="none" stroke="#22c55e" stroke-width="1.5" opacity="0.7"/>
-        <g class="wm-label-g">
-          <text class="wm-tname" x="857" y="256" fill="white">VERDANTIA</text>
-          <text class="wm-enter-cta" x="857" y="276" fill="rgba(255,255,255,0.7)" font-size="11" font-family="'Space Mono',monospace" letter-spacing="0.06em">ENTER NATION →</text>
-        </g>
-      </g>
-
-      <!-- NOVAN — lower-right, plains wild card (orange) -->
-      <g class="wm-territory" id="wmt-novan" data-nation="novan" data-color="#f97316" data-cx="952" data-cy="548">
-        <path d="M812,448 C862,410 958,402 1028,438 C1098,474 1142,547 1124,610 C1106,673 1036,694 962,684 C888,674 830,630 806,572 C782,514 770,482 812,448Z" fill="#f97316" opacity="0.18" filter="url(#wmglow2)"/>
-        <path class="wm-fill" d="M812,448 C862,410 958,402 1028,438 C1098,474 1142,547 1124,610 C1106,673 1036,694 962,684 C888,674 830,630 806,572 C782,514 770,482 812,448Z" fill="url(#wmnv)" opacity="0.82"/>
-        <!-- Plains horizon lines -->
-        <path d="M840,510 Q900,500 962,510 Q1020,520 1080,510 M835,540 Q900,528 965,540 Q1030,552 1085,540 M840,570 Q900,560 965,570 Q1025,580 1080,570" stroke="rgba(255,255,255,0.1)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-        <path d="M812,448 C862,410 958,402 1028,438 C990,418 940,412 905,428Z" fill="rgba(255,255,255,0.1)"/>
-        <path d="M812,448 C862,410 958,402 1028,438 C1098,474 1142,547 1124,610 C1106,673 1036,694 962,684 C888,674 830,630 806,572 C782,514 770,482 812,448Z" fill="none" stroke="#f97316" stroke-width="1.5" opacity="0.7"/>
-        <g class="wm-label-g">
-          <text class="wm-tname" x="952" y="539" fill="white">NOVAN</text>
-          <text class="wm-enter-cta" x="952" y="559" fill="rgba(255,255,255,0.7)" font-size="11" font-family="'Space Mono',monospace" letter-spacing="0.06em">ENTER NATION →</text>
-        </g>
-      </g>
-
-      <!-- Edge vignette -->
-      <rect width="1200" height="660" fill="url(#wmvig)" pointer-events="none"/>
-    </svg>
-    <div class="wm-hint">Click a territory to explore</div>
+    <canvas id="wm-globe"></canvas>
+    <div class="wm-hint">Drag to spin · Click a territory to enter</div>
   </div>
   <div id="wm-overlay"></div>
 
@@ -1124,6 +992,7 @@ footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:38
   <div class="fcopy">PBL City &amp; Nation Simulation</div>
 </footer>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
 <script>
@@ -1271,108 +1140,229 @@ ScrollTrigger.create({
   onEnter:()=>gsap.from('.ctain',{opacity:0,y:55,duration:1.1,ease:'power3.out'})
 });
 
-// WORLD MAP TERRITORY SELECTOR
+// WORLD MAP — THREE.JS SPINNING GLOBE
 (function(){
-  const svg = document.getElementById('wm-svg');
-  if(!svg) return;
-  const territories = svg.querySelectorAll('.wm-territory');
-  const overlay = document.getElementById('wm-overlay');
+  const container = document.querySelector('.worldmap-container');
+  const canvas    = document.getElementById('wm-globe');
+  if(!container || !canvas || typeof THREE === 'undefined') return;
 
-  territories.forEach(terr=>{
-    const nation = terr.dataset.nation;
-    const color  = terr.dataset.color;
-    const cx     = parseFloat(terr.dataset.cx);
-    const cy     = parseFloat(terr.dataset.cy);
-    const label  = terr.querySelector('.wm-label-g');
+  let W = container.offsetWidth  || window.innerWidth;
+  let H = container.offsetHeight || window.innerHeight;
 
-    // --- HOVER IN ---
-    terr.addEventListener('mouseenter',()=>{
-      // Dim all others
-      territories.forEach(t=>{ if(t!==terr) gsap.to(t,{opacity:0.28,duration:0.3}); });
-      // Brighten self: scale up fill opacity, show label
-      gsap.to(terr.querySelector('.wm-fill'),{attr:{opacity:1},duration:0.3});
-      if(label){
-        gsap.to(label,{opacity:1,duration:0.25});
-        gsap.fromTo(label,{y:6},{y:0,duration:0.35,ease:'power2.out'});
-      }
-      // Pulse glow on the territory border
-      gsap.to(terr.querySelectorAll('path[stroke]'),{attr:{opacity:1},strokeWidth:2.5,duration:0.25});
-    });
+  // ── Renderer ──
+  const renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true});
+  renderer.setSize(W, H);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setClearColor(0x000000, 0);
 
-    // --- HOVER OUT ---
-    terr.addEventListener('mouseleave',()=>{
-      territories.forEach(t=>gsap.to(t,{opacity:1,duration:0.35}));
-      gsap.to(terr.querySelector('.wm-fill'),{attr:{opacity:0.82},duration:0.3});
-      if(label) gsap.to(label,{opacity:0,duration:0.2});
-      gsap.to(terr.querySelectorAll('path[stroke]'),{attr:{opacity:0.7},strokeWidth:1.5,duration:0.25});
-    });
+  // ── Scene / Camera ──
+  const scene  = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(38, W/H, 0.1, 100);
+  camera.position.z = 3.2;
 
-    // --- CLICK: door-open animation → navigate ---
-    terr.addEventListener('click',()=>{
-      // 1) Hide all other territories fast
-      territories.forEach(t=>{ if(t!==terr) gsap.to(t,{opacity:0,duration:0.25}); });
-      // 2) Scale territory up from its center to fill viewport (door-open)
-      gsap.to(terr,{
-        scale:22,
-        svgOrigin: cx+' '+cy,
-        duration:0.7,
-        ease:'power2.in'
-      });
-      // 3) Color flash overlay kicks in partway through
-      if(overlay){
-        overlay.style.background = color;
-        overlay.style.pointerEvents = 'all';
-        gsap.to(overlay,{
-          opacity:1,
-          duration:0.35,
-          delay:0.32,
-          onComplete(){
-            // Navigate
-            showPage('nation-'+nation);
-            window.scrollTo(0,0);
-            // Entrance animations for detail page (fromTo avoids stale opacity reads)
-            const scene   = document.querySelector('[data-section="nation-'+nation+'"] .nl-scene');
-            const content = document.querySelector('[data-section="nation-'+nation+'"] .nd-wrap');
-            if(scene)   gsap.fromTo(scene,  {opacity:0,scale:1.04},{opacity:1,scale:1,duration:1.2,ease:'power2.out'});
-            if(content){
-              gsap.fromTo(content.querySelector('.nd-back-btn'),  {opacity:0,x:-20},{opacity:1,x:0,duration:0.5,ease:'power2.out',delay:0.3});
-              gsap.fromTo([content.querySelector('.nd-flag2'),content.querySelector('.nd-name2'),content.querySelector('.nd-tagline')],{opacity:0,y:30},{opacity:1,y:0,stagger:0.12,duration:0.7,ease:'power3.out',delay:0.25});
-              gsap.fromTo(content.querySelector('.nd-lore'),       {opacity:0,y:20},{opacity:1,y:0,duration:0.7,ease:'power2.out',delay:0.55});
-              gsap.fromTo(content.querySelectorAll('.nd-stat'),    {opacity:0,y:20},{opacity:1,y:0,stagger:0.1,duration:0.6,ease:'back.out(1.5)',delay:0.7});
-              gsap.fromTo(content.querySelector('.nd-strat'),      {opacity:0,y:20},{opacity:1,y:0,duration:0.7,ease:'power2.out',delay:0.95});
-            }
-            // Fade overlay out, then reset map for when user returns
-            gsap.to(overlay,{
-              opacity:0,duration:0.55,delay:0.18,
-              onComplete(){
-                overlay.style.pointerEvents='none';
-                // Reset map territories for next visit
-                gsap.set(territories,{opacity:1,scale:1,clearProps:'svgOrigin'});
-                territories.forEach(t=>{ const lb=t.querySelector('.wm-label-g'); if(lb) gsap.set(lb,{opacity:0,y:0}); });
-              }
-            });
-          }
-        });
-      }
-    });
+  // ── Lights ──
+  scene.add(new THREE.AmbientLight(0x2a3d5c, 2.8));
+  const sun = new THREE.DirectionalLight(0xffeedd, 1.8);
+  sun.position.set(4, 1, 0.5); scene.add(sun);   // side-lit → specular on edge, not centre
+  const rim = new THREE.DirectionalLight(0x1a4080, 1.0);
+  rim.position.set(-2,-1,-2); scene.add(rim);
+
+  // ── Globe group (territories are children → rotate together) ──
+  const globeGroup = new THREE.Group();
+  scene.add(globeGroup);
+
+  // Ocean sphere
+  const oceanMesh = new THREE.Mesh(
+    new THREE.SphereGeometry(1, 64, 64),
+    new THREE.MeshPhongMaterial({color:0x081c36, emissive:0x030c18, specular:0x0a1428, shininess:6})
+  );
+  globeGroup.add(oceanMesh);
+
+  // Atmosphere halo (BackSide, slightly larger)
+  scene.add(new THREE.Mesh(
+    new THREE.SphereGeometry(1.08, 32, 32),
+    new THREE.MeshPhongMaterial({color:0x1a4488, emissive:0x061830, transparent:true, opacity:0.13, side:THREE.BackSide})
+  ));
+
+  // ── Grid lines ──
+  const gridMat = new THREE.LineBasicMaterial({color:0xffffff, transparent:true, opacity:0.05});
+  function spt(lat,lon,r=1.002){
+    const p=(90-lat)*Math.PI/180, t2=lon*Math.PI/180;
+    return new THREE.Vector3(r*Math.sin(p)*Math.cos(t2), r*Math.cos(p), r*Math.sin(p)*Math.sin(t2));
+  }
+  for(let la=-60;la<=60;la+=30){const pts=[];for(let lo=0;lo<=360;lo+=3)pts.push(spt(la,lo));globeGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),gridMat));}
+  for(let lo=0;lo<360;lo+=30){const pts=[];for(let la=-90;la<=90;la+=3)pts.push(spt(la,lo));globeGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),gridMat));}
+
+  // ── Territory blobs ──
+  const TERRS = [
+    {id:'ironvale',  label:'IRONVALE',  color:0x8fb4cc, emissive:0x3a5c70, lat:48, lon:-18,  r:0.22, page:'nation-ironvale',  hex:'#94a3b8'},
+    {id:'synapse',   label:'SYNAPSE',   color:0xf05050, emissive:0xa01010, lat:36, lon:58,   r:0.18, page:'nation-synapse',   hex:'#ef4444'},
+    {id:'verdantia', label:'VERDANTIA', color:0x40d070, emissive:0x108030, lat:18, lon:138,  r:0.24, page:'nation-verdantia', hex:'#22c55e'},
+    {id:'novan',     label:'NOVAN',     color:0xf08040, emissive:0xa03010, lat:8,  lon:-155, r:0.21, page:'nation-novan',     hex:'#f97316'},
+    {id:'azure',     label:'AZURE',     color:0x4090f0, emissive:0x1040a0, lat:14, lon:-88,  r:0.19, page:'nation-azure',     hex:'#3b82f6'},
+  ];
+
+  TERRS.forEach(t=>{
+    const N=28;
+    const verts=[];
+    const cx=spt(t.lat,t.lon,1.004);
+    const cosLat=Math.max(0.05,Math.cos(t.lat*Math.PI/180));
+    for(let i=0;i<N;i++){
+      const a0=(i/N)*Math.PI*2, a1=((i+1)/N)*Math.PI*2;
+      const n0=0.78+0.28*Math.sin(a0*2.8+0.5)+0.12*Math.sin(a0*6.1+2.2)+0.08*Math.sin(a0*11+1.7);
+      const n1=0.78+0.28*Math.sin(a1*2.8+0.5)+0.12*Math.sin(a1*6.1+2.2)+0.08*Math.sin(a1*11+1.7);
+      const p0=spt(t.lat+t.r*n0*57.3*Math.cos(a0), t.lon+t.r*n0*57.3*Math.sin(a0)/cosLat, 1.005);
+      const p1=spt(t.lat+t.r*n1*57.3*Math.cos(a1), t.lon+t.r*n1*57.3*Math.sin(a1)/cosLat, 1.005);
+      verts.push(cx.x,cx.y,cx.z, p0.x,p0.y,p0.z, p1.x,p1.y,p1.z);
+    }
+    const geo=new THREE.BufferGeometry();
+    geo.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));
+    geo.computeVertexNormals();
+    t.mat=new THREE.MeshPhongMaterial({color:t.color, emissive:t.emissive, emissiveIntensity:0.4, shininess:12});
+    t.mesh=new THREE.Mesh(geo,t.mat);
+    t.mesh.userData=t;
+    globeGroup.add(t.mesh);
   });
 
-  // Entrance animation when Nations section becomes visible
-  const ngrid = document.getElementById('nations');
-  if(ngrid){
-    const existingObs = new MutationObserver(mutations=>{
-      const visible = mutations.some(m=>m.attributeName==='style') && ngrid.style.display!=='none';
-      if(visible){
-        // Animate the territories in one by one
-        gsap.fromTo(territories,
-          {opacity:0,scale:0.88,svgOrigin:function(i){ const t=territories[i]; return t.dataset.cx+' '+t.dataset.cy; }},
-          {opacity:1,scale:1,stagger:0.1,duration:0.9,ease:'back.out(1.4)',overwrite:true,
-           svgOrigin:function(i){ const t=territories[i]; return t.dataset.cx+' '+t.dataset.cy; }}
-        );
-      }
-    });
-    existingObs.observe(ngrid,{attributes:true,attributeFilter:['style']});
+  // ── HTML label overlay ──
+  const lbox=document.createElement('div');
+  lbox.style.cssText='position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:2;';
+  container.appendChild(lbox);
+  TERRS.forEach(t=>{
+    t.el=document.createElement('div');
+    t.el.style.cssText='position:absolute;opacity:0;pointer-events:none;transform:translate(-50%,-50%);text-align:center;transition:opacity .25s;will-change:transform,opacity;';
+    t.el.innerHTML=`<div style="font-family:Syne,sans-serif;font-weight:800;font-size:15px;letter-spacing:.04em;color:#fff;text-shadow:0 2px 14px ${t.hex}cc;">${t.label}</div><div style="font-family:'Space Mono',monospace;font-size:10px;color:rgba(255,255,255,.55);letter-spacing:.1em;margin-top:3px;">ENTER →</div>`;
+    lbox.appendChild(t.el);
+  });
+
+  // ── Interaction ──
+  let rotSpd=0.004, dragging=false, px=0, py=0, velX=0, velY=0;
+  let hovered=null, busy=false;
+  const ray=new THREE.Raycaster();
+  const mp=new THREE.Vector2();
+  const meshes=TERRS.map(t=>t.mesh);
+
+  function ndc(e){
+    const r=canvas.getBoundingClientRect();
+    return {x:((e.clientX-r.left)/r.width)*2-1, y:-((e.clientY-r.top)/r.height)*2+1};
   }
+  function setHover(t){
+    if(hovered===t) return;
+    if(hovered){hovered.el.style.opacity='0';hovered.mat.emissiveIntensity=0.4;}
+    hovered=t;
+    if(t){t.mat.emissiveIntensity=1.0;t.el.style.opacity='1';canvas.style.cursor='pointer';}
+    else canvas.style.cursor='grab';
+  }
+
+  canvas.addEventListener('mousedown',e=>{dragging=true;px=e.clientX;py=e.clientY;velX=velY=0;canvas.style.cursor='grabbing';});
+  canvas.addEventListener('mouseup',()=>{dragging=false;canvas.style.cursor=hovered?'pointer':'grab';});
+  canvas.addEventListener('mouseleave',()=>{dragging=false;setHover(null);});
+  canvas.addEventListener('mousemove',e=>{
+    if(busy)return;
+    if(dragging){
+      const dx=e.clientX-px, dy=e.clientY-py;
+      globeGroup.rotation.y+=dx*0.006; globeGroup.rotation.x+=dy*0.006;
+      globeGroup.rotation.x=Math.max(-1.1,Math.min(1.1,globeGroup.rotation.x));
+      velY=dx*0.006; velX=dy*0.006;
+      px=e.clientX; py=e.clientY;
+    }
+    const {x,y}=ndc(e); mp.set(x,y);
+    ray.setFromCamera(mp,camera);
+    const hits=ray.intersectObjects(meshes);
+    setHover(hits.length?hits[0].object.userData:null);
+  });
+
+  function navigate(t){
+    if(busy)return; busy=true;
+    const ov=document.getElementById('wm-overlay');
+    gsap.to(camera.position,{z:1.4,duration:0.7,ease:'power2.in'});
+    if(ov){
+      ov.style.background=t.hex; ov.style.pointerEvents='all';
+      gsap.to(ov,{opacity:1,duration:0.35,delay:0.32,onComplete(){
+        showPage(t.page); window.scrollTo(0,0);
+        const sc=document.querySelector('[data-section="'+t.page+'"] .nl-scene');
+        const ct=document.querySelector('[data-section="'+t.page+'"] .nd-wrap');
+        if(sc) gsap.fromTo(sc,{opacity:0,scale:1.04},{opacity:1,scale:1,duration:1.2,ease:'power2.out'});
+        if(ct){
+          gsap.fromTo(ct.querySelector('.nd-back-btn'),{opacity:0,x:-20},{opacity:1,x:0,duration:0.5,delay:0.3,ease:'power2.out'});
+          gsap.fromTo([ct.querySelector('.nd-flag2'),ct.querySelector('.nd-name2'),ct.querySelector('.nd-tagline')],{opacity:0,y:30},{opacity:1,y:0,stagger:.12,duration:.7,ease:'power3.out',delay:.25});
+          gsap.fromTo(ct.querySelector('.nd-lore'),{opacity:0,y:20},{opacity:1,y:0,duration:.7,delay:.55,ease:'power2.out'});
+          gsap.fromTo(ct.querySelectorAll('.nd-stat'),{opacity:0,y:20},{opacity:1,y:0,stagger:.1,duration:.6,delay:.7,ease:'back.out(1.5)'});
+          gsap.fromTo(ct.querySelector('.nd-strat'),{opacity:0,y:20},{opacity:1,y:0,duration:.7,delay:.95,ease:'power2.out'});
+        }
+        gsap.to(ov,{opacity:0,duration:0.55,delay:0.18,onComplete(){
+          ov.style.pointerEvents='none';
+          camera.position.z=3.2; busy=false;
+        }});
+      }});
+    }
+  }
+
+  canvas.addEventListener('click',e=>{
+    if(busy||dragging)return;
+    const {x,y}=ndc(e); mp.set(x,y);
+    ray.setFromCamera(mp,camera);
+    const hits=ray.intersectObjects(meshes);
+    if(hits.length) navigate(hits[0].object.userData);
+  });
+
+  // Touch drag
+  let tx=0,ty=0;
+  canvas.addEventListener('touchstart',e=>{tx=e.touches[0].clientX;ty=e.touches[0].clientY;},{passive:true});
+  canvas.addEventListener('touchmove',e=>{
+    if(busy||!e.touches.length)return;
+    globeGroup.rotation.y+=(e.touches[0].clientX-tx)*0.006;
+    globeGroup.rotation.x+=(e.touches[0].clientY-ty)*0.006;
+    globeGroup.rotation.x=Math.max(-1.1,Math.min(1.1,globeGroup.rotation.x));
+    tx=e.touches[0].clientX; ty=e.touches[0].clientY;
+  },{passive:true});
+
+  // ── Label projection ──
+  const tmpV=new THREE.Vector3();
+  function updateLabels(){
+    TERRS.forEach(t=>{
+      if(parseFloat(t.el.style.opacity)<0.05)return;
+      tmpV.copy(spt(t.lat,t.lon,1.25)).applyEuler(globeGroup.rotation);
+      // Hide if on far side of globe
+      if(tmpV.z<-0.1){t.el.style.opacity='0';if(hovered===t)setHover(null);return;}
+      const proj=tmpV.project(camera);
+      const r=canvas.getBoundingClientRect();
+      t.el.style.left=((proj.x*.5+.5)*r.width)+'px';
+      t.el.style.top=((-proj.y*.5+.5)*r.height)+'px';
+    });
+  }
+
+  // ── Render loop ──
+  let raf;
+  function tick(){
+    raf=requestAnimationFrame(tick);
+    if(!dragging&&!busy){
+      globeGroup.rotation.y+=rotSpd;
+      velX*=0.96; velY*=0.96;
+    } else if(!dragging){
+      velX*=0.96; velY*=0.96;
+      globeGroup.rotation.x+=velX; globeGroup.rotation.y+=velY;
+    }
+    updateLabels();
+    renderer.render(scene,camera);
+  }
+  tick();
+
+  // Pause render when nations section is hidden (perf)
+  const nationsEl=document.getElementById('nations');
+  if(nationsEl){
+    new MutationObserver(()=>{
+      if(nationsEl.style.display==='none') cancelAnimationFrame(raf);
+      else tick();
+    }).observe(nationsEl,{attributes:true,attributeFilter:['style']});
+  }
+
+  // Resize
+  new ResizeObserver(()=>{
+    W=container.offsetWidth; H=container.offsetHeight;
+    camera.aspect=W/H; camera.updateProjectionMatrix();
+    renderer.setSize(W,H);
+  }).observe(container);
 })();
 
 // NATION CARD CLICK → DETAIL PAGE
