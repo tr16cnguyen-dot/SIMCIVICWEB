@@ -264,6 +264,9 @@ footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:38
 .flinks button:hover,.flinks a:hover{color:var(--ink);background:rgba(255,255,255,0.04);}
 .fcopy{font-family:'Space Mono',monospace;font-size:0.58rem;color:var(--muted);letter-spacing:0.1em;}
 
+/* ── PAGE ROUTER ── */
+.nlinks button.nav-active{color:var(--gold)!important;background:rgba(219,166,66,0.08)!important;}
+
 /* ── ANIMATIONS ── */
 @keyframes riseIn{from{opacity:0;transform:translateY(26px)}to{opacity:1;transform:translateY(0)}}
 @keyframes fadeUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
@@ -342,22 +345,22 @@ footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:38
 
 <!-- NAV -->
 <nav>
-  <div class="nlogo">
+  <div class="nlogo" data-page="home">
     <div class="nwm"><span class="ns">SIM</span><span class="nc">CIVIC</span></div>
     <div class="nsep"></div>
     <div class="nsub">Where Leaders<br>Are Made</div>
   </div>
   <ul class="nlinks">
-    <li><button data-scroll="nations">Nations</button></li>
-    <li><button data-scroll="roles">Roles</button></li>
-    <li><button data-scroll="mechanics">Mechanics</button></li>
-    <li><button data-scroll="resources">Resources</button></li>
+    <li><button data-page="nations"   data-page-btn="nations">Nations</button></li>
+    <li><button data-page="roles"      data-page-btn="roles">Roles</button></li>
+    <li><button data-page="mechanics"  data-page-btn="mechanics">Mechanics</button></li>
+    <li><button data-page="resources"  data-page-btn="resources">Resources</button></li>
     <li><a href="https://tr16cnguyen-dot.github.io/SimCivic/" target="_blank" rel="noopener noreferrer" data-external class="ncta">Open Dashboard →</a></li>
   </ul>
 </nav>
 
 <!-- HERO -->
-<section class="hero">
+<section class="hero" data-section="home">
   <div class="hbg">SIMCIVIC</div>
   <div class="hglow"></div><div class="hg2"></div>
   <div class="hinner">
@@ -370,15 +373,15 @@ footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:38
       </h1>
       <p class="hp">A structured, immersive simulation where student teams govern fictional nations — managing 7 interconnected resources, negotiating formal trade deals, forging alliances, and building real cities. Piloted April 2026: 97% of students felt more engaged.</p>
       <div class="hactions">
-        <button data-scroll="nations" class="btn-p">Explore Nations</button>
-        <button data-scroll="mechanics" class="btn-o">How It Works</button>
+        <button data-page="nations"   class="btn-p">Explore Nations</button>
+        <button data-page="mechanics"  class="btn-o">How It Works</button>
       </div>
       <div class="hnations">
-        <button data-scroll="azure"     class="npill" style="--pc:var(--azure)">    <span class="pdot"></span>Azure</button>
-        <button data-scroll="synapse"   class="npill" style="--pc:var(--synapse)">  <span class="pdot"></span>Synapse</button>
-        <button data-scroll="ironvale"  class="npill" style="--pc:var(--ironvale)"> <span class="pdot"></span>Ironvale</button>
-        <button data-scroll="verdantia" class="npill" style="--pc:var(--verdantia)"><span class="pdot"></span>Verdantia</button>
-        <button data-scroll="novan"     class="npill" style="--pc:var(--novan)">    <span class="pdot"></span>Novan</button>
+        <button data-page="nations" class="npill" style="--pc:var(--azure)">    <span class="pdot" style="background:var(--azure)"></span>Azure</button>
+        <button data-page="nations" class="npill" style="--pc:var(--synapse)">  <span class="pdot" style="background:var(--synapse)"></span>Synapse</button>
+        <button data-page="nations" class="npill" style="--pc:var(--ironvale)"> <span class="pdot" style="background:var(--ironvale)"></span>Ironvale</button>
+        <button data-page="nations" class="npill" style="--pc:var(--verdantia)"><span class="pdot" style="background:var(--verdantia)"></span>Verdantia</button>
+        <button data-page="nations" class="npill" style="--pc:var(--novan)">    <span class="pdot" style="background:var(--novan)"></span>Novan</button>
       </div>
     </div>
     <div class="hright">
@@ -402,7 +405,7 @@ footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:38
 </section>
 
 <!-- ABOUT -->
-<section class="about">
+<section class="about" data-section="home">
   <div class="wrap">
     <div class="about-grid">
       <div class="rev">
@@ -413,7 +416,7 @@ footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:38
           <div class="aq-label">Pilot Results — Stonewall Elementary, April 2026</div>
           <p class="aq-p">33 fifth-graders participated. 97% felt more engaged than a typical class. 93% said they'd do it again. Average enjoyment: 4.2 out of 5. ~60% wanted an after-school SimCivic club.</p>
         </div>
-        <button data-scroll="nations" class="btn-p">Meet the Nations</button>
+        <button data-page="nations" class="btn-p">Meet the Nations</button>
       </div>
       <div class="rhex rev d1">
         <div class="rc" style="--rcc:#dba642"><div class="ri">💰</div><div class="rn">Capital</div>  <div class="ra">Cap.</div></div>
@@ -428,10 +431,8 @@ footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:38
   </div>
 </section>
 
-<div class="div"></div>
-
 <!-- NATIONS -->
-<section id="nations" class="nations">
+<section id="nations" class="nations" data-section="nations" style="display:none;padding-top:82px;">
   <div class="wrap">
     <div class="nhdr rev">
       <div class="eye">The Nations</div>
@@ -448,10 +449,8 @@ footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:38
   </div>
 </section>
 
-<div class="div"></div>
-
 <!-- ROLES -->
-<section id="roles" class="roles">
+<section id="roles" class="roles" data-section="roles" style="display:none;padding-top:82px;">
   <div class="wrap">
     <div class="rlayout">
       <div class="rsticky rev">
@@ -462,7 +461,7 @@ footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:38
           <div class="rcl">Budget Rule</div>
           <div class="rcb">Correct budget = <strong>+5 Capital</strong><br>Incorrect budget = <span class="neg">−5 Capital</span></div>
         </div>
-        <button data-scroll="mechanics" class="btn-o">See All Mechanics →</button>
+        <button data-page="mechanics" class="btn-o">See All Mechanics →</button>
       </div>
       <div class="rgrid">
         <div class="rcard rev">   <span class="rico">👑</span><div class="rn2">President</div>          <div class="rd">The strategic leader. Sets direction, holds the device during choice events, communicates with the host, and calls the Global Summit — once per game.</div><div class="rchips"><span class="rchip">SUMMIT</span><span class="rchip">EVENTS</span><span class="rchip">RECORDS</span></div></div>
@@ -477,7 +476,7 @@ footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:38
 </section>
 
 <!-- MECHANICS -->
-<section id="mechanics" class="mech">
+<section id="mechanics" class="mech" data-section="mechanics" style="display:none;padding-top:82px;">
   <div class="wrap">
     <div class="mtop">
       <div class="rev"><div class="eye">Game Mechanics</div><h2 class="sh">How SimCivic <em>Works</em></h2></div>
@@ -495,7 +494,7 @@ footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:38
 </section>
 
 <!-- RESOURCES -->
-<section id="resources" class="res">
+<section id="resources" class="res" data-section="resources" style="display:none;padding-top:82px;">
   <div class="wrap">
     <div class="rev">
       <div class="eye">Resource Guide</div>
@@ -528,10 +527,10 @@ footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:38
   </div>
 </section>
 
-<div class="div"></div>
+<div class="div" data-section="home"></div>
 
 <!-- CTA -->
-<section class="cta">
+<section class="cta" data-section="home">
   <div class="ctabg"></div>
   <div class="ctabw">LEAD</div>
   <div class="ctain rev">
@@ -540,7 +539,7 @@ footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:38
     <p class="ctap">Every round is a new challenge. Every decision has consequences. Will your nation rise to the top — or fall to war, poverty, and poor planning?</p>
     <div class="ctaa">
       <a href="https://tr16cnguyen-dot.github.io/SimCivic/" target="_blank" rel="noopener noreferrer" data-external class="btn-p">Open Dashboard →</a>
-      <button data-scroll="nations" class="btn-o">Explore Nations</button>
+      <button data-page="nations" class="btn-o">Explore Nations</button>
     </div>
   </div>
 </section>
@@ -552,10 +551,10 @@ footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:38
     <div class="fsub">Where Leaders Are Made</div>
   </div>
   <div class="flinks">
-    <button data-scroll="nations">Nations</button>
-    <button data-scroll="roles">Roles</button>
-    <button data-scroll="mechanics">Mechanics</button>
-    <button data-scroll="resources">Resources</button>
+    <button data-page="nations">Nations</button>
+    <button data-page="roles">Roles</button>
+    <button data-page="mechanics">Mechanics</button>
+    <button data-page="resources">Resources</button>
     <a href="https://tr16cnguyen-dot.github.io/SimCivic/" target="_blank" rel="noopener noreferrer" data-external>Dashboard</a>
   </div>
   <div class="fcopy">PBL City &amp; Nation Simulation</div>
@@ -588,8 +587,17 @@ document.querySelectorAll('.rev').forEach(el=>obs.observe(el));
 // STRIP HREFS
 document.querySelectorAll('a:not([data-external])').forEach(a=>{a.removeAttribute('href');a.removeAttribute('target');a.removeAttribute('rel');a.style.cursor='pointer';});
 
-// DATA-SCROLL
-document.querySelectorAll('[data-scroll]').forEach(el=>{el.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();const t=document.getElementById(el.dataset.scroll);if(t)t.scrollIntoView({behavior:'smooth',block:'start'});});});
+// PAGE ROUTER
+function showPage(n){
+  document.querySelectorAll('[data-section]').forEach(el=>{el.style.display=el.dataset.section===n?'':'none';});
+  document.querySelectorAll('[data-page-btn]').forEach(b=>b.classList.toggle('nav-active',b.dataset.pageBtn===n));
+  history.pushState(null,'',n==='home'?window.location.pathname:'#'+n);
+  window.scrollTo(0,0);
+  document.querySelectorAll('[data-section="'+n+'"] .rev').forEach(el=>{el.classList.remove('on');obs.observe(el);});
+}
+document.querySelectorAll('[data-page]').forEach(el=>{el.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();showPage(el.dataset.page);});});
+window.addEventListener('popstate',()=>showPage(location.hash.slice(1)||'home'));
+showPage(location.hash.slice(1)||'home');
 </script>
 </body>
 </html>
