@@ -1203,22 +1203,31 @@ ScrollTrigger.create({
   ];
 
   TERRS.forEach(t=>{
-    const N=28;
+    // Subdivided radial grid — every vertex projected onto sphere surface
+    // so no triangle can dip below the ocean
+    const N=36, RINGS=6;
     const verts=[];
-    const cx=spt(t.lat,t.lon,1.004);
     const cosLat=Math.max(0.05,Math.cos(t.lat*Math.PI/180));
+    function noise(a){return 0.78+0.28*Math.sin(a*2.8+0.5)+0.12*Math.sin(a*6.1+2.2)+0.08*Math.sin(a*11+1.7);}
+    function sv(ang,frac){ // project point at (angle, radial-fraction) onto sphere
+      if(frac<0.001) return spt(t.lat,t.lon,1.006);
+      const nr=t.r*noise(ang)*frac;
+      return spt(t.lat+nr*57.3*Math.cos(ang), t.lon+nr*57.3*Math.sin(ang)/cosLat, 1.006);
+    }
     for(let i=0;i<N;i++){
       const a0=(i/N)*Math.PI*2, a1=((i+1)/N)*Math.PI*2;
-      const n0=0.78+0.28*Math.sin(a0*2.8+0.5)+0.12*Math.sin(a0*6.1+2.2)+0.08*Math.sin(a0*11+1.7);
-      const n1=0.78+0.28*Math.sin(a1*2.8+0.5)+0.12*Math.sin(a1*6.1+2.2)+0.08*Math.sin(a1*11+1.7);
-      const p0=spt(t.lat+t.r*n0*57.3*Math.cos(a0), t.lon+t.r*n0*57.3*Math.sin(a0)/cosLat, 1.005);
-      const p1=spt(t.lat+t.r*n1*57.3*Math.cos(a1), t.lon+t.r*n1*57.3*Math.sin(a1)/cosLat, 1.005);
-      verts.push(cx.x,cx.y,cx.z, p0.x,p0.y,p0.z, p1.x,p1.y,p1.z);
+      for(let ring=0;ring<RINGS;ring++){
+        const f0=ring/RINGS, f1=(ring+1)/RINGS;
+        const v00=sv(a0,f0), v01=sv(a0,f1);
+        const v10=sv(a1,f0), v11=sv(a1,f1);
+        // Two triangles per quad cell
+        verts.push(v00.x,v00.y,v00.z, v01.x,v01.y,v01.z, v11.x,v11.y,v11.z);
+        verts.push(v00.x,v00.y,v00.z, v11.x,v11.y,v11.z, v10.x,v10.y,v10.z);
+      }
     }
     const geo=new THREE.BufferGeometry();
     geo.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));
-    geo.computeVertexNormals();
-    t.mat=new THREE.MeshPhongMaterial({color:t.color, emissive:t.emissive, emissiveIntensity:0.4, shininess:12});
+    t.mat=new THREE.MeshBasicMaterial({color:t.color, side:THREE.DoubleSide});
     t.mesh=new THREE.Mesh(geo,t.mat);
     t.mesh.userData=t;
     globeGroup.add(t.mesh);
@@ -1248,10 +1257,12 @@ ScrollTrigger.create({
   }
   function setHover(t){
     if(hovered===t) return;
-    if(hovered){hovered.el.style.opacity='0';hovered.mat.emissiveIntensity=0.4;}
+    if(hovered){hovered.el.style.opacity='0'; hovered.mat.color.setHex(hovered.color);}
     hovered=t;
-    if(t){t.mat.emissiveIntensity=1.0;t.el.style.opacity='1';canvas.style.cursor='pointer';}
-    else canvas.style.cursor='grab';
+    if(t){
+      t.mat.color.setHex(t.color); t.mat.color.multiplyScalar(1.7);
+      t.el.style.opacity='1'; canvas.style.cursor='pointer';
+    } else canvas.style.cursor='grab';
   }
 
   canvas.addEventListener('mousedown',e=>{dragging=true;px=e.clientX;py=e.clientY;velX=velY=0;canvas.style.cursor='grabbing';});
