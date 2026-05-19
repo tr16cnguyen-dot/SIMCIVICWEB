@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SIMCIVIC — Where Leaders Are Made</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@1,400;1,700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:      #04060d;
+  --bg2:     #060810;
+  --surface: #090c17;
+  --panel:   #0c1020;
+  --border:  rgba(255,255,255,0.06);
+  --bm:      rgba(255,255,255,0.11);
+
+  --gold:    #dba642;
+  --gold-lt: #f0c060;
+  --gold-dim:rgba(219,166,66,0.08);
+  --gold-glow:rgba(219,166,66,0.2);
+
+  --ink:   #edf0fa;
+  --muted: #364052;
+  --sub:   #6b7d96;
+
+  --azure:     #3b82f6;
+  --synapse:   #ef4444;
+  --ironvale:  #94a3b8;
+  --verdantia: #22c55e;
+  --novan:     #f97316;
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;overflow-x:hidden;line-height:1.6;-webkit-font-smoothing:antialiased;}
+
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");background-size:256px 256px;opacity:0.028;}
+
+/* Dot grid */
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background-image:radial-gradient(circle,rgba(255,255,255,0.06) 1px,transparent 1px);background-size:40px 40px;}
+
+button[data-scroll]:not(.btn-p):not(.btn-o):not(.npill){background:none;border:none;font:inherit;cursor:pointer;text-align:inherit;display:inline-flex;align-items:center;}
+button.btn-p,button.btn-o,button.npill{font:inherit;cursor:pointer;text-align:center;display:inline-flex;align-items:center;justify-content:center;}
+
+/* ── LOADING ── */
+#loading-screen{position:fixed;inset:0;z-index:99999;background:#04060d;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;transition:opacity 1s ease,visibility 1s ease;}
+#loading-screen.hide{opacity:0;visibility:hidden;pointer-events:none;}
+#loader-canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;}
+.loader-scan{position:absolute;top:-4px;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(219,166,66,0.8) 50%,transparent);animation:scanLine 2s ease-in-out infinite;pointer-events:none;z-index:2;}
+@keyframes scanLine{0%{top:-4px;opacity:0;}5%{opacity:1;}95%{opacity:1;}100%{top:100%;opacity:0;}}
+.lc{position:absolute;width:32px;height:32px;pointer-events:none;z-index:3;}
+.lc::before,.lc::after{content:'';position:absolute;background:var(--gold);}
+.lc::before{width:100%;height:1.5px;top:0;}.lc::after{width:1.5px;height:100%;top:0;}
+.lc-tl{top:20px;left:20px}.lc-tr{top:20px;right:20px;transform:scaleX(-1)}.lc-bl{bottom:20px;left:20px;transform:scaleY(-1)}.lc-br{bottom:20px;right:20px;transform:scale(-1,-1)}
+.lc{animation:lcPulse 2.5s ease-in-out infinite}
+@keyframes lcPulse{0%,100%{opacity:0.35}50%{opacity:0.9}}
+.loader-world{position:relative;width:320px;height:320px;margin-bottom:48px;animation:wFloat 5s ease-in-out infinite;z-index:2;}
+@keyframes wFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+.or{position:absolute;border-radius:50%;top:50%;left:50%;transform-origin:center;border-style:solid;}
+.or1{width:370px;height:370px;margin:-185px 0 0 -185px;border:1px dashed rgba(219,166,66,0.18);animation:spinR 14s linear infinite;}
+.or2{width:430px;height:430px;margin:-215px 0 0 -215px;border:1px solid rgba(59,130,246,0.1);animation:spinR 22s linear infinite reverse;}
+.or3{width:490px;height:490px;margin:-245px 0 0 -245px;border:1px dashed rgba(34,197,94,0.07);animation:spinR 36s linear infinite;}
+@keyframes spinR{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+.od{position:absolute;border-radius:50%;top:50%;left:50%;transform-origin:0 0;z-index:4;}
+.od::after{content:attr(data-label);position:absolute;top:16px;left:50%;transform:translateX(-50%);font-family:'Space Mono',monospace;font-size:0.5rem;letter-spacing:0.1em;color:var(--oc);white-space:nowrap;opacity:0.75;}
+@keyframes odSpin{from{transform:rotate(var(--os,0deg)) translateX(var(--or,190px)) rotate(calc(-1 * var(--os,0deg)))}to{transform:rotate(calc(var(--os,0deg) + 360deg)) translateX(var(--or,190px)) rotate(calc(-360deg - var(--os,0deg)))}}
+.od::before{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);border-radius:50%;border:1px solid var(--oc);opacity:0;animation:odPulse 2.2s ease-out infinite;}
+@keyframes odPulse{0%{width:12px;height:12px;opacity:0.7}100%{width:30px;height:30px;opacity:0}}
+.lglow{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:550px;height:550px;background:radial-gradient(ellipse,rgba(219,166,66,0.055) 0%,transparent 65%);pointer-events:none;animation:lgBreath 3s ease-in-out infinite;z-index:0;}
+@keyframes lgBreath{0%,100%{transform:translate(-50%,-50%) scale(1);opacity:0.6}50%{transform:translate(-50%,-50%) scale(1.12);opacity:1}}
+.lglow-b{position:absolute;width:380px;height:380px;border-radius:50%;background:radial-gradient(ellipse,rgba(59,130,246,0.035) 0%,transparent 70%);top:28%;left:18%;animation:glowD 7s ease-in-out infinite;pointer-events:none;}
+.lglow-g{position:absolute;width:320px;height:320px;border-radius:50%;background:radial-gradient(ellipse,rgba(34,197,94,0.03) 0%,transparent 70%);bottom:18%;right:14%;animation:glowD 9s ease-in-out infinite reverse;pointer-events:none;}
+@keyframes glowD{0%,100%{transform:translate(0,0)}50%{transform:translate(28px,-20px)}}
+.lbrand{position:relative;z-index:3;text-align:center;animation:fadeUp 0.8s 0.15s ease both;}
+.lbtitle{font-family:'Syne',sans-serif;font-weight:800;font-size:3.8rem;letter-spacing:0.02em;line-height:1;margin-bottom:6px;animation:tGlow 3s ease-in-out infinite;}
+@keyframes tGlow{0%,100%{text-shadow:0 0 20px rgba(219,166,66,0.15)}50%{text-shadow:0 0 40px rgba(219,166,66,0.45)}}
+.lb-s{color:var(--gold)}.lb-c{color:var(--ink)}
+.lbtag{font-family:'Space Mono',monospace;font-size:0.6rem;letter-spacing:0.24em;color:#364052;text-transform:uppercase;margin-bottom:34px;}
+.lbwrap{width:260px;height:2px;background:rgba(255,255,255,0.05);border-radius:2px;overflow:hidden;margin:0 auto 12px;position:relative;}
+.lbbar{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold-lt),var(--gold));background-size:200% 100%;width:0%;animation:lbFill 3.5s cubic-bezier(0.4,0,0.2,1) forwards,lbShimmer 1.5s linear infinite;}
+@keyframes lbFill{0%{width:0%}30%{width:45%}60%{width:72%}85%{width:90%}100%{width:100%}}
+@keyframes lbShimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.lbtip{position:absolute;right:0;top:50%;transform:translateY(-50%);width:5px;height:5px;border-radius:50%;background:var(--gold-lt);box-shadow:0 0 8px var(--gold-lt),0 0 16px rgba(219,166,66,0.4);}
+.lbstatus{font-family:'Space Mono',monospace;font-size:0.6rem;letter-spacing:0.15em;color:var(--gold);text-transform:uppercase;transition:opacity 0.25s ease;margin-bottom:28px;}
+.lbnations{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
+.lni{display:flex;align-items:center;gap:6px;font-family:'Syne',sans-serif;font-size:0.72rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:rgba(237,240,250,0.18);transition:color 0.4s,text-shadow 0.4s;padding:3px 11px;border:1px solid rgba(255,255,255,0.04);border-radius:2px;}
+.lni.on{border-color:var(--lc);color:var(--lc);text-shadow:0 0 12px var(--lc);}
+.lnd{width:5px;height:5px;border-radius:50%;animation:lnBlink 1s ease-in-out infinite;}
+@keyframes lnBlink{0%,100%{opacity:0.35;transform:scale(1)}50%{opacity:1;transform:scale(1.5)}}
+
+/* ── NAV ── */
+nav{position:fixed;top:0;left:0;right:0;z-index:200;height:62px;display:flex;align-items:center;justify-content:space-between;padding:0 52px;background:rgba(4,6,13,0.75);backdrop-filter:blur(28px) saturate(160%);border-bottom:1px solid var(--border);}
+.nlogo{display:flex;align-items:center;gap:10px;cursor:pointer;}
+.nwm{font-family:'Syne',sans-serif;font-weight:800;font-size:1.25rem;letter-spacing:0.02em;display:flex;}
+.ns{color:var(--gold)}.nc{color:var(--ink)}
+.nsep{width:1px;height:18px;background:rgba(255,255,255,0.12);margin:0 12px;}
+.nsub{font-family:'Space Mono',monospace;font-size:0.52rem;letter-spacing:0.12em;color:var(--muted);text-transform:uppercase;line-height:1.4;}
+.nlinks{display:flex;align-items:center;gap:2px;list-style:none;}
+.nlinks button{background:none;border:none;color:var(--sub);font-family:'Inter',sans-serif;font-size:0.84rem;font-weight:500;padding:7px 14px;border-radius:6px;cursor:pointer;transition:color 0.2s,background 0.2s;}
+.nlinks button:hover{color:var(--ink);background:rgba(255,255,255,0.05);}
+.ncta{background:var(--gold)!important;color:var(--bg)!important;font-weight:600!important;font-size:0.82rem!important;padding:8px 18px!important;border-radius:6px!important;border:none!important;cursor:pointer!important;transition:all 0.2s!important;font-family:'Syne',sans-serif!important;letter-spacing:0.04em!important;}
+.ncta:hover{background:var(--gold-lt)!important;transform:translateY(-1px);box-shadow:0 4px 20px var(--gold-glow)!important;}
+
+/* ── HERO ── */
+.hero{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:140px 80px 0;overflow:hidden;}
+.hbg{position:absolute;top:50%;left:50%;transform:translate(-52%,-52%) rotate(-5deg);font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(10rem,22vw,22rem);letter-spacing:-0.05em;color:rgba(219,166,66,0.025);white-space:nowrap;pointer-events:none;user-select:none;z-index:0;line-height:1;}
+.hglow{position:absolute;top:35%;left:50%;transform:translate(-50%,-50%);width:1000px;height:700px;background:radial-gradient(ellipse,rgba(219,166,66,0.05) 0%,transparent 60%);pointer-events:none;z-index:0;}
+.hg2{position:absolute;top:65%;left:15%;width:450px;height:450px;background:radial-gradient(ellipse,rgba(59,130,246,0.035) 0%,transparent 70%);pointer-events:none;z-index:0;animation:hg2anim 9s ease-in-out infinite;}
+@keyframes hg2anim{0%,100%{transform:translate(0,0)}50%{transform:translate(30px,-25px)}}
+
+.hinner{position:relative;z-index:2;display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;max-width:1280px;margin:0 auto;width:100%;}
+.hleft{}
+.hlabel{display:inline-flex;align-items:center;gap:10px;font-family:'Space Mono',monospace;font-size:0.6rem;letter-spacing:0.22em;color:var(--gold);text-transform:uppercase;margin-bottom:28px;opacity:0;animation:riseIn 0.6s 0.1s ease forwards;}
+.hlabel::before,.hlabel::after{content:'';width:18px;height:1px;background:var(--gold);opacity:0.5;}
+.hh1{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(3.2rem,6.5vw,6rem);line-height:0.95;letter-spacing:-0.025em;margin-bottom:24px;opacity:0;animation:riseIn 0.6s 0.18s ease forwards;}
+.hh1 .line1{display:block;color:var(--ink);}
+.hh1 .line2{display:block;color:var(--gold);font-family:'Playfair Display',serif;font-style:italic;font-weight:400;}
+.hh1 .line3{display:block;color:var(--ink);}
+.hp{font-size:1.02rem;color:var(--sub);line-height:1.85;max-width:460px;margin-bottom:40px;font-weight:400;opacity:0;animation:riseIn 0.6s 0.26s ease forwards;}
+.hactions{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:52px;opacity:0;animation:riseIn 0.6s 0.34s ease forwards;}
+.btn-p{background:var(--gold);color:var(--bg);padding:13px 30px;border-radius:6px;font-family:'Syne',sans-serif;font-weight:700;font-size:0.88rem;letter-spacing:0.04em;border:2px solid var(--gold);cursor:pointer;transition:all 0.2s;}
+.btn-p:hover{background:transparent;color:var(--gold);transform:translateY(-3px);box-shadow:0 8px 28px var(--gold-glow);}
+.btn-o{background:transparent;color:var(--ink);padding:13px 30px;border-radius:6px;font-family:'Syne',sans-serif;font-weight:600;font-size:0.88rem;letter-spacing:0.04em;border:2px solid rgba(255,255,255,0.15);cursor:pointer;transition:all 0.2s;}
+.btn-o:hover{border-color:var(--gold);color:var(--gold);transform:translateY(-3px);}
+.hnations{display:flex;gap:8px;flex-wrap:wrap;opacity:0;animation:riseIn 0.6s 0.42s ease forwards;}
+.npill{display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.09);padding:6px 14px;border-radius:100px;font-family:'Space Mono',monospace;font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;color:rgba(237,240,250,0.45);transition:all 0.25s;cursor:pointer;}
+.npill:hover{border-color:var(--pc);color:var(--pc);transform:translateY(-2px);}
+.pdot{width:5px;height:5px;border-radius:50%;background:var(--pc);}
+
+/* Hero right panels */
+.hright{opacity:0;animation:riseIn 0.7s 0.35s ease forwards;}
+.hstatgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.hstat{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:22px 18px;position:relative;overflow:hidden;transition:all 0.3s;}
+.hstat::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--sc,var(--gold));opacity:0.5;}
+.hstat:hover{border-color:rgba(219,166,66,0.18);transform:translateY(-3px);}
+.hsi{font-size:1.4rem;margin-bottom:10px;display:block;}
+.hsv{font-family:'Syne',sans-serif;font-weight:800;font-size:1.5rem;color:var(--sc,var(--gold));line-height:1;margin-bottom:3px;}
+.hsl{font-family:'Space Mono',monospace;font-size:0.62rem;color:var(--sub);letter-spacing:0.06em;text-transform:uppercase;}
+.hstat.wide{grid-column:1/-1;display:flex;align-items:center;gap:16px;padding:18px 22px;}
+.hstat.wide .hsi{font-size:1.8rem;margin:0;}
+.hstat.wide .hsv{font-size:1.9rem;}
+
+/* Marquee in hero */
+.hmq{position:relative;z-index:2;margin-top:88px;}
+.mqs{background:var(--gold);padding:10px 0;overflow:hidden;white-space:nowrap;position:relative;z-index:1;}
+.mqin{display:inline-flex;animation:mq 30s linear infinite;}
+.mqi{font-family:'Syne',sans-serif;font-weight:700;font-size:0.75rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--bg);padding:0 24px;}
+.mqsep{color:rgba(4,6,13,0.35);padding:0 5px;}
+@keyframes mq{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+/* ── SHARED ── */
+.wrap{max-width:1240px;margin:0 auto;padding:0 52px;}
+.eye{font-family:'Space Mono',monospace;font-size:0.6rem;letter-spacing:0.22em;color:var(--gold);text-transform:uppercase;display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+.eye::after{content:'';width:28px;height:1px;background:var(--gold);opacity:0.45;}
+.sh{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(1.9rem,4vw,3.4rem);letter-spacing:-0.02em;line-height:1.05;margin-bottom:18px;}
+.sh em{font-family:'Playfair Display',serif;font-style:italic;font-weight:400;color:var(--gold);}
+.sh .g{color:var(--gold);}
+.sp{color:var(--sub);font-size:0.98rem;line-height:1.85;max-width:540px;}
+.div{height:1px;background:var(--border);position:relative;z-index:1;}
+
+/* ── ABOUT ── */
+.about{padding:120px 0;position:relative;z-index:1;}
+.about-grid{display:grid;grid-template-columns:5fr 4fr;gap:80px;align-items:center;}
+.about-q{background:var(--gold-dim);border:1px solid rgba(219,166,66,0.14);border-left:3px solid var(--gold);border-radius:0 8px 8px 0;padding:18px 22px;margin:24px 0 34px;}
+.aq-label{font-family:'Space Mono',monospace;font-size:0.58rem;letter-spacing:0.14em;color:var(--gold);text-transform:uppercase;margin-bottom:7px;}
+.aq-p{font-size:0.86rem;color:rgba(237,240,250,0.72);line-height:1.75;}
+.rhex{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.rc{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px 14px;text-align:center;transition:all 0.25s;position:relative;overflow:hidden;}
+.rc::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 0%,var(--rcc) 0%,transparent 70%);opacity:0;transition:opacity 0.3s;}
+.rc:hover{border-color:var(--rcc);transform:translateY(-3px);}
+.rc:hover::after{opacity:0.07;}
+.ri{font-size:1.4rem;margin-bottom:7px;}.rn{font-weight:700;font-size:0.76rem;letter-spacing:0.04em;color:var(--rcc);font-family:'Syne',sans-serif;}.ra{font-family:'Space Mono',monospace;font-size:0.58rem;color:var(--muted);margin-top:2px;}
+
+/* ── NATIONS ── */
+.nations{padding:120px 0;position:relative;z-index:1;background:linear-gradient(180deg,transparent,rgba(219,166,66,0.012) 50%,transparent);}
+.nhdr{text-align:center;max-width:680px;margin:0 auto 64px;}.nhdr .eye{justify-content:center;}.nhdr .eye::after{display:none;}
+.ngrid{display:grid;grid-template-columns:repeat(5,1fr);border:1px solid var(--border);border-radius:16px;overflow:hidden;}
+.ncard{background:var(--surface);padding:32px 20px 26px;transition:all 0.3s;position:relative;overflow:hidden;border-right:1px solid var(--border);}
+.ncard:last-child{border-right:none;}
+.ncard::before{content:'';position:absolute;top:0;left:0;right:0;height:2.5px;background:var(--nc,var(--gold));transform:scaleX(0);transform-origin:left;transition:transform 0.4s ease;}
+.ncard:hover::before{transform:scaleX(1);}
+.ncard::after{content:'';position:absolute;bottom:-60px;right:-60px;width:130px;height:130px;border-radius:50%;background:var(--nc,var(--gold));opacity:0;transition:all 0.4s;}
+.ncard:hover::after{opacity:0.04;bottom:-40px;right:-40px;}
+.ncard:hover{background:var(--panel);}
+.nf{font-size:2rem;display:block;margin-bottom:18px;transition:transform 0.3s;}.ncard:hover .nf{transform:scale(1.12);}
+.nn{font-family:'Syne',sans-serif;font-weight:800;font-size:1rem;letter-spacing:0.02em;color:var(--nc,var(--gold));margin-bottom:3px;}
+.nsb{font-family:'Space Mono',monospace;font-size:0.56rem;letter-spacing:0.1em;color:var(--muted);text-transform:uppercase;margin-bottom:12px;}
+.nd{font-size:0.8rem;color:rgba(237,240,250,0.52);line-height:1.7;margin-bottom:16px;}
+.ntags{display:flex;flex-wrap:wrap;gap:4px;}
+.ntag{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);color:var(--sub);font-family:'Space Mono',monospace;font-size:0.56rem;padding:2px 8px;border-radius:100px;}
+
+/* ── ROLES ── */
+.roles{padding:120px 0;position:relative;z-index:1;}
+.rlayout{display:grid;grid-template-columns:380px 1fr;gap:80px;align-items:start;}
+.rsticky{position:sticky;top:86px;}
+.rcallout{background:var(--gold-dim);border:1px solid rgba(219,166,66,0.15);border-radius:10px;padding:18px 22px;margin:22px 0 30px;}
+.rcl{font-family:'Space Mono',monospace;font-size:0.58rem;letter-spacing:0.14em;color:var(--gold);text-transform:uppercase;margin-bottom:7px;}
+.rcb{font-size:0.84rem;color:rgba(237,240,250,0.7);line-height:1.7;}
+.rcb strong{color:#22c55e;}.rcb .neg{color:#ef4444;}
+.rgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.rcard{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:26px;transition:all 0.25s;position:relative;overflow:hidden;}
+.rcard::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 0% 0%,rgba(219,166,66,0.035) 0%,transparent 60%);opacity:0;transition:opacity 0.3s;}
+.rcard:hover{border-color:rgba(219,166,66,0.18);transform:translateY(-4px);box-shadow:0 12px 40px rgba(0,0,0,0.28);}
+.rcard:hover::before{opacity:1;}
+.rico{font-size:1.7rem;display:block;margin-bottom:12px;}
+.rn2{font-family:'Syne',sans-serif;font-weight:800;font-size:0.85rem;letter-spacing:0.03em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;}
+.rd{font-size:0.81rem;color:rgba(237,240,250,0.52);line-height:1.7;margin-bottom:12px;}
+.rchips{display:flex;flex-wrap:wrap;gap:4px;}
+.rchip{background:var(--gold-dim);border:1px solid rgba(219,166,66,0.16);color:var(--gold);font-family:'Space Mono',monospace;font-size:0.56rem;padding:3px 8px;border-radius:100px;letter-spacing:0.04em;}
+
+/* ── MECHANICS ── */
+.mech{padding:120px 0;position:relative;z-index:1;background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
+.mtop{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:60px;gap:40px;}.mtop .sp{max-width:360px;}
+.mgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:14px;overflow:hidden;}
+.mc{background:var(--surface);padding:36px 28px;transition:background 0.2s;}
+.mc:hover{background:#0f1525;}
+.mn{font-family:'Playfair Display',serif;font-style:italic;font-size:3.8rem;color:rgba(219,166,66,0.1);line-height:1;margin-bottom:12px;transition:color 0.3s;}
+.mc:hover .mn{color:rgba(219,166,66,0.18);}
+.mt2{font-family:'Syne',sans-serif;font-weight:700;font-size:0.92rem;letter-spacing:0.01em;color:var(--ink);margin-bottom:10px;}
+.md{font-size:0.81rem;color:var(--sub);line-height:1.75;margin-bottom:16px;}
+.mrules{display:flex;flex-direction:column;gap:6px;}
+.mr{display:flex;gap:9px;font-size:0.77rem;color:rgba(237,240,250,0.58);line-height:1.5;}
+.mr::before{content:'›';color:var(--gold);flex-shrink:0;}
+
+/* ── RESOURCES ── */
+.res{padding:120px 0;position:relative;z-index:1;}
+.rlyt{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:60px;}
+.rp{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;}
+.rph{padding:16px 26px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:9px;font-family:'Syne',sans-serif;font-weight:700;font-size:0.8rem;letter-spacing:0.08em;text-transform:uppercase;}
+.rg{color:#22c55e;background:rgba(34,197,94,0.035);}.rr{color:#ef4444;background:rgba(239,68,68,0.035);}
+.rrow{display:flex;align-items:center;gap:14px;padding:13px 26px;border-bottom:1px solid rgba(255,255,255,0.025);transition:background 0.15s;}
+.rrow:last-child{border-bottom:none;}.rrow:hover{background:rgba(255,255,255,0.018);}
+.rbadge{font-family:'Space Mono',monospace;font-size:0.6rem;padding:3px 9px;border-radius:100px;white-space:nowrap;flex-shrink:0;font-weight:700;letter-spacing:0.04em;}
+.bg{background:rgba(34,197,94,0.09);color:#22c55e;border:1px solid rgba(34,197,94,0.18);}
+.br{background:rgba(239,68,68,0.09);color:#ef4444;border:1px solid rgba(239,68,68,0.18);}
+.rtxt{font-size:0.81rem;color:rgba(237,240,250,0.62);}
+.rnd{margin-top:20px;background:var(--gold-dim);border:1px solid rgba(219,166,66,0.16);border-radius:12px;padding:24px 32px;display:flex;align-items:center;gap:36px;flex-wrap:wrap;}
+.rnl{font-family:'Syne',sans-serif;font-weight:800;font-size:0.78rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--gold);white-space:nowrap;}
+.rnc{display:flex;flex-wrap:wrap;gap:7px;}
+.rnch{font-family:'Space Mono',monospace;font-size:0.68rem;padding:4px 13px;border-radius:100px;font-weight:700;letter-spacing:0.05em;}
+.pos{background:rgba(34,197,94,0.09);color:#22c55e;border:1px solid rgba(34,197,94,0.22);}
+.neg2{background:rgba(239,68,68,0.09);color:#ef4444;border:1px solid rgba(239,68,68,0.22);}
+
+/* ── CTA ── */
+.cta{padding:160px 0;position:relative;z-index:1;text-align:center;overflow:hidden;}
+.ctabg{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:900px;height:600px;background:radial-gradient(ellipse,rgba(219,166,66,0.065) 0%,transparent 62%);pointer-events:none;}
+.ctabw{position:absolute;top:50%;left:50%;transform:translate(-50%,-52%) rotate(-4deg);font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(7rem,17vw,17rem);letter-spacing:-0.05em;color:rgba(219,166,66,0.022);white-space:nowrap;pointer-events:none;user-select:none;line-height:1;}
+.ctain{position:relative;z-index:1;max-width:740px;margin:0 auto;}
+.ctaeye{display:inline-flex;align-items:center;gap:12px;font-family:'Space Mono',monospace;font-size:0.6rem;letter-spacing:0.22em;color:var(--gold);text-transform:uppercase;margin-bottom:26px;}
+.ctaeye::before,.ctaeye::after{content:'';width:24px;height:1px;background:var(--gold);opacity:0.5;}
+.ctah{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(2.8rem,7vw,5.8rem);letter-spacing:-0.025em;line-height:0.95;margin-bottom:22px;}
+.ctah em{font-family:'Playfair Display',serif;font-style:italic;font-weight:400;color:var(--gold);}
+.ctap{color:var(--sub);font-size:1rem;line-height:1.85;margin-bottom:42px;}
+.ctaa{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;}
+
+/* ── FOOTER ── */
+footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:38px 52px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:20px;}
+.fbrand .fs{font-family:'Syne',sans-serif;font-weight:800;font-size:1.05rem;color:var(--gold);}
+.fbrand .fc{font-family:'Syne',sans-serif;font-weight:800;font-size:1.05rem;color:var(--ink);}
+.fsub{font-family:'Space Mono',monospace;font-size:0.58rem;letter-spacing:0.12em;color:var(--muted);text-transform:uppercase;margin-top:4px;}
+.flinks{display:flex;gap:3px;flex-wrap:wrap;}
+.flinks button,.flinks a{background:none;border:none;font-family:'Inter',sans-serif;font-size:0.82rem;color:var(--sub);padding:6px 12px;border-radius:6px;cursor:pointer;transition:all 0.2s;text-decoration:none;display:inline-block;}
+.flinks button:hover,.flinks a:hover{color:var(--ink);background:rgba(255,255,255,0.04);}
+.fcopy{font-family:'Space Mono',monospace;font-size:0.58rem;color:var(--muted);letter-spacing:0.1em;}
+
+/* ── ANIMATIONS ── */
+@keyframes riseIn{from{opacity:0;transform:translateY(26px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+.rev{opacity:0;transform:translateY(30px);transition:opacity 0.65s ease,transform 0.65s ease;}
+.rev.on{opacity:1;transform:none;}
+.d1{transition-delay:0.1s;}.d2{transition-delay:0.2s;}.d3{transition-delay:0.3s;}.d4{transition-delay:0.4s;}
+
+/* ── RESPONSIVE ── */
+@media(max-width:1100px){.ngrid{grid-template-columns:repeat(3,1fr)}.ncard{border-bottom:1px solid var(--border)}.hinner{grid-template-columns:1fr}.hright{display:none}}
+@media(max-width:900px){nav{padding:0 24px}.nlinks{display:none}.hero{padding:120px 24px 0}.wrap{padding:0 24px}.about-grid{grid-template-columns:1fr;gap:40px}.ngrid{grid-template-columns:1fr 1fr}.rlayout{grid-template-columns:1fr;gap:40px}.rsticky{position:static}.rgrid{grid-template-columns:1fr}.mgrid{grid-template-columns:1fr}.mtop{flex-direction:column;align-items:flex-start}.rlyt{grid-template-columns:1fr}footer{padding:28px 24px}}
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div id="loading-screen">
+  <canvas id="loader-canvas"></canvas>
+  <div class="loader-scan"></div>
+  <div class="lc lc-tl"></div><div class="lc lc-tr"></div><div class="lc lc-bl"></div><div class="lc lc-br"></div>
+  <div class="lglow"></div><div class="lglow-b"></div><div class="lglow-g"></div>
+  <div class="loader-world">
+    <div class="or or1"></div><div class="or or2"></div><div class="or or3"></div>
+    <svg viewBox="0 0 340 340" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;position:absolute;top:0;left:0;z-index:2;">
+      <defs>
+        <radialGradient id="gG" cx="38%" cy="35%" r="65%"><stop offset="0%" stop-color="#1a2840"/><stop offset="100%" stop-color="#05080e"/></radialGradient>
+        <radialGradient id="sG" cx="30%" cy="26%" r="55%"><stop offset="0%" stop-color="rgba(255,255,255,0.12)"/><stop offset="100%" stop-color="rgba(255,255,255,0)"/></radialGradient>
+        <radialGradient id="rG" cx="50%" cy="50%" r="50%"><stop offset="85%" stop-color="rgba(219,166,66,0)"/><stop offset="100%" stop-color="rgba(219,166,66,0.12)"/></radialGradient>
+        <clipPath id="gC"><circle cx="170" cy="170" r="128"/></clipPath>
+        <filter id="gl" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      </defs>
+      <circle cx="170" cy="170" r="128" fill="url(#gG)"/>
+      <g clip-path="url(#gC)" stroke="rgba(255,255,255,0.05)" stroke-width="0.7" fill="none">
+        <ellipse cx="170" cy="170" rx="128" ry="28"/><ellipse cx="170" cy="170" rx="128" ry="62"/><ellipse cx="170" cy="170" rx="128" ry="96"/><ellipse cx="170" cy="170" rx="128" ry="118"/>
+        <line x1="170" y1="42" x2="170" y2="298"/><ellipse cx="170" cy="170" rx="42" ry="128"/><ellipse cx="170" cy="170" rx="88" ry="128"/><ellipse cx="170" cy="170" rx="114" ry="128"/>
+      </g>
+      <g clip-path="url(#gC)">
+        <path d="M82,98 Q102,76 134,82 Q158,86 162,108 Q166,130 144,140 Q122,150 97,140 Q76,130 78,113 Z" fill="rgba(59,130,246,0.18)" stroke="rgba(59,130,246,0.45)" stroke-width="0.7"><animate attributeName="opacity" values="0.7;1;0.7" dur="3s" repeatCount="indefinite"/></path>
+        <path d="M208,86 Q236,78 258,98 Q276,118 268,142 Q260,166 238,168 Q216,170 206,150 Q196,130 204,108 Z" fill="rgba(239,68,68,0.18)" stroke="rgba(239,68,68,0.45)" stroke-width="0.7"><animate attributeName="opacity" values="0.7;1;0.7" dur="2.5s" begin="0.5s" repeatCount="indefinite"/></path>
+        <path d="M88,172 Q116,162 142,176 Q160,190 154,214 Q148,238 120,240 Q94,242 82,220 Q70,198 78,185 Z" fill="rgba(148,163,184,0.18)" stroke="rgba(148,163,184,0.38)" stroke-width="0.7"><animate attributeName="opacity" values="0.7;1;0.7" dur="3.5s" begin="1s" repeatCount="indefinite"/></path>
+        <path d="M166,152 Q190,144 204,163 Q218,182 204,200 Q190,218 166,215 Q142,212 133,193 Q124,174 144,160 Z" fill="rgba(34,197,94,0.22)" stroke="rgba(34,197,94,0.5)" stroke-width="0.7"><animate attributeName="opacity" values="0.7;1;0.7" dur="2.8s" begin="0.3s" repeatCount="indefinite"/></path>
+        <path d="M220,188 Q248,174 268,196 Q284,218 272,240 Q260,262 234,262 Q208,262 200,240 Q192,218 208,204 Z" fill="rgba(249,115,22,0.18)" stroke="rgba(249,115,22,0.45)" stroke-width="0.7"><animate attributeName="opacity" values="0.7;1;0.7" dur="3.2s" begin="0.8s" repeatCount="indefinite"/></path>
+        <line x1="120" y1="106" x2="238" y2="118" stroke="rgba(219,166,66,0.3)" stroke-width="0.7" stroke-dasharray="4,3"><animate attributeName="stroke-dashoffset" values="0;-28" dur="1s" repeatCount="indefinite"/><animate attributeName="opacity" values="0;1;1;0" dur="4s" repeatCount="indefinite"/></line>
+        <line x1="172" y1="182" x2="116" y2="200" stroke="rgba(219,166,66,0.3)" stroke-width="0.7" stroke-dasharray="4,3"><animate attributeName="stroke-dashoffset" values="0;-28" dur="0.8s" repeatCount="indefinite"/><animate attributeName="opacity" values="0;0;1;1;0" dur="5s" begin="1s" repeatCount="indefinite"/></line>
+        <line x1="172" y1="182" x2="238" y2="224" stroke="rgba(219,166,66,0.3)" stroke-width="0.7" stroke-dasharray="4,3"><animate attributeName="stroke-dashoffset" values="0;-28" dur="1.2s" repeatCount="indefinite"/><animate attributeName="opacity" values="0;0;0;1;1;0" dur="6s" begin="2s" repeatCount="indefinite"/></line>
+        <circle cx="120" cy="106" r="5" fill="#3b82f6" filter="url(#gl)"><animate attributeName="r" values="4;6;4" dur="2s" repeatCount="indefinite"/></circle>
+        <circle cx="238" cy="118" r="5" fill="#ef4444" filter="url(#gl)"><animate attributeName="r" values="4;6;4" dur="2.4s" repeatCount="indefinite"/></circle>
+        <circle cx="116" cy="200" r="5" fill="#94a3b8" filter="url(#gl)"><animate attributeName="r" values="4;6;4" dur="1.8s" repeatCount="indefinite"/></circle>
+        <circle cx="172" cy="182" r="5" fill="#22c55e" filter="url(#gl)"><animate attributeName="r" values="4;7;4" dur="2.2s" repeatCount="indefinite"/></circle>
+        <circle cx="238" cy="224" r="5" fill="#f97316" filter="url(#gl)"><animate attributeName="r" values="4;6;4" dur="2.6s" repeatCount="indefinite"/></circle>
+        <g fill="rgba(255,255,255,0.55)" font-family="'Space Mono',monospace" font-size="7" letter-spacing="0.8" text-anchor="middle"><text x="120" y="98">AZURE</text><text x="238" y="110">SYNAPSE</text><text x="116" y="214">IRONVALE</text><text x="172" y="196">VERDANTIA</text><text x="238" y="238">NOVAN</text></g>
+      </g>
+      <circle cx="170" cy="170" r="128" fill="url(#sG)"/>
+      <circle cx="170" cy="170" r="128" fill="url(#rG)"/>
+      <circle cx="170" cy="170" r="128" fill="none" stroke="rgba(219,166,66,0.25)" stroke-width="1.5"/>
+    </svg>
+    <div class="od" data-label="AZURE"     style="--oc:#3b82f6;width:13px;height:13px;background:#3b82f6;box-shadow:0 0 10px #3b82f6,0 0 20px rgba(59,130,246,0.35);margin:-6.5px 0 0 -6.5px;animation:odSpin 7s linear infinite;--os:0deg;--or:195px;"></div>
+    <div class="od" data-label="SYNAPSE"   style="--oc:#ef4444;width:13px;height:13px;background:#ef4444;box-shadow:0 0 10px #ef4444,0 0 20px rgba(239,68,68,0.35);margin:-6.5px 0 0 -6.5px;animation:odSpin 10s linear infinite;--os:72deg;--or:195px;"></div>
+    <div class="od" data-label="IRONVALE"  style="--oc:#94a3b8;width:13px;height:13px;background:#94a3b8;box-shadow:0 0 10px #94a3b8,0 0 20px rgba(148,163,184,0.35);margin:-6.5px 0 0 -6.5px;animation:odSpin 8s linear infinite;--os:144deg;--or:195px;"></div>
+    <div class="od" data-label="VERDANTIA" style="--oc:#22c55e;width:13px;height:13px;background:#22c55e;box-shadow:0 0 10px #22c55e,0 0 20px rgba(34,197,94,0.35);margin:-6.5px 0 0 -6.5px;animation:odSpin 12s linear infinite;--os:216deg;--or:195px;"></div>
+    <div class="od" data-label="NOVAN"     style="--oc:#f97316;width:13px;height:13px;background:#f97316;box-shadow:0 0 10px #f97316,0 0 20px rgba(249,115,22,0.35);margin:-6.5px 0 0 -6.5px;animation:odSpin 9s linear infinite;--os:288deg;--or:195px;"></div>
+  </div>
+  <div class="lbrand">
+    <div class="lbtitle"><span class="lb-s">SIM</span><span class="lb-c">CIVIC</span></div>
+    <div class="lbtag">Where Leaders Are Made</div>
+    <div class="lbwrap"><div class="lbbar"></div><div class="lbtip" id="lbrtip"></div></div>
+    <div class="lbstatus" id="loader-status">Initializing World...</div>
+    <div class="lbnations">
+      <div class="lni" style="--lc:#3b82f6"><div class="lnd" style="background:#3b82f6"></div>Azure</div>
+      <div class="lni" style="--lc:#ef4444"><div class="lnd" style="background:#ef4444"></div>Synapse</div>
+      <div class="lni" style="--lc:#94a3b8"><div class="lnd" style="background:#94a3b8"></div>Ironvale</div>
+      <div class="lni" style="--lc:#22c55e"><div class="lnd" style="background:#22c55e"></div>Verdantia</div>
+      <div class="lni" style="--lc:#f97316"><div class="lnd" style="background:#f97316"></div>Novan</div>
+    </div>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <div class="nlogo">
+    <div class="nwm"><span class="ns">SIM</span><span class="nc">CIVIC</span></div>
+    <div class="nsep"></div>
+    <div class="nsub">Where Leaders<br>Are Made</div>
+  </div>
+  <ul class="nlinks">
+    <li><button data-scroll="nations">Nations</button></li>
+    <li><button data-scroll="roles">Roles</button></li>
+    <li><button data-scroll="mechanics">Mechanics</button></li>
+    <li><button data-scroll="resources">Resources</button></li>
+    <li><a href="https://tr16cnguyen-dot.github.io/SimCivic/" target="_blank" rel="noopener noreferrer" data-external class="ncta">Open Dashboard →</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hbg">SIMCIVIC</div>
+  <div class="hglow"></div><div class="hg2"></div>
+  <div class="hinner">
+    <div class="hleft">
+      <div class="hlabel">PBL City &amp; Nation Simulation</div>
+      <h1 class="hh1">
+        <span class="line1">Where</span>
+        <span class="line2">Leaders</span>
+        <span class="line3">Are Made.</span>
+      </h1>
+      <p class="hp">A dynamic simulation where students manage economies, forge alliances, navigate diplomacy, and build thriving cities — in real time. Every decision matters.</p>
+      <div class="hactions">
+        <button data-scroll="nations" class="btn-p">Explore Nations</button>
+        <button data-scroll="mechanics" class="btn-o">How It Works</button>
+      </div>
+      <div class="hnations">
+        <button data-scroll="azure"     class="npill" style="--pc:var(--azure)">    <span class="pdot"></span>Azure</button>
+        <button data-scroll="synapse"   class="npill" style="--pc:var(--synapse)">  <span class="pdot"></span>Synapse</button>
+        <button data-scroll="ironvale"  class="npill" style="--pc:var(--ironvale)"> <span class="pdot"></span>Ironvale</button>
+        <button data-scroll="verdantia" class="npill" style="--pc:var(--verdantia)"><span class="pdot"></span>Verdantia</button>
+        <button data-scroll="novan"     class="npill" style="--pc:var(--novan)">    <span class="pdot"></span>Novan</button>
+      </div>
+    </div>
+    <div class="hright">
+      <div class="hstatgrid">
+        <div class="hstat" style="--sc:var(--gold)">      <span class="hsi">🌍</span><div class="hsv">5</div><div class="hsl">Nations</div></div>
+        <div class="hstat" style="--sc:#a855f7">           <span class="hsi">👥</span><div class="hsv">6</div><div class="hsl">Team Roles</div></div>
+        <div class="hstat" style="--sc:var(--verdantia)"> <span class="hsi">📊</span><div class="hsv">7</div><div class="hsl">Resources</div></div>
+        <div class="hstat" style="--sc:var(--synapse)">   <span class="hsi">♾️</span><div class="hsv">∞</div><div class="hsl">Strategies</div></div>
+        <div class="hstat wide" style="--sc:var(--azure)"><span class="hsi">🏆</span><div><div class="hsv">Real-Time</div><div class="hsl">Live Scoreboard &amp; Dashboard</div></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="hmq">
+    <div class="mqs">
+      <div class="mqin">
+        <span class="mqi">Simulate<span class="mqsep">·</span></span><span class="mqi">Lead<span class="mqsep">·</span></span><span class="mqi">Negotiate<span class="mqsep">·</span></span><span class="mqi">Build<span class="mqsep">·</span></span><span class="mqi">Govern<span class="mqsep">·</span></span><span class="mqi">Defend<span class="mqsep">·</span></span><span class="mqi">Trade<span class="mqsep">·</span></span><span class="mqi">Strategize<span class="mqsep">·</span></span><span class="mqi">Collaborate<span class="mqsep">·</span></span><span class="mqi">Compete<span class="mqsep">·</span></span>
+        <span class="mqi">Simulate<span class="mqsep">·</span></span><span class="mqi">Lead<span class="mqsep">·</span></span><span class="mqi">Negotiate<span class="mqsep">·</span></span><span class="mqi">Build<span class="mqsep">·</span></span><span class="mqi">Govern<span class="mqsep">·</span></span><span class="mqi">Defend<span class="mqsep">·</span></span><span class="mqi">Trade<span class="mqsep">·</span></span><span class="mqi">Strategize<span class="mqsep">·</span></span><span class="mqi">Collaborate<span class="mqsep">·</span></span><span class="mqi">Compete<span class="mqsep">·</span></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section class="about">
+  <div class="wrap">
+    <div class="about-grid">
+      <div class="rev">
+        <div class="eye">What Is SimCivic?</div>
+        <h2 class="sh">A Living,<br>Breathing <em>World</em></h2>
+        <p class="sp">SimCivic puts students in charge of entire territories — managing economies, negotiating treaties, building infrastructure, and competing for the highest overall score.</p>
+        <div class="about-q">
+          <div class="aq-label">Core Philosophy</div>
+          <p class="aq-p">Every decision has consequences. Trade too much and deplete your resources. Ignore your citizens and lose happiness. Declare war and risk your alliances. The path to victory is never simple — and that's exactly the point.</p>
+        </div>
+        <button data-scroll="nations" class="btn-p">Meet the Nations</button>
+      </div>
+      <div class="rhex rev d1">
+        <div class="rc" style="--rcc:#dba642"><div class="ri">💰</div><div class="rn">Capital</div>  <div class="ra">Cap.</div></div>
+        <div class="rc" style="--rcc:#ef4444"><div class="ri">🏭</div><div class="rn">Pollution</div><div class="ra">Poll.</div></div>
+        <div class="rc" style="--rcc:#22c55e"><div class="ri">🌾</div><div class="rn">Food</div>     <div class="ra">Food</div></div>
+        <div class="rc" style="--rcc:#3b82f6"><div class="ri">💧</div><div class="rn">Water</div>    <div class="ra">H₂O</div></div>
+        <div class="rc" style="--rcc:#f97316"><div class="ri">⛏️</div><div class="rn">Raw Mats</div> <div class="ra">Mats.</div></div>
+        <div class="rc" style="--rcc:#a855f7"><div class="ri">😊</div><div class="rn">Happiness</div><div class="ra">Happ.</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="div"></div>
+
+<!-- NATIONS -->
+<section id="nations" class="nations">
+  <div class="wrap">
+    <div class="nhdr rev">
+      <div class="eye">The Nations</div>
+      <h2 class="sh">Five Territories. <em>One World.</em></h2>
+      <p class="sp" style="margin:0 auto;text-align:center;">Each nation brings a unique identity, set of resources, and strategic position. Every choice shapes your destiny — and your neighbors'.</p>
+    </div>
+    <div class="ngrid">
+      <div id="azure"     class="ncard rev"    style="--nc:var(--azure)"><span class="nf">💧</span><div class="nn">Azure</div>    <div class="nsb">The Trade Hegemon</div>    <div class="nd">Controls global trade routes and enforces the 30% Trade Tax. Every deal flows through Azure's economy.</div>    <div class="ntags"><span class="ntag">Trade Tax</span><span class="ntag">Water Rich</span><span class="ntag">High Capital</span></div></div>
+      <div id="synapse"   class="ncard rev d1" style="--nc:var(--synapse)"><span class="nf">⚡</span><div class="nn">Synapse</div>  <div class="nsb">The Tech Nation</div>       <div class="nd">Leads in technological advancement. Home to the Synapse Tech Tax, balancing rapid development with a growing population.</div><div class="ntags"><span class="ntag">Tech Tax</span><span class="ntag">High Pop.</span><span class="ntag">Industrial</span></div></div>
+      <div id="ironvale"  class="ncard rev d2" style="--nc:var(--ironvale)"><span class="nf">⚙️</span><div class="nn">Ironvale</div> <div class="nsb">The Industrial Core</div>    <div class="nd">Built on mountains and factories. Generates massive raw materials at high environmental cost.</div>              <div class="ntags"><span class="ntag">Raw Mats</span><span class="ntag">Factory Power</span><span class="ntag">High Poll.</span></div></div>
+      <div id="verdantia" class="ncard rev d3" style="--nc:var(--verdantia)"><span class="nf">🌿</span><div class="nn">Verdantia</div><div class="nsb">The Green Republic</div>    <div class="nd">Prioritizes sustainability and citizen happiness. Thrives through smart diplomacy and long-term alliances.</div>      <div class="ntags"><span class="ntag">Forest Rich</span><span class="ntag">High Happiness</span><span class="ntag">Low Poll.</span></div></div>
+      <div id="novan"     class="ncard rev d4" style="--nc:var(--novan)"><span class="nf">☀️</span><div class="nn">Novan</div>    <div class="nsb">The Emerging Power</div>    <div class="nd">The wild card. A balanced emerging economy with no dominant tax burden. Neutrality is its greatest weapon.</div>        <div class="ntags"><span class="ntag">Balanced</span><span class="ntag">Diplomatic</span><span class="ntag">Growth</span></div></div>
+    </div>
+  </div>
+</section>
+
+<div class="div"></div>
+
+<!-- ROLES -->
+<section id="roles" class="roles">
+  <div class="wrap">
+    <div class="rlayout">
+      <div class="rsticky rev">
+        <div class="eye">Team Roles</div>
+        <h2 class="sh">Every Role.<br>Every <em>Decision.</em></h2>
+        <p class="sp">Six specialized roles run each city. A weak Financial Planner can sink a thriving empire. A skilled Diplomat can turn enemies into allies overnight.</p>
+        <div class="rcallout">
+          <div class="rcl">Budget Rule</div>
+          <div class="rcb">Correct budget = <strong>+5 Capital</strong><br>Incorrect budget = <span class="neg">−5 Capital</span></div>
+        </div>
+        <button data-scroll="mechanics" class="btn-o">See All Mechanics →</button>
+      </div>
+      <div class="rgrid">
+        <div class="rcard rev">   <span class="rico">👑</span><div class="rn2">Mayor</div>            <div class="rd">The strategic leader. Delegates tasks, coordinates the presentation, and calls Global Summits.</div><div class="rchips"><span class="rchip">DELEGATE</span><span class="rchip">SUMMIT</span><span class="rchip">AID</span></div></div>
+        <div class="rcard rev d1"><span class="rico">💰</span><div class="rn2">Financial Planner</div><div class="rd">Tracks all 7 resources each round. Records trade and materials costs. Submits the budget.</div><div class="rchips"><span class="rchip">BUDGET</span><span class="rchip">TRADE CALCS</span></div></div>
+        <div class="rcard rev d2"><span class="rico">🤝</span><div class="rn2">Negotiator</div>       <div class="rd">Brokers all deals between nations. Negotiates alone for 5 minutes and reports back to the team.</div><div class="rchips"><span class="rchip">TRADE</span><span class="rchip">ALLIANCES</span></div></div>
+        <div class="rcard rev d3"><span class="rico">🌍</span><div class="rn2">Diplomat</div>         <div class="rd">Manages political rankings and nation relationships. Advises on war and passes Global Policy.</div><div class="rchips"><span class="rchip">RELATIONS</span><span class="rchip">WAR</span><span class="rchip">POLICY</span></div></div>
+        <div class="rcard rev">   <span class="rico">🏛️</span><div class="rn2">City Planner</div>    <div class="rd">Decides what to build, destroy, buy, and sell. Shapes the city's layout and tells its story.</div><div class="rchips"><span class="rchip">BUILDS</span><span class="rchip">BUY/SELL</span><span class="rchip">SCORE</span></div></div>
+        <div class="rcard rev d1"><span class="rico">🔧</span><div class="rn2">Engineer</div>         <div class="rd">Handles all purchase calculations each round. Tracks store cost, labor cost, and totals.</div><div class="rchips"><span class="rchip">MATERIALS</span><span class="rchip">LABOR COSTS</span></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MECHANICS -->
+<section id="mechanics" class="mech">
+  <div class="wrap">
+    <div class="mtop">
+      <div class="rev"><div class="eye">Game Mechanics</div><h2 class="sh">How SimCivic <em>Works</em></h2></div>
+      <div class="rev d1"><p class="sp">Six interconnected systems determine your fate. Master all of them — or find allies who cover your weaknesses.</p></div>
+    </div>
+    <div class="mgrid">
+      <div class="mc rev">   <div class="mn">01</div><div class="mt2">Resources & Budget</div>  <div class="md">Every round applies passive changes to your 7 core resources. Financial Planners must track everything precisely.</div><div class="mrules"><div class="mr">+3 Capital, +2 Happiness, +3 Raw Mats every round</div><div class="mr">−3 Food and −3 Water consumed every round</div><div class="mr">Correct budget = +5 Capital / Incorrect = −5 Capital</div></div></div>
+      <div class="mc rev d1"><div class="mn">02</div><div class="mt2">Diplomacy & Trade</div>  <div class="md">Political rankings rise and fall through trades, alliances, and aid. Every transaction has diplomatic consequences.</div><div class="mrules"><div class="mr">+1% political ranking per trade occurrence</div><div class="mr">Ongoing alliances grant +2% per round</div><div class="mr">Breaking alliance: −8% + both nations become ENEMIES</div></div></div>
+      <div class="mc rev d2"><div class="mn">03</div><div class="mt2">War System</div>          <div class="md">Nations can declare war — but the costs are real. Winners gain from losers; all allies are affected.</div><div class="mrules"><div class="mr">Winner gains +6 Food, Water, Raw Mats & Capital</div><div class="mr">Losing nation protected from war for 2 rounds</div><div class="mr">Allies of winning side get +2 all stats</div></div></div>
+      <div class="mc rev">   <div class="mn">04</div><div class="mt2">City Building</div>       <div class="md">Building physical structures earns score points. But every build costs capital — vision must meet budget reality.</div><div class="mrules"><div class="mr">Houses +0.5 score / Apartments +1 score</div><div class="mr">Amenities +2 score / Essentials +2.5 score</div><div class="mr">Labor costs paid only when build is complete</div></div></div>
+      <div class="mc rev d1"><div class="mn">05</div><div class="mt2">Global Policy</div>       <div class="md">Pass resolutions that reshape the rules of the game. Get 5 signatures from other nations' key roles.</div><div class="mrules"><div class="mr">5 signatures from other nations required to pass</div><div class="mr">Each passed policy = +3% political score</div><div class="mr">Coordinator can veto unbalanced policies</div></div></div>
+      <div class="mc rev d2"><div class="mn">06</div><div class="mt2">Aid System</div>          <div class="md">Nations can request and receive aid at any time. Post-war nations get a special Aid Request system.</div><div class="mrules"><div class="mr">Any nation can request aid at any time</div><div class="mr">Declining ally aid causes greater relation damage</div><div class="mr">Relationship strength shapes aid impact</div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- RESOURCES -->
+<section id="resources" class="res">
+  <div class="wrap">
+    <div class="rev">
+      <div class="eye">Resource Guide</div>
+      <h2 class="sh">Thresholds That <em>Change Everything</em></h2>
+      <p class="sp">These automatic triggers fire at the end of every round. Financial Planners must watch these numbers constantly — one wrong move can spiral into crisis.</p>
+    </div>
+    <div class="rlyt">
+      <div class="rp rev">
+        <div class="rph rg">✅ &nbsp; Positive Triggers</div>
+        <div class="rrow"><span class="rbadge bg">HAPP &gt; 70</span><span class="rtxt">+2 Population gained this round</span></div>
+        <div class="rrow"><span class="rbadge bg">HAPP &gt; 60</span><span class="rtxt">+3 Raw Materials bonus this round</span></div>
+        <div class="rrow"><span class="rbadge bg">POP &gt; 70</span> <span class="rtxt">+2 Capital bonus from productivity</span></div>
+        <div class="rrow"><span class="rbadge bg">MATS &gt; 55</span><span class="rtxt">+2 Capital from material surplus</span></div>
+      </div>
+      <div class="rp rev d1">
+        <div class="rph rr">⚠️ &nbsp; Negative Triggers</div>
+        <div class="rrow"><span class="rbadge br">HAPP &lt; 40</span><span class="rtxt">−5 Population due to civil unrest</span></div>
+        <div class="rrow"><span class="rbadge br">POP &gt; 100</span><span class="rtxt">−6 Food AND −6 Water consumed</span></div>
+        <div class="rrow"><span class="rbadge br">POP &lt; 30</span> <span class="rtxt">−5 Raw Materials from labor shortage</span></div>
+        <div class="rrow"><span class="rbadge br">FOOD &lt; 30</span><span class="rtxt">−8 Population from food crisis</span></div>
+        <div class="rrow"><span class="rbadge br">WATER &lt; 30</span><span class="rtxt">−8 Population from water crisis</span></div>
+      </div>
+    </div>
+    <div class="rnd rev">
+      <div class="rnl">Every Round<br>Automatically</div>
+      <div class="rnc">
+        <span class="rnch pos">+3 Capital</span><span class="rnch pos">+2 Happiness</span><span class="rnch pos">+3 Raw Materials</span><span class="rnch neg2">−3 Food</span><span class="rnch neg2">−3 Water</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="div"></div>
+
+<!-- CTA -->
+<section class="cta">
+  <div class="ctabg"></div>
+  <div class="ctabw">LEAD</div>
+  <div class="ctain rev">
+    <div class="ctaeye">Ready to Compete?</div>
+    <h2 class="ctah">Build. Lead.<br><em>Dominate.</em></h2>
+    <p class="ctap">Every round is a new challenge. Every decision has consequences. Will your nation rise to the top — or fall to war, poverty, and poor planning?</p>
+    <div class="ctaa">
+      <a href="https://tr16cnguyen-dot.github.io/SimCivic/" target="_blank" rel="noopener noreferrer" data-external class="btn-p">Open Dashboard →</a>
+      <button data-scroll="nations" class="btn-o">Explore Nations</button>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="fbrand">
+    <div><span class="fs">SIM</span><span class="fc">CIVIC</span></div>
+    <div class="fsub">Where Leaders Are Made</div>
+  </div>
+  <div class="flinks">
+    <button data-scroll="nations">Nations</button>
+    <button data-scroll="roles">Roles</button>
+    <button data-scroll="mechanics">Mechanics</button>
+    <button data-scroll="resources">Resources</button>
+    <a href="https://tr16cnguyen-dot.github.io/SimCivic/" target="_blank" rel="noopener noreferrer" data-external>Dashboard</a>
+  </div>
+  <div class="fcopy">PBL City &amp; Nation Simulation</div>
+</footer>
+
+<script>
+// LOADING
+const ls=document.getElementById('loading-screen'),lstat=document.getElementById('loader-status');
+const cv=document.getElementById('loader-canvas'),cx=cv.getContext('2d');
+cv.width=window.innerWidth;cv.height=window.innerHeight;
+const NC=['#3b82f6','#ef4444','#94a3b8','#22c55e','#f97316','#dba642','#a855f7'];
+const pts=[];for(let i=0;i<120;i++)pts.push({x:Math.random()*cv.width,y:Math.random()*cv.height,r:Math.random()*1.8+0.3,c:NC[Math.floor(Math.random()*NC.length)],vx:(Math.random()-.5)*.4,vy:(Math.random()-.5)*.4,a:Math.random()*.5+.1,p:Math.random()*Math.PI*2,ps:Math.random()*.02+.01});
+const strs=[];function spStar(){strs.push({x:Math.random()*cv.width,y:Math.random()*cv.height*.5,l:Math.random()*80+40,sp:Math.random()*4+3,a:1,c:NC[Math.floor(Math.random()*NC.length)],ag:Math.PI/4+(Math.random()-.5)*.3});}
+spStar();spStar();setInterval(spStar,900);
+let aid;function anim(){cx.clearRect(0,0,cv.width,cv.height);pts.forEach(p=>{p.p+=p.ps;p.x+=p.vx;p.y+=p.vy;if(p.x<0)p.x=cv.width;if(p.x>cv.width)p.x=0;if(p.y<0)p.y=cv.height;if(p.y>cv.height)p.y=0;const a=p.a*(.6+.4*Math.sin(p.p));cx.beginPath();cx.arc(p.x,p.y,p.r,0,Math.PI*2);cx.fillStyle=p.c+Math.round(a*255).toString(16).padStart(2,'0');cx.fill();});
+for(let i=strs.length-1;i>=0;i--){const s=strs[i];const g=cx.createLinearGradient(s.x,s.y,s.x-Math.cos(s.ag)*s.l,s.y-Math.sin(s.ag)*s.l);g.addColorStop(0,s.c+Math.round(s.a*200).toString(16).padStart(2,'0'));g.addColorStop(1,s.c+'00');cx.beginPath();cx.moveTo(s.x,s.y);cx.lineTo(s.x-Math.cos(s.ag)*s.l,s.y-Math.sin(s.ag)*s.l);cx.strokeStyle=g;cx.lineWidth=1.5;cx.stroke();s.x+=Math.cos(s.ag)*s.sp;s.y+=Math.sin(s.ag)*s.sp;s.a-=.012;if(s.a<=0||s.x>cv.width||s.y>cv.height)strs.splice(i,1);}
+for(let i=0;i<pts.length;i++)for(let j=i+1;j<pts.length;j++){const dx=pts[i].x-pts[j].x,dy=pts[i].y-pts[j].y,d=Math.sqrt(dx*dx+dy*dy);if(d<90){cx.beginPath();cx.moveTo(pts[i].x,pts[i].y);cx.lineTo(pts[j].x,pts[j].y);cx.strokeStyle=`rgba(219,166,66,${.06*(1-d/90)})`;cx.lineWidth=.5;cx.stroke();}}
+aid=requestAnimationFrame(anim);}anim();
+const msgs=['Initializing World...','Mapping Territories...','Loading Nations...','Establishing Trade Routes...','Briefing Diplomats...','Calibrating Resources...','Entering SimCivic...'];
+let mi=0;const mint=setInterval(()=>{mi++;if(mi<msgs.length){lstat.style.opacity='0';setTimeout(()=>{lstat.textContent=msgs[mi];lstat.style.opacity='1';},220);}},500);
+document.querySelectorAll('.lni').forEach((el,i)=>setTimeout(()=>el.classList.add('on'),500+i*300));
+const tip=document.getElementById('lbrtip'),bar=document.querySelector('.lbbar');
+if(tip&&bar){const mv=()=>{tip.style.left=(bar.getBoundingClientRect().width-3)+'px';requestAnimationFrame(mv);};mv();}
+setTimeout(()=>{clearInterval(mint);cancelAnimationFrame(aid);ls.classList.add('hide');},4000);
+
+// REVEAL
+const obs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('on');obs.unobserve(e.target);}});},{threshold:0.08});
+document.querySelectorAll('.rev').forEach(el=>obs.observe(el));
+
+// STRIP HREFS
+document.querySelectorAll('a:not([data-external])').forEach(a=>{a.removeAttribute('href');a.removeAttribute('target');a.removeAttribute('rel');a.style.cursor='pointer';});
+
+// DATA-SCROLL
+document.querySelectorAll('[data-scroll]').forEach(el=>{el.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();const t=document.getElementById(el.dataset.scroll);if(t)t.scrollIntoView({behavior:'smooth',block:'start'});});});
+</script>
+</body>
+</html>
