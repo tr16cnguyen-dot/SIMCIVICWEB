@@ -175,20 +175,75 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:62px;display:flex;ali
 /* ── NATIONS ── */
 .nations{padding:120px 0;position:relative;z-index:1;background:linear-gradient(180deg,transparent,rgba(219,166,66,0.012) 50%,transparent);}
 .nhdr{text-align:center;max-width:680px;margin:0 auto 64px;}.nhdr .eye{justify-content:center;}.nhdr .eye::after{display:none;}
-.ngrid{display:grid;grid-template-columns:repeat(5,1fr);border:1px solid var(--border);border-radius:16px;overflow:hidden;}
-.ncard{background:var(--surface);padding:32px 20px 26px;transition:all 0.3s;position:relative;overflow:hidden;border-right:1px solid var(--border);}
-.ncard:last-child{border-right:none;}
-.ncard::before{content:'';position:absolute;top:0;left:0;right:0;height:2.5px;background:var(--nc,var(--gold));transform:scaleX(0);transform-origin:left;transition:transform 0.4s ease;}
-.ncard:hover::before{transform:scaleX(1);}
-.ncard::after{content:'';position:absolute;bottom:-60px;right:-60px;width:130px;height:130px;border-radius:50%;background:var(--nc,var(--gold));opacity:0;transition:all 0.4s;}
-.ncard:hover::after{opacity:0.04;bottom:-40px;right:-40px;}
-.ncard:hover{background:var(--panel);}
-.nf{font-size:2rem;display:block;margin-bottom:18px;transition:transform 0.3s;}.ncard:hover .nf{transform:scale(1.12);}
-.nn{font-family:'Syne',sans-serif;font-weight:800;font-size:1rem;letter-spacing:0.02em;color:var(--nc,var(--gold));margin-bottom:3px;}
-.nsb{font-family:'Space Mono',monospace;font-size:0.56rem;letter-spacing:0.1em;color:var(--muted);text-transform:uppercase;margin-bottom:12px;}
-.nd{font-size:0.8rem;color:rgba(237,240,250,0.52);line-height:1.7;margin-bottom:16px;}
-.ntags{display:flex;flex-wrap:wrap;gap:4px;}
-.ntag{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);color:var(--sub);font-family:'Space Mono',monospace;font-size:0.56rem;padding:2px 8px;border-radius:100px;}
+/* ── NATION CARDS — REDESIGNED ── */
+.nq-divider{display:flex;align-items:center;gap:18px;margin:0 0 36px;}
+.nq-divider::before,.nq-divider::after{content:'';flex:1;height:1px;background:var(--border);}
+.nq-divider span{font-family:'Space Mono',monospace;font-size:0.58rem;letter-spacing:0.2em;color:var(--sub);text-transform:uppercase;white-space:nowrap;}
+
+.ngrid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;}
+
+.ncard{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-top:3px solid var(--nc,var(--gold));
+  border-radius:18px;
+  padding:32px 18px 26px;
+  position:relative;overflow:hidden;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;text-align:center;
+  transition:transform 0.38s cubic-bezier(.22,1,.36,1),box-shadow 0.38s,border-color 0.3s,background 0.3s;
+}
+/* Radial colour glow behind — breathing */
+.ncard::before{
+  content:'';position:absolute;top:-50px;left:50%;transform:translateX(-50%);
+  width:200px;height:150px;border-radius:50%;
+  background:radial-gradient(ellipse,var(--nc,var(--gold)) 0%,transparent 72%);
+  opacity:0.06;pointer-events:none;
+  animation:ncBreath 4.5s ease-in-out infinite;
+}
+.ncard:nth-child(1)::before{animation-delay:0s;  animation-duration:4.2s;}
+.ncard:nth-child(2)::before{animation-delay:0.7s; animation-duration:5.0s;}
+.ncard:nth-child(3)::before{animation-delay:0.4s; animation-duration:3.8s;}
+.ncard:nth-child(4)::before{animation-delay:1.1s; animation-duration:4.7s;}
+.ncard:nth-child(5)::before{animation-delay:0.2s; animation-duration:5.3s;}
+@keyframes ncBreath{0%,100%{opacity:0.06;transform:translateX(-50%) scale(1)}50%{opacity:0.18;transform:translateX(-50%) scale(1.3)}}
+/* Hover: lift + strong glow */
+.ncard:hover{
+  background:var(--panel);
+  border-color:var(--nc,var(--gold));
+  transform:translateY(-10px);
+  box-shadow:0 24px 56px -20px var(--nc,rgba(219,166,66,0.4)),0 0 0 1px var(--nc,rgba(219,166,66,0.12));
+}
+.ncard:hover::before{opacity:0.28;animation-play-state:paused;}
+/* Bottom colour wash on hover */
+.ncard::after{
+  content:'';position:absolute;bottom:0;left:0;right:0;height:55%;
+  background:linear-gradient(to top,var(--nc,var(--gold)),transparent);
+  opacity:0;transition:opacity 0.4s;pointer-events:none;
+}
+.ncard:hover::after{opacity:0.05;}
+
+/* Emoji — desynchronised float */
+.nf{font-size:2.6rem;display:block;margin-bottom:18px;
+  animation:nfFloat 3.8s ease-in-out infinite;}
+.ncard:nth-child(1) .nf{animation-delay:0s;  animation-duration:3.6s;}
+.ncard:nth-child(2) .nf{animation-delay:0.5s; animation-duration:4.2s;}
+.ncard:nth-child(3) .nf{animation-delay:1.0s; animation-duration:3.3s;}
+.ncard:nth-child(4) .nf{animation-delay:0.7s; animation-duration:4.5s;}
+.ncard:nth-child(5) .nf{animation-delay:0.3s; animation-duration:3.9s;}
+@keyframes nfFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.ncard:hover .nf{animation-play-state:paused;transform:scale(1.2) translateY(-5px);}
+
+.nn{font-family:'Syne',sans-serif;font-weight:800;font-size:1.05rem;letter-spacing:0.01em;color:var(--nc,var(--gold));margin-bottom:4px;}
+.nsb{font-family:'Space Mono',monospace;font-size:0.52rem;letter-spacing:0.1em;color:var(--sub);text-transform:uppercase;margin-bottom:14px;line-height:1.6;}
+/* Description — invisible by default, fades in on hover */
+.nd{font-size:0.75rem;color:rgba(237,240,250,0);line-height:1.75;margin-bottom:14px;transition:color 0.4s;}
+.ncard:hover .nd{color:rgba(237,240,250,0.48);}
+.ntags{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;margin-top:auto;}
+.ntag{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:var(--sub);font-family:'Space Mono',monospace;font-size:0.52rem;padding:3px 10px;border-radius:100px;transition:border-color 0.3s,color 0.3s,background 0.3s;}
+.ncard:hover .ntag{border-color:var(--nc,rgba(219,166,66,0.4));color:var(--ink);background:rgba(255,255,255,0.07);}
+/* Explore CTA */
+.ncard-cta{font-family:'Space Mono',monospace;font-size:0.55rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--nc,var(--gold));margin-top:18px;opacity:0;transform:translateY(6px);transition:opacity 0.35s,transform 0.35s;}
+.ncard:hover .ncard-cta{opacity:1;transform:translateY(0);}
 
 /* ── ROLES ── */
 .roles{padding:120px 0;position:relative;z-index:1;}
@@ -287,7 +342,7 @@ footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:38
 .float-orb{position:absolute;border-radius:50%;pointer-events:none;z-index:0;animation:orbFloat var(--od,10s) ease-in-out infinite var(--odelay,0s);}
 
 /* ── CARD TILT ── */
-.ncard,.mc{transition:background 0.2s,border-color 0.2s,box-shadow 0.2s;}
+.mc{transition:background 0.2s,border-color 0.2s,box-shadow 0.2s;}
 
 /* ── STAT COUNTER GLOW ── */
 @keyframes statPop{0%{transform:scale(1)}40%{transform:scale(1.18)}100%{transform:scale(1)}}
@@ -524,16 +579,49 @@ footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:38
   </div>
   <div id="wm-overlay"></div>
 
-  <div class="wrap" style="padding-top:80px;">
-    <div class="nhdr rev">
-      <p class="sp" style="margin:0 auto;text-align:center;">Each nation brings a unique identity, set of resources, and strategic position. Every choice shapes your destiny — and your neighbors'.</p>
-    </div>
+  <div class="wrap" style="padding-top:56px;padding-bottom:80px;">
+    <div class="nq-divider rev"><span>Browse the five nations</span></div>
     <div class="ngrid">
-      <div id="azure"     class="ncard rev"    style="--nc:var(--azure)"><span class="nf">💧</span><div class="nn">Azure</div>    <div class="nsb">The Maritime Trade Hub</div>  <div class="nd">The world's largest maritime trade hub. A peninsula nation with a strategic coastal position, highly fertile inland plains, and fishing fleets that anchor its economy.</div>    <div class="ntags"><span class="ntag">Maritime Hub</span><span class="ntag">Water Rich</span><span class="ntag">High Capital</span></div></div>
-      <div id="synapse"   class="ncard rev d1" style="--nc:var(--synapse)"><span class="nf">⚡</span><div class="nn">Synapse</div>  <div class="nsb">The Tech Nation</div>         <div class="nd">A large-scale Silicon Valley built on innovation and research. Technologically dominant but under constant strain from limited access to essential resources like food and water.</div><div class="ntags"><span class="ntag">Tech Hub</span><span class="ntag">Low Resources</span><span class="ntag">High Capital</span></div></div>
-      <div id="ironvale"  class="ncard rev d2" style="--nc:var(--ironvale)"><span class="nf">⚙️</span><div class="nn">Ironvale</div> <div class="nsb">The Industrial Core</div>    <div class="nd">The gray nation — rugged mountain ranges and dense industrial corridors. Generates massive raw materials and capital, but at enormous environmental and social cost.</div>    <div class="ntags"><span class="ntag">Raw Mats</span><span class="ntag">High Capital</span><span class="ntag">High Pollution</span></div></div>
-      <div id="verdantia" class="ncard rev d3" style="--nc:var(--verdantia)"><span class="nf">🌿</span><div class="nn">Verdantia</div><div class="nsb">The Green Republic</div>    <div class="nd">Often called a "Paradise." Founded on ecological balance and long-term citizen well-being. Diplomacy and sustainability are its greatest weapons.</div>                    <div class="ntags"><span class="ntag">Forest Rich</span><span class="ntag">High Happiness</span><span class="ntag">Low Pollution</span></div></div>
-      <div id="novan"     class="ncard rev d4" style="--nc:var(--novan)"><span class="nf">☀️</span><div class="nn">Novan</div>    <div class="nsb">The Land of Dreamers</div>   <div class="nd">Vast, resource-rich, and largely untapped. The wild card — an early-stage nation with no established alliances whose biggest challenge is internal governance.</div>          <div class="ntags"><span class="ntag">Untapped</span><span class="ntag">No Alliances</span><span class="ntag">Wild Card</span></div></div>
+      <div id="azure"     class="ncard"    style="--nc:var(--azure)">
+        <span class="nf">💧</span>
+        <div class="nn">Azure</div>
+        <div class="nsb">The Maritime Trade Hub</div>
+        <div class="nd">A peninsula nation commanding global sea trade. Fertile coasts, powerful fleets, and an economy built on the water.</div>
+        <div class="ntags"><span class="ntag">Maritime Hub</span><span class="ntag">Water Rich</span><span class="ntag">High Capital</span></div>
+        <div class="ncard-cta">Explore Nation →</div>
+      </div>
+      <div id="synapse"   class="ncard"    style="--nc:var(--synapse)">
+        <span class="nf">⚡</span>
+        <div class="nn">Synapse</div>
+        <div class="nsb">The Tech Nation</div>
+        <div class="nd">Silicon Valley at scale. Dominant in research and capital — but critically dependent on others for food and water.</div>
+        <div class="ntags"><span class="ntag">Tech Hub</span><span class="ntag">Low Resources</span><span class="ntag">High Capital</span></div>
+        <div class="ncard-cta">Explore Nation →</div>
+      </div>
+      <div id="ironvale"  class="ncard"    style="--nc:var(--ironvale)">
+        <span class="nf">⚙️</span>
+        <div class="nn">Ironvale</div>
+        <div class="nsb">The Industrial Core</div>
+        <div class="nd">Mountains of raw industry. Generates massive capital and materials — at enormous environmental and social cost.</div>
+        <div class="ntags"><span class="ntag">Raw Mats</span><span class="ntag">High Capital</span><span class="ntag">High Pollution</span></div>
+        <div class="ncard-cta">Explore Nation →</div>
+      </div>
+      <div id="verdantia" class="ncard"    style="--nc:var(--verdantia)">
+        <span class="nf">🌿</span>
+        <div class="nn">Verdantia</div>
+        <div class="nsb">The Green Republic</div>
+        <div class="nd">A living paradise built on ecological balance. Diplomacy and sustainability are its greatest — and only — weapons.</div>
+        <div class="ntags"><span class="ntag">Forest Rich</span><span class="ntag">High Happiness</span><span class="ntag">Low Pollution</span></div>
+        <div class="ncard-cta">Explore Nation →</div>
+      </div>
+      <div id="novan"     class="ncard"    style="--nc:var(--novan)">
+        <span class="nf">☀️</span>
+        <div class="nn">Novan</div>
+        <div class="nsb">The Land of Dreamers</div>
+        <div class="nd">Vast, untapped, and ungoverned. The wild card whose biggest challenge isn't resources — it's itself.</div>
+        <div class="ntags"><span class="ntag">Untapped</span><span class="ntag">No Alliances</span><span class="ntag">Wild Card</span></div>
+        <div class="ncard-cta">Explore Nation →</div>
+      </div>
     </div>
   </div>
 </section>
