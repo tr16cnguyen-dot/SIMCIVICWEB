@@ -1289,23 +1289,25 @@ setTimeout(()=>{
   const p = gsap.utils.toArray('.hc-panel'); // [Azure,Synapse,Ironvale,Verdantia,Novan]
 
   // ── Gate open sequence ──────────────────────────────────────────────
-  // Panels start at position 0 (covering screen). Delay 0.35 s lets the
-  // loading screen finish its 0.3 s fade before the curtain moves.
-  // Order: Ironvale (centre) flies UP, then Synapse LEFT + Verdantia RIGHT,
-  // then Azure LEFT + Novan RIGHT. Creates an outward-expanding reveal.
-  const gates = gsap.timeline({delay:0.35});
+  // No delay — gates start moving the instant the loading screen begins
+  // fading (both triggered at 4000 ms). Loading screen takes 0.3 s to
+  // disappear; by then panels are already mid-flight so there's no dead
+  // frame of static coloured blocks.
+  // ease:'power2.out' = instant snap into motion, smooth deceleration.
+  // Positions are absolute ms within the timeline (no delay offset).
+  const gates = gsap.timeline();
   gates
-    .to(p[2], {yPercent:-110, duration:0.65, ease:'power3.inOut'})           // Ironvale ↑
-    .to(p[1], {xPercent:-110, duration:0.62, ease:'power3.inOut'}, 0.35+0.30)// Synapse ←
-    .to(p[3], {xPercent: 110, duration:0.62, ease:'power3.inOut'}, '<')      // Verdantia →
-    .to(p[0], {xPercent:-110, duration:0.60, ease:'power3.inOut'}, 0.35+0.58)// Azure ←
-    .to(p[4], {xPercent: 110, duration:0.60, ease:'power3.inOut'}, '<')      // Novan →
-    .set(curtain, {display:'none'}, 1.35);                                    // clean up
+    .to(p[2], {yPercent:-110, duration:0.65, ease:'power2.out'})       // Ironvale ↑  t=0
+    .to(p[1], {xPercent:-110, duration:0.60, ease:'power2.out'}, 0.22) // Synapse  ←  t=0.22
+    .to(p[3], {xPercent: 110, duration:0.60, ease:'power2.out'}, '<')  // Verdantia→  t=0.22
+    .to(p[0], {xPercent:-110, duration:0.58, ease:'power2.out'}, 0.42) // Azure    ←  t=0.42
+    .to(p[4], {xPercent: 110, duration:0.58, ease:'power2.out'}, '<')  // Novan    →  t=0.42
+    .set(curtain, {display:'none'}, 1.10);                              // clean up
 
   // ── Hero content reveal ─────────────────────────────────────────────
-  // Starts 0.85 s after gates begin — Ironvale is nearly gone, Synapse/
-  // Verdantia are sliding, so text emerges through the widening gap.
-  const hero = gsap.timeline({delay:0.35 + 0.75});
+  // delay:0.55 s → fires as Ironvale clears (85% done) and Synapse/
+  // Verdantia are sliding, so each element emerges through the live gap.
+  const hero = gsap.timeline({delay:0.55});
   hero
     .to('.hlabel',   {opacity:1,y:0,duration:0.55,ease:'power3.out'})
     .to('.hh1',      {opacity:1,y:0,duration:0.80,ease:'power3.out'},   '-=0.32')
