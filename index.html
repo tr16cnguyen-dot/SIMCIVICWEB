@@ -44,7 +44,7 @@ button[data-scroll]:not(.btn-p):not(.btn-o):not(.npill){background:none;border:n
 button.btn-p,button.btn-o,button.npill{font:inherit;cursor:pointer;text-align:center;display:inline-flex;align-items:center;justify-content:center;}
 
 /* ── LOADING ── */
-#loading-screen{position:fixed;inset:0;z-index:99999;background:#04060d;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;transition:transform 0.9s cubic-bezier(0.16,1,0.3,1),visibility 0.9s;}
+#loading-screen{position:fixed;inset:0;z-index:99999;background:#04060d;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;transition:transform 1.4s cubic-bezier(0.45,0,0.55,1),visibility 1.4s;}
 #loading-screen.hide{transform:translateY(-100%);visibility:hidden;pointer-events:none;}
 #loader-canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;}
 .loader-scan{position:absolute;top:-4px;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(219,166,66,0.8) 50%,transparent);animation:scanLine 2s ease-in-out infinite;pointer-events:none;z-index:2;}
@@ -1171,7 +1171,7 @@ setTimeout(()=>{
   // The loading screen takes 0.9 s to clear; the hero label/h1 emerge
   // from beneath it mid-flight, which looks like the content is being
   // revealed rather than popping in after the fact.
-  const tl = gsap.timeline({delay:0.18});
+  const tl = gsap.timeline({delay:0.45});
   tl.to('.hlabel',   {opacity:1,y:0,duration:0.60,ease:'power3.out'})
     .to('.hh1',      {opacity:1,y:0,duration:0.85,ease:'power3.out'},   '-=0.35')
     .to('.hp',       {opacity:1,y:0,duration:0.62,ease:'power2.out'},   '-=0.52')
