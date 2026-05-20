@@ -44,8 +44,8 @@ button[data-scroll]:not(.btn-p):not(.btn-o):not(.npill){background:none;border:n
 button.btn-p,button.btn-o,button.npill{font:inherit;cursor:pointer;text-align:center;display:inline-flex;align-items:center;justify-content:center;}
 
 /* ── LOADING ── */
-#loading-screen{position:fixed;inset:0;z-index:99999;background:#04060d;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;transition:opacity 1s ease,visibility 1s ease;}
-#loading-screen.hide{opacity:0;visibility:hidden;pointer-events:none;}
+#loading-screen{position:fixed;inset:0;z-index:99999;background:#04060d;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;transition:transform 0.9s cubic-bezier(0.16,1,0.3,1),visibility 0.9s;}
+#loading-screen.hide{transform:translateY(-100%);visibility:hidden;pointer-events:none;}
 #loader-canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;}
 .loader-scan{position:absolute;top:-4px;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(219,166,66,0.8) 50%,transparent);animation:scanLine 2s ease-in-out infinite;pointer-events:none;z-index:2;}
 @keyframes scanLine{0%{top:-4px;opacity:0;}5%{opacity:1;}95%{opacity:1;}100%{top:100%;opacity:0;}}
@@ -341,76 +341,6 @@ footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:38
 /* ── FLOATING ORBS ── */
 .float-orb{position:absolute;border-radius:50%;pointer-events:none;z-index:0;animation:orbFloat var(--od,10s) ease-in-out infinite var(--odelay,0s);}
 
-/* ── HERO CURTAIN — nation gate doors ── */
-/* z:9999 sits above hero (z:1) but below loading screen (z:99999).
-   Panels start AT position (no transform), covering the hero.
-   Loading screen hides them during load; when it fades, panels
-   are revealed and immediately animate away. */
-#hero-curtain{
-  position:fixed;inset:0;z-index:9999;
-  display:flex;pointer-events:none;
-}
-.hc-panel{
-  flex:1;height:100%;will-change:transform;
-  position:relative;overflow:hidden;
-  display:flex;align-items:center;justify-content:center;
-}
-/* diagonal grain texture */
-.hc-panel::before{
-  content:'';position:absolute;inset:0;pointer-events:none;
-  background:
-    repeating-linear-gradient(
-      -52deg,
-      transparent, transparent 14px,
-      rgba(255,255,255,0.022) 14px, rgba(255,255,255,0.022) 15px
-    );
-}
-/* edge separator */
-.hc-panel::after{
-  content:'';position:absolute;top:0;right:0;
-  width:1px;height:100%;pointer-events:none;
-  background:linear-gradient(180deg,
-    transparent 0%,
-    rgba(255,255,255,0.18) 25%,
-    rgba(255,255,255,0.18) 75%,
-    transparent 100%);
-}
-/* nation colours — deep→vivid gradient gives "gate" depth */
-.hc-panel:nth-child(1){background:linear-gradient(175deg,#0d1f42 0%,#1d4ed8 55%,#3b82f6 100%);}
-.hc-panel:nth-child(2){background:linear-gradient(175deg,#3b0808 0%,#b91c1c 55%,#ef4444 100%);}
-.hc-panel:nth-child(3){background:linear-gradient(175deg,#0e1117 0%,#334155 55%,#94a3b8 100%);}
-.hc-panel:nth-child(4){background:linear-gradient(175deg,#031a0d 0%,#166534 55%,#22c55e 100%);}
-.hc-panel:nth-child(5){background:linear-gradient(175deg,#2d0e02 0%,#c2410c 55%,#f97316 100%);}
-/* inner content block */
-.hcp-in{
-  position:relative;z-index:2;
-  display:flex;flex-direction:column;align-items:center;
-  gap:8px;padding:0 10px;text-align:center;
-}
-.hcp-icon{
-  font-size:clamp(2rem,3vw,2.6rem);line-height:1;
-  filter:drop-shadow(0 0 14px rgba(255,255,255,0.35));
-  margin-bottom:4px;
-}
-.hcp-name{
-  font-family:'Syne',sans-serif;font-weight:800;
-  font-size:clamp(0.65rem,1vw,0.9rem);
-  letter-spacing:0.28em;color:rgba(255,255,255,0.9);
-  text-transform:uppercase;
-}
-.hcp-line{
-  width:24px;height:1px;
-  background:rgba(219,166,66,0.65);
-  margin:2px 0;
-}
-.hcp-tag{
-  font-family:'Space Mono',monospace;
-  font-size:clamp(0.38rem,0.6vw,0.5rem);
-  letter-spacing:0.16em;
-  color:rgba(255,255,255,0.36);
-  text-transform:uppercase;line-height:1.5;
-}
-
 /* ── CARD TILT ── */
 .mc{transition:background 0.2s,border-color 0.2s,box-shadow 0.2s;}
 
@@ -559,50 +489,6 @@ footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:38
     <li><a href="https://tr16cnguyen-dot.github.io/SimCivic/" target="_blank" rel="noopener noreferrer" data-external class="ncta">Start Game →</a></li>
   </ul>
 </nav>
-
-<!-- NATION GATE CURTAIN — covers hero; slides apart after loading screen -->
-<div id="hero-curtain" aria-hidden="true">
-  <div class="hc-panel">
-    <div class="hcp-in">
-      <div class="hcp-icon">💧</div>
-      <div class="hcp-name">Azure</div>
-      <div class="hcp-line"></div>
-      <div class="hcp-tag">Maritime Trade Hub</div>
-    </div>
-  </div>
-  <div class="hc-panel">
-    <div class="hcp-in">
-      <div class="hcp-icon">⚡</div>
-      <div class="hcp-name">Synapse</div>
-      <div class="hcp-line"></div>
-      <div class="hcp-tag">The Tech Nation</div>
-    </div>
-  </div>
-  <div class="hc-panel">
-    <div class="hcp-in">
-      <div class="hcp-icon">⚙️</div>
-      <div class="hcp-name">Ironvale</div>
-      <div class="hcp-line"></div>
-      <div class="hcp-tag">The Industrial Core</div>
-    </div>
-  </div>
-  <div class="hc-panel">
-    <div class="hcp-in">
-      <div class="hcp-icon">🌿</div>
-      <div class="hcp-name">Verdantia</div>
-      <div class="hcp-line"></div>
-      <div class="hcp-tag">The Green Republic</div>
-    </div>
-  </div>
-  <div class="hc-panel">
-    <div class="hcp-in">
-      <div class="hcp-icon">☀️</div>
-      <div class="hcp-name">Novan</div>
-      <div class="hcp-line"></div>
-      <div class="hcp-tag">Land of Dreamers</div>
-    </div>
-  </div>
-</div>
 
 <!-- HERO -->
 <section class="hero" data-section="home">
@@ -1215,11 +1101,7 @@ let mi=0;const mint=setInterval(()=>{mi++;if(mi<msgs.length){lstat.style.opacity
 document.querySelectorAll('.lni').forEach((el,i)=>setTimeout(()=>el.classList.add('on'),500+i*300));
 const tip=document.getElementById('lbrtip'),bar=document.querySelector('.lbbar');
 if(tip&&bar){const mv=()=>{tip.style.left=(bar.getBoundingClientRect().width-3)+'px';requestAnimationFrame(mv);};mv();}
-setTimeout(()=>{
-  clearInterval(mint);cancelAnimationFrame(aid);
-  ls.style.transition='opacity 0.3s ease,visibility 0.3s ease';
-  ls.classList.add('hide');
-},4000);
+setTimeout(()=>{clearInterval(mint);cancelAnimationFrame(aid);ls.classList.add('hide');},4000);
 
 // REVEAL
 const obs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('on');obs.unobserve(e.target);}});},{threshold:0.08});
@@ -1275,46 +1157,27 @@ document.querySelectorAll('.ncard,.mc').forEach(card=>{
 // ── GSAP ──────────────────────────────────────────────────────────────
 gsap.registerPlugin(ScrollTrigger);
 
-// HERO ENTRANCE — nation gates open, hero rises into view
-// Panels sit at z:9999 (above hero z:1, below loading screen z:99999).
-// They start AT position covering the hero; loading screen hides them
-// during the 4 s load. When loading screen fades, panels are revealed,
-// then immediately swept away centre-outward like gates opening.
+// HERO ENTRANCE
+// The loading screen lifts straight up (translateY -100%) via CSS transition,
+// revealing the hero beneath in one seamless motion — no separate overlay needed.
+// Hero content rises up from y:22 simultaneously so elements are already in
+// motion as the loading screen uncovers them (counter-motion = cinematic).
 setTimeout(()=>{
-  // Pre-hide hero content; panels cover it anyway so no flash
+  // Hide hero elements; loading screen still covers them so no visible flash
   gsap.set(['.hlabel','.hh1','.hp','.hactions','.hnations','.hright'],
-    {opacity:0, y:30, clearProps:'animation'});
+    {opacity:0, y:22, clearProps:'animation'});
 
-  const curtain = document.getElementById('hero-curtain');
-  const p = gsap.utils.toArray('.hc-panel'); // [Azure,Synapse,Ironvale,Verdantia,Novan]
-
-  // ── Gate open sequence ──────────────────────────────────────────────
-  // No delay — gates start moving the instant the loading screen begins
-  // fading (both triggered at 4000 ms). Loading screen takes 0.3 s to
-  // disappear; by then panels are already mid-flight so there's no dead
-  // frame of static coloured blocks.
-  // ease:'power2.out' = instant snap into motion, smooth deceleration.
-  // Positions are absolute ms within the timeline (no delay offset).
-  const gates = gsap.timeline();
-  gates
-    .to(p[2], {yPercent:-110, duration:0.65, ease:'power2.out'})       // Ironvale ↑  t=0
-    .to(p[1], {xPercent:-110, duration:0.60, ease:'power2.out'}, 0.22) // Synapse  ←  t=0.22
-    .to(p[3], {xPercent: 110, duration:0.60, ease:'power2.out'}, '<')  // Verdantia→  t=0.22
-    .to(p[0], {xPercent:-110, duration:0.58, ease:'power2.out'}, 0.42) // Azure    ←  t=0.42
-    .to(p[4], {xPercent: 110, duration:0.58, ease:'power2.out'}, '<')  // Novan    →  t=0.42
-    .set(curtain, {display:'none'}, 1.10);                              // clean up
-
-  // ── Hero content reveal ─────────────────────────────────────────────
-  // delay:0.55 s → fires as Ironvale clears (85% done) and Synapse/
-  // Verdantia are sliding, so each element emerges through the live gap.
-  const hero = gsap.timeline({delay:0.55});
-  hero
-    .to('.hlabel',   {opacity:1,y:0,duration:0.55,ease:'power3.out'})
-    .to('.hh1',      {opacity:1,y:0,duration:0.80,ease:'power3.out'},   '-=0.32')
-    .to('.hp',       {opacity:1,y:0,duration:0.60,ease:'power2.out'},   '-=0.50')
-    .to('.hactions', {opacity:1,y:0,duration:0.60,ease:'back.out(1.5)'},'-=0.40')
-    .to('.hnations', {opacity:1,y:0,duration:0.50,ease:'power3.out'},   '-=0.34')
-    .to('.hright',   {opacity:1,y:0,duration:0.80,ease:'power3.out'},   '-=0.36')
+  // Content rises in 0.18 s after the loading screen starts lifting.
+  // The loading screen takes 0.9 s to clear; the hero label/h1 emerge
+  // from beneath it mid-flight, which looks like the content is being
+  // revealed rather than popping in after the fact.
+  const tl = gsap.timeline({delay:0.18});
+  tl.to('.hlabel',   {opacity:1,y:0,duration:0.60,ease:'power3.out'})
+    .to('.hh1',      {opacity:1,y:0,duration:0.85,ease:'power3.out'},   '-=0.35')
+    .to('.hp',       {opacity:1,y:0,duration:0.62,ease:'power2.out'},   '-=0.52')
+    .to('.hactions', {opacity:1,y:0,duration:0.62,ease:'back.out(1.4)'},'-=0.42')
+    .to('.hnations', {opacity:1,y:0,duration:0.52,ease:'power3.out'},   '-=0.36')
+    .to('.hright',   {opacity:1,y:0,duration:0.82,ease:'power3.out'},   '-=0.40')
     .call(()=>{
       document.querySelectorAll('.hstat').forEach(stat=>{
         const v=stat.querySelector('.hsv');
@@ -1330,7 +1193,7 @@ setTimeout(()=>{
           });
         }
       });
-    }, null, '-=0.2');
+    },null,'-=0.2');
 },4000);
 
 // SMOOTH PARALLAX — ScrollTrigger scrubs the watermark at 28% scroll speed
