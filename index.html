@@ -246,23 +246,50 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:62px;display:flex;ali
 .ncard:hover .ncard-cta{opacity:1;transform:translateY(0);}
 
 /* ── ROLES ── */
-.roles{padding:120px 0;position:relative;z-index:1;}
-.rlayout{display:grid;grid-template-columns:380px 1fr;gap:80px;align-items:start;}
-.rsticky{position:sticky;top:86px;}
-.rcallout{background:var(--gold-dim);border:1px solid rgba(219,166,66,0.15);border-radius:10px;padding:18px 22px;margin:22px 0 30px;}
-.rcl{font-family:'Space Mono',monospace;font-size:0.58rem;letter-spacing:0.14em;color:var(--gold);text-transform:uppercase;margin-bottom:7px;}
-.rcb{font-size:0.84rem;color:rgba(237,240,250,0.7);line-height:1.7;}
-.rcb strong{color:#22c55e;}.rcb .neg{color:#ef4444;}
-.rgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-.rcard{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:26px;transition:all 0.25s;position:relative;overflow:hidden;}
-.rcard::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 0% 0%,rgba(219,166,66,0.035) 0%,transparent 60%);opacity:0;transition:opacity 0.3s;}
-.rcard:hover{border-color:rgba(219,166,66,0.18);transform:translateY(-4px);box-shadow:0 12px 40px rgba(0,0,0,0.28);}
-.rcard:hover::before{opacity:1;}
-.rico{font-size:1.7rem;display:block;margin-bottom:12px;}
-.rn2{font-family:'Syne',sans-serif;font-weight:800;font-size:0.85rem;letter-spacing:0.03em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;}
-.rd{font-size:0.81rem;color:rgba(237,240,250,0.52);line-height:1.7;margin-bottom:12px;}
-.rchips{display:flex;flex-wrap:wrap;gap:4px;}
-.rchip{background:var(--gold-dim);border:1px solid rgba(219,166,66,0.16);color:var(--gold);font-family:'Space Mono',monospace;font-size:0.56rem;padding:3px 8px;border-radius:100px;letter-spacing:0.04em;}
+/* ── ROLES (redesigned) ── */
+.roles{padding:72px 0 90px;position:relative;z-index:1;}
+.roles-hd{text-align:center;max-width:660px;margin:0 auto 32px;}
+.roles-hd .sp{margin-top:12px;}
+/* budget rule banner */
+.rbanner{
+  display:flex;align-items:center;justify-content:center;gap:20px;flex-wrap:wrap;
+  background:var(--gold-dim);border:1px solid rgba(219,166,66,0.18);border-radius:10px;
+  padding:13px 28px;max-width:680px;margin:0 auto 48px;text-align:center;
+}
+.rbl{font-family:'Space Mono',monospace;font-size:0.56rem;letter-spacing:0.18em;color:var(--gold);text-transform:uppercase;white-space:nowrap;}
+.rbr{font-size:0.83rem;color:rgba(237,240,250,0.7);line-height:1.6;}
+.rbr strong{color:#22c55e;}.rbr .neg{color:#ef4444;}
+/* 3-col role card grid */
+.rgrid2{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:40px;}
+/* role card */
+.rc2{
+  background:var(--surface);border:1px solid var(--border);
+  border-top:3px solid var(--rc,var(--gold));border-radius:14px;
+  padding:26px 20px 20px;position:relative;overflow:hidden;
+  display:flex;flex-direction:column;
+  transition:transform 0.38s cubic-bezier(.22,1,.36,1),box-shadow 0.38s,border-color 0.3s,background 0.3s;
+}
+.rc2::before{
+  content:'';position:absolute;top:-44px;left:50%;transform:translateX(-50%);
+  width:200px;height:140px;border-radius:50%;
+  background:radial-gradient(ellipse,var(--rc,var(--gold)) 0%,transparent 70%);
+  opacity:0.06;pointer-events:none;transition:opacity 0.4s;
+}
+.rc2:hover{background:var(--panel);border-color:var(--rc,var(--gold));transform:translateY(-9px);box-shadow:0 22px 52px -18px var(--rc-a,rgba(219,166,66,0.4));}
+.rc2:hover::before{opacity:0.2;}
+.rc2-icon{font-size:2rem;display:block;margin-bottom:13px;transition:transform 0.35s cubic-bezier(.22,1,.36,1);}
+.rc2:hover .rc2-icon{transform:scale(1.22) translateY(-3px);}
+.rc2-name{font-family:'Syne',sans-serif;font-weight:800;font-size:0.82rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--rc,var(--gold));margin-bottom:8px;}
+.rc2-desc{font-size:0.79rem;color:rgba(237,240,250,0.52);line-height:1.72;margin-bottom:14px;flex:1;}
+.rc2-tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:auto;}
+.rc2-tag{
+  background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);
+  color:rgba(237,240,250,0.42);font-family:'Space Mono',monospace;
+  font-size:0.52rem;padding:3px 9px;border-radius:100px;letter-spacing:0.06em;
+  transition:border-color 0.3s,color 0.3s;
+}
+.rc2:hover .rc2-tag{border-color:var(--rc,var(--gold));color:var(--rc,var(--gold));}
+.roles-cta{text-align:center;}
 
 /* ── MECHANICS ── */
 .mech{padding:120px 0;position:relative;z-index:1;background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
@@ -972,26 +999,61 @@ footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:38
 <!-- ROLES -->
 <section id="roles" class="roles" data-section="roles" style="display:none;padding-top:82px;">
   <div class="wrap">
-    <div class="rlayout">
-      <div class="rsticky rev">
-        <div class="eye">Team Roles</div>
-        <h2 class="sh">Every Role.<br>Every <em>Decision.</em></h2>
-        <p class="sp">Six specialized roles run each city. A weak Financial Planner can sink a thriving empire. A skilled Diplomat can turn enemies into allies overnight.</p>
-        <div class="rcallout">
-          <div class="rcl">Budget Rule</div>
-          <div class="rcb">Correct budget = <strong>+5 Capital</strong><br>Incorrect budget = <span class="neg">−5 Capital</span></div>
-        </div>
-        <button data-page="mechanics" class="btn-o">See All Mechanics →</button>
+
+    <div class="roles-hd rev">
+      <div class="eye">Team Roles</div>
+      <h2 class="sh">Every Role. Every <em>Decision.</em></h2>
+      <p class="sp">Six specialized roles run each city. A weak Financial Planner can sink a thriving empire. A skilled Diplomat can turn enemies into allies overnight.</p>
+    </div>
+
+    <div class="rbanner rev">
+      <span class="rbl">Budget Rule</span>
+      <span class="rbr">Correct budget = <strong>+5 Capital</strong>&nbsp;&nbsp;·&nbsp;&nbsp;Incorrect budget = <span class="neg">−5 Capital</span></span>
+    </div>
+
+    <div class="rgrid2">
+      <div class="rc2" style="--rc:#dba642;--rc-a:rgba(219,166,66,0.38)">
+        <span class="rc2-icon">👑</span>
+        <div class="rc2-name">President</div>
+        <div class="rc2-desc">The strategic leader. Sets direction, holds the device during choice events, communicates with the host, and calls the Global Summit — once per game.</div>
+        <div class="rc2-tags"><span class="rc2-tag">SUMMIT</span><span class="rc2-tag">EVENTS</span><span class="rc2-tag">RECORDS</span></div>
       </div>
-      <div class="rgrid">
-        <div class="rcard rev">   <span class="rico">👑</span><div class="rn2">President</div>          <div class="rd">The strategic leader. Sets direction, holds the device during choice events, communicates with the host, and calls the Global Summit — once per game.</div><div class="rchips"><span class="rchip">SUMMIT</span><span class="rchip">EVENTS</span><span class="rchip">RECORDS</span></div></div>
-        <div class="rcard rev d1"><span class="rico">💰</span><div class="rn2">Financial Planner</div><div class="rd">Tracks all 7 resources each round. Records trade and materials costs. Submits the budget.</div><div class="rchips"><span class="rchip">BUDGET</span><span class="rchip">TRADE CALCS</span></div></div>
-        <div class="rcard rev d2"><span class="rico">🤝</span><div class="rn2">Negotiator</div>       <div class="rd">Conducts formal negotiations at the Negotiation Table — 5 minutes per session. Both parties must sign the deal on paper. Submits signed copies to the host.</div><div class="rchips"><span class="rchip">TRADE</span><span class="rchip">ALLIANCES</span><span class="rchip">SIGN</span></div></div>
-        <div class="rcard rev d3"><span class="rico">🌍</span><div class="rn2">Diplomat</div>         <div class="rd">Creates Global Policy Resolutions and collects 5 signatures to pass them. Tracks political rankings and advises the President on alliances, enemies, and war.</div><div class="rchips"><span class="rchip">GLOBAL POLICY</span><span class="rchip">RELATIONS</span><span class="rchip">WAR</span></div></div>
-        <div class="rcard rev">   <span class="rico">🏛️</span><div class="rn2">City Planner</div>    <div class="rd">Decides what to build, destroy, buy, and sell. Scores buildings based on materials, explanation, location, and contribution to the nation's story.</div><div class="rchips"><span class="rchip">BUILDS</span><span class="rchip">BUY/SELL</span><span class="rchip">SCORE</span></div></div>
-        <div class="rcard rev d1"><span class="rico">🔧</span><div class="rn2">Engineer</div>         <div class="rd">Draws blueprints, buys from the materials store, records purchase orders, and calculates store and labor costs each round.</div><div class="rchips"><span class="rchip">BLUEPRINTS</span><span class="rchip">MATERIALS</span><span class="rchip">LABOR COSTS</span></div></div>
+      <div class="rc2" style="--rc:#22c55e;--rc-a:rgba(34,197,94,0.35)">
+        <span class="rc2-icon">💰</span>
+        <div class="rc2-name">Financial Planner</div>
+        <div class="rc2-desc">Tracks all 7 resources each round. Records trade and materials costs. Submits the budget — precision is everything.</div>
+        <div class="rc2-tags"><span class="rc2-tag">BUDGET</span><span class="rc2-tag">TRADE CALCS</span><span class="rc2-tag">RESOURCES</span></div>
+      </div>
+      <div class="rc2" style="--rc:#3b82f6;--rc-a:rgba(59,130,246,0.35)">
+        <span class="rc2-icon">🤝</span>
+        <div class="rc2-name">Negotiator</div>
+        <div class="rc2-desc">Conducts formal negotiations at the Negotiation Table — 5 minutes per session. Both parties must sign the deal. Submits signed copies to the host.</div>
+        <div class="rc2-tags"><span class="rc2-tag">TRADE</span><span class="rc2-tag">ALLIANCES</span><span class="rc2-tag">SIGN</span></div>
+      </div>
+      <div class="rc2" style="--rc:#a855f7;--rc-a:rgba(168,85,247,0.35)">
+        <span class="rc2-icon">🌍</span>
+        <div class="rc2-name">Diplomat</div>
+        <div class="rc2-desc">Creates Global Policy Resolutions and collects 5 signatures to pass them. Tracks political rankings and advises on alliances, enemies, and war.</div>
+        <div class="rc2-tags"><span class="rc2-tag">GLOBAL POLICY</span><span class="rc2-tag">RELATIONS</span><span class="rc2-tag">WAR</span></div>
+      </div>
+      <div class="rc2" style="--rc:#f97316;--rc-a:rgba(249,115,22,0.35)">
+        <span class="rc2-icon">🏛️</span>
+        <div class="rc2-name">City Planner</div>
+        <div class="rc2-desc">Decides what to build, destroy, buy, and sell. Scores structures based on materials, explanation, location, and contribution to the nation's story.</div>
+        <div class="rc2-tags"><span class="rc2-tag">BUILDS</span><span class="rc2-tag">BUY/SELL</span><span class="rc2-tag">SCORE</span></div>
+      </div>
+      <div class="rc2" style="--rc:#94a3b8;--rc-a:rgba(148,163,184,0.35)">
+        <span class="rc2-icon">🔧</span>
+        <div class="rc2-name">Engineer</div>
+        <div class="rc2-desc">Draws blueprints, buys from the materials store, records purchase orders, and calculates store and labor costs each round.</div>
+        <div class="rc2-tags"><span class="rc2-tag">BLUEPRINTS</span><span class="rc2-tag">MATERIALS</span><span class="rc2-tag">LABOR COSTS</span></div>
       </div>
     </div>
+
+    <div class="roles-cta rev">
+      <button data-page="mechanics" class="btn-o">See All Mechanics →</button>
+    </div>
+
   </div>
 </section>
 
@@ -1214,6 +1276,19 @@ if(ngrid){
       );
     }
   }).observe(ngrid,{attributes:true,attributeFilter:['style']});
+}
+
+// ROLE CARDS — staggered fly-in when roles section is shown
+const rolesEl=document.getElementById('roles');
+if(rolesEl){
+  new MutationObserver(mutations=>{
+    if(mutations.some(m=>m.attributeName==='style')&&rolesEl.style.display!=='none'){
+      gsap.fromTo(rolesEl.querySelectorAll('.rc2'),
+        {opacity:0,y:48,scale:0.94},
+        {opacity:1,y:0,scale:1,stagger:0.08,duration:0.72,ease:'power3.out',overwrite:true}
+      );
+    }
+  }).observe(rolesEl,{attributes:true,attributeFilter:['style']});
 }
 
 // MECHANIC NUMBERS — big italic numerals scale-bounce in on scroll
