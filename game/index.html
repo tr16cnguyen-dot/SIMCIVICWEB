@@ -2531,6 +2531,15 @@ window._resumingAuthFlow = (function() {
   } catch (e) { return false; }
 })();
 
+// Once a student has joined a game on this device, hide the teacher-host
+// option on the landing screen until they explicitly sign out.
+function _applyStudentModeUI() {
+  var active = false;
+  try { active = localStorage.getItem('_studentModeActive') === '1'; } catch (e) {}
+  var btn = document.getElementById('btnHostEnter');
+  if (btn) btn.style.display = active ? 'none' : '';
+}
+
 // Safe Firebase init — runs after CDN scripts load
 var _fbDB = null;
 function _initFirebase() {
@@ -2648,6 +2657,7 @@ window.googleSignOut = async function() {
   sessionStorage.removeItem('_cloudSyncBooted');
   sessionStorage.removeItem('_pendingHostEntry');
   sessionStorage.removeItem('_pendingAdminPanel');
+  try { localStorage.removeItem('_studentModeActive'); } catch (e) {}
   showToastMsg && showToastMsg('Signed out');
   // Go back to the plain student/teacher choice screen — strip any
   // ?host=1 / ?admin=1 / ?join=... so nothing re-opens automatically.
@@ -4131,6 +4141,11 @@ window.fbJoinAsNation = async function(nationId) {
   window._fb.mode     = 'viewer';
   window._fb.nation   = nationId;
   const nation = CITIES.find(c=>c.id===nationId);
+
+  // Once someone has joined as a student, hide the teacher-host option
+  // site-wide on this device until they explicitly sign out.
+  try { localStorage.setItem('_studentModeActive', '1'); } catch (e) {}
+  if (typeof _applyStudentModeUI === 'function') _applyStudentModeUI();
 
   await _fbDB.ref(`games/${code}/viewers/${viewerId}`).set({
     name:      nation?.name || 'Viewer',
@@ -8698,7 +8713,7 @@ window.fbToggleViewers = function() {
       <div class="landing-divider"></div>
 
       <!-- Host button -->
-      <button class="landing-btn landing-btn-host" onclick="hostEnterClicked()">
+      <button id="btnHostEnter" class="landing-btn landing-btn-host" onclick="hostEnterClicked()">
         <span class="landing-btn-icon">🖥️</span>
         I'M THE TEACHER (HOST)
       </button>
@@ -17095,6 +17110,7 @@ window.fbToggleViewers = function() {
       } else if (!isHost) {
         var landing = document.getElementById('fbLandingScreen');
         if (landing) {
+          if (typeof _applyStudentModeUI === 'function') _applyStudentModeUI();
           landing.style.display = 'flex';
           // Play startup chime when landing screen appears
           setTimeout(function(){ try{playStartup();}catch(e){} }, 400);
