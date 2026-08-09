@@ -2702,12 +2702,33 @@ async function _requireTeacherAccess() {
 
 async function _checkLicense(uid) {
   try {
-    const snap = await _fbDB.ref('users/' + uid + '/license').get();
-    return snap.exists() && !!snap.val();
+    // Accounts can now hold multiple license keys (users/{uid}/licenses/{key}).
+    // Also check the older single-license field for accounts that redeemed
+    // before this account supported more than one.
+    const [legacySnap, multiSnap] = await Promise.all([
+      _fbDB.ref('users/' + uid + '/license').get(),
+      _fbDB.ref('users/' + uid + '/licenses').get(),
+    ]);
+    const hasLegacy = legacySnap.exists() && !!legacySnap.val();
+    const hasMulti  = multiSnap.exists() && Object.keys(multiSnap.val() || {}).length > 0;
+    return hasLegacy || hasMulti;
   } catch (e) {
     console.warn('License check failed:', e.message);
     return false;
   }
+}
+
+async function _getMyLicenseKeys(uid) {
+  const keys = new Set();
+  try {
+    const legacySnap = await _fbDB.ref('users/' + uid + '/license').get();
+    if (legacySnap.exists() && legacySnap.val() && legacySnap.val().key) keys.add(legacySnap.val().key);
+  } catch (e) {}
+  try {
+    const multiSnap = await _fbDB.ref('users/' + uid + '/licenses').get();
+    if (multiSnap.exists()) Object.keys(multiSnap.val() || {}).forEach(k => keys.add(k));
+  } catch (e) {}
+  return keys;
 }
 
 function hideLicenseGate() {
@@ -2727,6 +2748,14 @@ function renderLicenseGateSignIn() {
   `;
   modal.style.display = 'flex';
 }
+
+window.promptAddLicenseKey = function() {
+  if (!_fbAuth || !_fbAuth.currentUser) {
+    showToastMsg && showToastMsg('Sign in first to add a license key.');
+    return;
+  }
+  renderLicenseGateKeyEntry();
+};
 
 function renderLicenseGateKeyEntry(errorMsg) {
   const modal = document.getElementById('licenseGateModal');
@@ -2802,16 +2831,22 @@ async function _redeemLicenseKey(rawKey) {
     _debugLog('getIdToken FAILED: ' + e.message);
   }
 
-  // Guard: never let an already-licensed account consume a second key slot
-  // (e.g. if a transient read failure re-showed this screen to them).
+  // Guard: never let this SPECIFIC key be redeemed twice by the same account
+  // (accounts may now hold several different license keys, so we only skip
+  // the transaction if they already redeemed this exact key before). Also
+  // track whether this account has ANY prior license — the clean-slate wipe
+  // below should only ever run on a truly first-ever redemption, not every
+  // time an already-active account adds another key.
+  let isFirstLicenseEver = true;
   try {
-    const existing = await _fbDB.ref('users/' + user.uid + '/license').get();
-    if (existing.exists() && existing.val()) {
-      _debugLog('account already licensed with ' + JSON.stringify(existing.val()) + ' — not consuming another key');
+    const myKeys = await _getMyLicenseKeys(user.uid);
+    isFirstLicenseEver = myKeys.size === 0;
+    if (myKeys.has(key)) {
+      _debugLog('account already redeemed ' + key + ' — not consuming another slot');
       return { ok: true, freshlyRedeemed: false };
     }
   } catch (e) {
-    _debugLog('existing-license check failed: ' + e.code + ' ' + e.message);
+    _debugLog('existing-license check failed: ' + e.message);
   }
 
   const keyPath = 'licenseKeys/' + _sanitizeKey(key);
@@ -2856,7 +2891,7 @@ async function _redeemLicenseKey(rawKey) {
   }
 
   try {
-    await _fbDB.ref('users/' + user.uid + '/license').set({
+    await _fbDB.ref('users/' + user.uid + '/licenses/' + _sanitizeKey(key)).set({
       key: key,
       email: user.email || null,
       displayName: user.displayName || null,
@@ -2867,31 +2902,35 @@ async function _redeemLicenseKey(rawKey) {
     return { ok: false, error: 'Key accepted but could not save to your account. Try again.' };
   }
 
-  // Give a newly-licensed account a clean slate: round descriptions, team
+  // Give a truly first-time account a clean slate: round descriptions, team
   // draft, and teacher names must be empty — never the built-in demo
   // content, and never whatever another teacher's testing left behind in
   // this browser's local cache (localStorage isn't scoped per account).
-  try {
-    var emptyDescs = {};
-    var emptyDraft = {
-      pool: [],
-      rosters: (typeof initDraftRosters === 'function') ? initDraftRosters() : {},
-      teacherNames: [],
-      teacherAssign: {},
-      roleAssignments: {},
-    };
-    localStorage.setItem(ROUND_DESC_SK, JSON.stringify(emptyDescs));
-    localStorage.setItem(DRAFT_SK, JSON.stringify(emptyDraft));
-    await Promise.all([
-      window.storage && window.storage.set(ROUND_DESC_SK, JSON.stringify(emptyDescs)),
-      window.storage && window.storage.set(DRAFT_SK, JSON.stringify(emptyDraft)),
-    ]);
-    _debugLog('clean slate written for new license');
-  } catch (e) {
-    _debugLog('clean-slate reset failed: ' + e.message);
+  // Skipped when adding an additional key to an already-licensed account,
+  // so it never wipes an in-progress game.
+  if (isFirstLicenseEver) {
+    try {
+      var emptyDescs = {};
+      var emptyDraft = {
+        pool: [],
+        rosters: (typeof initDraftRosters === 'function') ? initDraftRosters() : {},
+        teacherNames: [],
+        teacherAssign: {},
+        roleAssignments: {},
+      };
+      localStorage.setItem(ROUND_DESC_SK, JSON.stringify(emptyDescs));
+      localStorage.setItem(DRAFT_SK, JSON.stringify(emptyDraft));
+      await Promise.all([
+        window.storage && window.storage.set(ROUND_DESC_SK, JSON.stringify(emptyDescs)),
+        window.storage && window.storage.set(DRAFT_SK, JSON.stringify(emptyDraft)),
+      ]);
+      _debugLog('clean slate written for first-ever license');
+    } catch (e) {
+      _debugLog('clean-slate reset failed: ' + e.message);
+    }
   }
 
-  return { ok: true, freshlyRedeemed: true };
+  return { ok: true, freshlyRedeemed: isFirstLicenseEver };
 }
 
 // Resolve any pending host-entry / admin-panel flow once auth state is known
@@ -2993,7 +3032,32 @@ async function renderAdminPanel() {
   const usersObj = usersSnap.val() || {};
   const keysObj  = keysSnap.val() || {};
 
-  const rows = Object.entries(usersObj).filter(([, u]) => u && u.license);
+  // Accounts can hold multiple keys now (users/{uid}/licenses/{key}), plus
+  // older accounts may still have a single legacy users/{uid}/license entry.
+  // Build one row per (uid, key) pair so each can be revoked independently.
+  const rows = [];
+  Object.entries(usersObj).forEach(([uid, u]) => {
+    if (!u) return;
+    if (u.license) {
+      const lic = u.license;
+      rows.push({
+        uid, source: 'legacy',
+        key: typeof lic === 'object' ? lic.key : lic,
+        email: (typeof lic === 'object' && lic.email) ? lic.email : uid,
+        when: (typeof lic === 'object' && lic.redeemedAt) ? lic.redeemedAt : null,
+      });
+    }
+    if (u.licenses) {
+      Object.entries(u.licenses).forEach(([sanitizedKey, lic]) => {
+        rows.push({
+          uid, source: 'multi', sanitizedKey,
+          key: lic && lic.key ? lic.key : sanitizedKey,
+          email: (lic && lic.email) ? lic.email : uid,
+          when: (lic && lic.redeemedAt) ? lic.redeemedAt : null,
+        });
+      });
+    }
+  });
 
   let html = `
     <div style="margin-bottom:16px;padding:10px 12px;border-radius:8px;background:rgba(255,255,255,0.04);">
@@ -3005,18 +3069,16 @@ async function renderAdminPanel() {
   if (!rows.length) {
     html += '<div>No licensed users yet.</div>';
   } else {
-    html += rows.map(([uid, u]) => {
-      const lic   = u.license;
-      const key   = typeof lic === 'object' ? lic.key : lic;
-      const email = typeof lic === 'object' && lic.email ? lic.email : uid;
-      const when  = typeof lic === 'object' && lic.redeemedAt ? new Date(lic.redeemedAt).toLocaleString() : '';
+    html += rows.map((row) => {
+      const when = row.when ? new Date(row.when).toLocaleString() : '';
+      const revokeArg = row.source === 'legacy' ? `'${row.uid}','${row.key}',null` : `'${row.uid}','${row.key}','${row.sanitizedKey}'`;
       return `
         <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,0.08);gap:10px;">
           <div style="min-width:0;">
-            <div style="color:#edf0fa;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${email}</div>
-            <div style="font-size:0.65rem;color:#6b7d96;">key: ${key}${when ? ' · ' + when : ''}</div>
+            <div style="color:#edf0fa;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${row.email}</div>
+            <div style="font-size:0.65rem;color:#6b7d96;">key: ${row.key}${when ? ' · ' + when : ''}</div>
           </div>
-          <button onclick="revokeLicense('${uid}','${key}')" style="flex-shrink:0;padding:6px 12px;border-radius:6px;border:1px solid rgba(239,68,68,0.4);background:rgba(239,68,68,0.12);color:#f87171;font-size:0.62rem;font-weight:700;cursor:pointer;">Revoke</button>
+          <button onclick="revokeLicense(${revokeArg})" style="flex-shrink:0;padding:6px 12px;border-radius:6px;border:1px solid rgba(239,68,68,0.4);background:rgba(239,68,68,0.12);color:#f87171;font-size:0.62rem;font-weight:700;cursor:pointer;">Revoke</button>
         </div>
       `;
     }).join('');
@@ -3025,9 +3087,13 @@ async function renderAdminPanel() {
   body.innerHTML = html;
 }
 
-window.revokeLicense = async function(uid, key) {
+window.revokeLicense = async function(uid, key, sanitizedKey) {
   try {
-    await _fbDB.ref('users/' + uid + '/license').remove();
+    if (sanitizedKey) {
+      await _fbDB.ref('users/' + uid + '/licenses/' + sanitizedKey).remove();
+    } else {
+      await _fbDB.ref('users/' + uid + '/license').remove();
+    }
     const keyRef = _fbDB.ref('licenseKeys/' + _sanitizeKey(key));
     const snap = await keyRef.get();
     if (snap.exists()) {
@@ -9327,6 +9393,7 @@ window.fbToggleViewers = function() {
       <div id="authUser" style="display:none;align-items:center;gap:6px;padding:3px 8px 3px 3px;border-radius:20px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);">
         <img id="authAvatar" style="width:20px;height:20px;border-radius:50%;display:block;" />
         <span id="authName" style="font-size:0.6rem;color:var(--text-dim);max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+        <button onclick="promptAddLicenseKey()" title="Redeem another license key on this account" style="padding:3px 8px;border-radius:6px;border:1px solid rgba(219,166,66,0.3);background:rgba(219,166,66,0.08);color:#f0c060;font-size:0.52rem;cursor:pointer;">+ Key</button>
         <button onclick="googleSignOut()" style="padding:3px 8px;border-radius:6px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.05);color:var(--text-muted);font-size:0.52rem;cursor:pointer;">Sign out</button>
       </div>
       <button class="btn-manual-save" id="btnManualSave" onclick="manualSave()">💾 Save</button>
