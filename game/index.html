@@ -2539,11 +2539,102 @@ function _initFirebase() {
     });
     _fbDB = firebase.database();
     console.log('Firebase ready ✓');
+    _initFirebaseAuth();
   } catch(e) {
     console.warn('Firebase init failed — live sync unavailable:', e.message);
   }
 }
 // Will be called once CDN scripts finish loading (see bottom of body)
+
+// ── Google Sign-In + per-user cloud save ──────────────────
+var _fbAuth = null;
+
+function _sanitizeKey(k) {
+  return String(k).replace(/[.#$\[\]\/]/g, '_');
+}
+
+function _makeCloudStorage(uid) {
+  const base = _fbDB.ref('users/' + uid + '/kv');
+  return {
+    get: async function(key) {
+      const snap = await base.child(_sanitizeKey(key)).get();
+      const val = snap.exists() ? snap.val() : null;
+      return val ? { value: val } : null;
+    },
+    set: async function(key, value) {
+      await base.child(_sanitizeKey(key)).set(value);
+    },
+    delete: async function(key) {
+      await base.child(_sanitizeKey(key)).remove();
+    },
+  };
+}
+
+function _setAuthUI(user) {
+  const signInBtn = document.getElementById('btnGoogleSignIn');
+  const userBox   = document.getElementById('authUser');
+  if (user) {
+    if (signInBtn) signInBtn.style.display = 'none';
+    if (userBox) {
+      userBox.style.display = 'flex';
+      const avatar = document.getElementById('authAvatar');
+      const name   = document.getElementById('authName');
+      if (avatar) avatar.src = user.photoURL || '';
+      if (name)   name.textContent = user.displayName || user.email || 'Signed in';
+    }
+  } else {
+    if (signInBtn) signInBtn.style.display = 'flex';
+    if (userBox) userBox.style.display = 'none';
+  }
+}
+
+function _initFirebaseAuth() {
+  try {
+    if (typeof firebase.auth !== 'function') {
+      console.warn('Firebase auth SDK not loaded');
+      return;
+    }
+    _fbAuth = firebase.auth();
+    _fbAuth.onAuthStateChanged(function(user) {
+      _setAuthUI(user);
+      if (user) {
+        window.storage = _makeCloudStorage(user.uid);
+        // Reload once per tab session so the app boot sequence picks up
+        // the cloud save from the start (storageLoad/loadAll run at boot).
+        if (!sessionStorage.getItem('_cloudSyncBooted')) {
+          sessionStorage.setItem('_cloudSyncBooted', '1');
+          showToastMsg && showToastMsg('☁️ Signed in as ' + (user.displayName || user.email) + ' — loading cloud save...');
+          setTimeout(() => location.reload(), 700);
+        }
+      } else {
+        window.storage = undefined;
+      }
+    });
+  } catch (e) {
+    console.warn('Firebase auth init failed:', e.message);
+  }
+}
+
+window.googleSignIn = async function() {
+  if (!_fbAuth) {
+    showToastMsg && showToastMsg('⏳ Connecting to Firebase...');
+    return;
+  }
+  try {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    await _fbAuth.signInWithPopup(provider);
+  } catch (e) {
+    console.warn('Google sign-in failed:', e.message);
+    showToastMsg && showToastMsg('⚠️ Sign-in failed: ' + e.message);
+  }
+};
+
+window.googleSignOut = async function() {
+  try { await _fbAuth.signOut(); } catch (e) {}
+  window.storage = undefined;
+  sessionStorage.removeItem('_cloudSyncBooted');
+  showToastMsg && showToastMsg('Signed out — using local save only');
+};
 
 window._fb = {
   mode:     null,
@@ -8788,6 +8879,16 @@ window.fbToggleViewers = function() {
         font-size:0.65rem; color:var(--green); font-weight:600;
         opacity:0; transition:opacity 0.4s; letter-spacing:0.5px;
       ">✓ Saved</span>
+      <button id="btnGoogleSignIn" onclick="googleSignIn()" style="
+        padding:5px 12px;border-radius:7px;font-family:'Orbitron',sans-serif;font-size:0.58rem;
+        font-weight:800;letter-spacing:1px;cursor:pointer;border:1px solid rgba(255,255,255,0.2);
+        background:rgba(255,255,255,0.06);color:#e2e8f0;display:flex;align-items:center;gap:5px;transition:all 0.2s;
+      " onmouseover="this.style.background='rgba(255,255,255,0.12)'" onmouseout="this.style.background='rgba(255,255,255,0.06)'">🔐 Sign in with Google</button>
+      <div id="authUser" style="display:none;align-items:center;gap:6px;padding:3px 8px 3px 3px;border-radius:20px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);">
+        <img id="authAvatar" style="width:20px;height:20px;border-radius:50%;display:block;" />
+        <span id="authName" style="font-size:0.6rem;color:var(--text-dim);max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+        <button onclick="googleSignOut()" style="padding:3px 8px;border-radius:6px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.05);color:var(--text-muted);font-size:0.52rem;cursor:pointer;">Sign out</button>
+      </div>
       <button class="btn-manual-save" id="btnManualSave" onclick="manualSave()">💾 Save</button>
       <button class="btn-load-save" id="btnLoadSave" onclick="showSaveSlots()">📂 Saves</button>
       <button class="btn-fullscreen-app" id="btnFullscreenApp" onclick="toggleAppFullscreen()" title="Toggle fullscreen">⛶</button>
@@ -24034,6 +24135,10 @@ function showCityPicker(playerName, anchorEl) {
     'https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js',
     'https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-database-compat.min.js',
   ];
+  var authCdns = [
+    'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-auth-compat.min.js',
+  ];
 
   function loadScript(urls, onSuccess, onFail) {
     if (!urls.length) { onFail(); return; }
@@ -24047,11 +24152,18 @@ function showCityPicker(playerName, anchorEl) {
   function loadFirebase() {
     loadScript(cdns, function() {
       loadScript(dbCdns, function() {
-        // Defer one tick so all inline scripts finish parsing before _initFirebase is called
-        setTimeout(function() {
-          if (typeof _initFirebase === 'function') _initFirebase();
-          else console.warn('_initFirebase not defined — check script load order');
-        }, 0);
+        loadScript(authCdns, function() {
+          // Defer one tick so all inline scripts finish parsing before _initFirebase is called
+          setTimeout(function() {
+            if (typeof _initFirebase === 'function') _initFirebase();
+            else console.warn('_initFirebase not defined — check script load order');
+          }, 0);
+        }, function() {
+          console.warn('Firebase auth SDK failed to load from all CDNs — Google sign-in unavailable');
+          setTimeout(function() {
+            if (typeof _initFirebase === 'function') _initFirebase();
+          }, 0);
+        });
       }, function() {
         console.warn('Firebase database SDK failed to load from all CDNs');
       });
