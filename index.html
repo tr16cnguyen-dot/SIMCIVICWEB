@@ -591,6 +591,7 @@ nav{backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:
     <li><button data-page="mechanics"  data-page-btn="mechanics">Mechanics</button></li>
     <li><button data-page="resources"  data-page-btn="resources">Resources</button></li>
     <li><button id="sound-btn" class="sound-toggle" title="Toggle Ambient Sound">🔇</button></li>
+    <li><button id="btnEditToggle" onclick="toggleEditMode()" style="display:none;padding:7px 14px;border-radius:6px;border:1px solid rgba(219,166,66,0.4);background:rgba(219,166,66,0.1);color:var(--gold);font-family:'Inter',sans-serif;font-size:0.8rem;font-weight:600;cursor:pointer;">✏ Edit</button></li>
     <li><a href="/game/" target="_blank" rel="noopener noreferrer" data-external class="ncta">Start Game →</a></li>
   </ul>
 </nav>
@@ -604,13 +605,13 @@ nav{backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:
   <div class="float-orb" style="--od:9s;--odelay:6s;--ox:15px;--oy:-12px;--oy2:6px;width:160px;height:160px;background:radial-gradient(ellipse,rgba(249,115,22,0.04) 0%,transparent 70%);top:55%;right:28%;"></div>
   <div class="hinner">
     <div class="hleft">
-      <div class="hlabel">PBL City &amp; Nation Simulation</div>
+      <div class="hlabel" data-editable="hero-label">PBL City &amp; Nation Simulation</div>
       <h1 class="hh1">
-        <span class="line1">Where</span>
-        <span class="line2">Leaders</span>
-        <span class="line3">Are Made.</span>
+        <span class="line1" data-editable="hero-line1">Where</span>
+        <span class="line2" data-editable="hero-line2">Leaders</span>
+        <span class="line3" data-editable="hero-line3">Are Made.</span>
       </h1>
-      <p class="hp">A structured, immersive simulation where student teams govern fictional nations — managing 7 interconnected resources, negotiating formal trade deals, forging alliances, and building real cities. Piloted April 2026: 97% of students felt more engaged.</p>
+      <p class="hp" data-editable="hero-paragraph">A structured, immersive simulation where student teams govern fictional nations — managing 7 interconnected resources, negotiating formal trade deals, forging alliances, and building real cities. Piloted April 2026: 97% of students felt more engaged.</p>
       <div class="hactions">
         <button data-page="nations"   class="btn-p">Explore Nations</button>
         <button data-page="mechanics"  class="btn-o">How It Works</button>
@@ -1335,6 +1336,155 @@ nav{backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:
   </div>
   <div class="fcopy">PBL City &amp; Nation Simulation</div>
 </footer>
+
+<!-- ═══ IN-PAGE EDIT MODE (admin-only, Firebase-backed) ═══ -->
+<style>
+body.site-edit-mode [data-editable] { outline: 2px dashed rgba(219,166,66,0.5); outline-offset: 4px; cursor: text; border-radius: 4px; }
+body.site-edit-mode [data-editable]:focus { outline: 2px solid #dba642; background: rgba(219,166,66,0.06); }
+#editSaveBar { display:none; position:fixed; bottom:20px; left:50%; transform:translateX(-50%); z-index:99999; background:#0c1020; border:1px solid rgba(219,166,66,0.4); border-radius:12px; padding:10px 16px; gap:10px; align-items:center; box-shadow:0 8px 30px rgba(0,0,0,0.5); font-family:'Inter',sans-serif; }
+#editSaveBar span { color:#a8b3c7; font-size:0.8rem; }
+#editSaveBar button { padding:8px 16px; border-radius:7px; font-family:'Syne',sans-serif; font-weight:700; font-size:0.8rem; cursor:pointer; border:none; }
+#editSaveBar .btn-save { background:var(--gold); color:var(--bg); }
+#editSaveBar .btn-cancel { background:rgba(255,255,255,0.08); color:#e2e8f0; }
+</style>
+<div id="editSaveBar">
+  <span>Editing page</span>
+  <button class="btn-save" onclick="saveSiteEdits()">Save changes</button>
+  <button class="btn-cancel" onclick="cancelSiteEdits()">Cancel</button>
+</div>
+
+<script>
+// Same Firebase project used by the game (simcivic) — reuses its Google
+// Sign-In accounts and admins/{uid} role check, no separate login needed.
+var _fbDB2 = null, _fbAuth2 = null;
+
+function _initSiteFirebase() {
+  try {
+    firebase.initializeApp({
+      apiKey:            'AIzaSyA_p_FmPGI7J8vRDHlQCxMemEYZwkklftI',
+      authDomain:        'simcivic.firebaseapp.com',
+      projectId:         'simcivic',
+      storageBucket:     'simcivic.firebasestorage.app',
+      messagingSenderId: '1045105988001',
+      appId:             '1:1045105988001:web:1db1deab5e3dfee0de7be0',
+      databaseURL:       'https://simcivic-default-rtdb.firebaseio.com'
+    });
+    _fbDB2   = firebase.database();
+    _fbAuth2 = firebase.auth();
+    _loadSiteContentOverrides();
+    _fbAuth2.onAuthStateChanged(async function(user) {
+      const btn = document.getElementById('btnEditToggle');
+      if (!btn) return;
+      if (user && await _isSiteAdmin(user.uid)) {
+        btn.style.display = '';
+      } else {
+        btn.style.display = 'none';
+      }
+    });
+  } catch (e) {
+    console.warn('Site Firebase init failed:', e.message);
+  }
+}
+
+async function _isSiteAdmin(uid) {
+  try {
+    const snap = await _fbDB2.ref('admins/' + uid).get();
+    return snap.exists() && snap.val() === true;
+  } catch (e) { return false; }
+}
+
+async function _loadSiteContentOverrides() {
+  try {
+    const snap = await _fbDB2.ref('siteContent').get();
+    const data = snap.val() || {};
+    Object.keys(data).forEach(function(key) {
+      const el = document.querySelector('[data-editable="' + key + '"]');
+      if (el) el.innerHTML = data[key];
+    });
+  } catch (e) {
+    console.warn('Could not load site content overrides:', e.message);
+  }
+}
+
+window.toggleEditMode = async function() {
+  if (!_fbAuth2) { alert('Still connecting — try again in a moment.'); return; }
+  let user = _fbAuth2.currentUser;
+  if (!user) {
+    try {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      const result = await _fbAuth2.signInWithPopup(provider);
+      user = result.user;
+    } catch (e) {
+      alert('Sign-in failed: ' + e.message);
+      return;
+    }
+  }
+  if (!(await _isSiteAdmin(user.uid))) {
+    alert('This account is not authorized to edit this site.');
+    return;
+  }
+  document.body.classList.add('site-edit-mode');
+  document.querySelectorAll('[data-editable]').forEach(function(el) {
+    el.setAttribute('contenteditable', 'true');
+  });
+  document.getElementById('editSaveBar').style.display = 'flex';
+};
+
+window.saveSiteEdits = async function() {
+  const updates = {};
+  document.querySelectorAll('[data-editable]').forEach(function(el) {
+    updates[el.getAttribute('data-editable')] = el.innerHTML;
+  });
+  try {
+    await _fbDB2.ref('siteContent').update(updates);
+    alert('Saved.');
+    location.reload();
+  } catch (e) {
+    alert('Save failed: ' + e.message);
+  }
+};
+
+window.cancelSiteEdits = function() {
+  location.reload();
+};
+
+(function loadSiteFirebase() {
+  var cdns = [
+    'https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-app-compat.min.js',
+  ];
+  var dbCdns = [
+    'https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-database-compat.min.js',
+  ];
+  var authCdns = [
+    'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-auth-compat.min.js',
+  ];
+  function loadScript(urls, onSuccess, onFail) {
+    if (!urls.length) { onFail(); return; }
+    var s = document.createElement('script');
+    s.src = urls[0];
+    s.onload = onSuccess;
+    s.onerror = function() { loadScript(urls.slice(1), onSuccess, onFail); };
+    document.body.appendChild(s);
+  }
+  function go() {
+    loadScript(cdns, function() {
+      loadScript(dbCdns, function() {
+        loadScript(authCdns, function() {
+          setTimeout(_initSiteFirebase, 0);
+        }, function() { console.warn('Firebase auth SDK failed to load'); });
+      }, function() { console.warn('Firebase database SDK failed to load'); });
+    }, function() { console.warn('Firebase app SDK failed to load — editing unavailable'); });
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', go);
+  } else {
+    go();
+  }
+})();
+</script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
