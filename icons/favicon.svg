@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="168 28 344 344" width="512" height="512">
+<defs>
+<radialGradient id="sphereFill" cx="38%" cy="32%" r="75%">
+<stop offset="0%" stop-color="#12304f"/>
+<stop offset="55%" stop-color="#081c36"/>
+<stop offset="100%" stop-color="#040d1c"/>
+</radialGradient>
+<radialGradient id="atmGlow" cx="50%" cy="50%" r="50%">
+<stop offset="70%" stop-color="#4488ff" stop-opacity="0"/>
+<stop offset="92%" stop-color="#4488ff" stop-opacity="0.35"/>
+<stop offset="100%" stop-color="#4488ff" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="goldMono" x1="0%" y1="0%" x2="100%" y2="100%">
+<stop offset="0%" stop-color="#c8920e"/>
+<stop offset="35%" stop-color="#f5d990"/>
+<stop offset="65%" stop-color="#dba642"/>
+<stop offset="100%" stop-color="#f8e89a"/>
+</linearGradient>
+<linearGradient id="whiteMono" x1="0%" y1="0%" x2="100%" y2="100%">
+<stop offset="0%" stop-color="#ffffff"/>
+<stop offset="100%" stop-color="#edf0fa"/>
+</linearGradient>
+<clipPath id="sphereClip">
+<circle cx="340" cy="200" r="150"/>
+</clipPath>
+</defs>
+<circle cx="340" cy="200" r="172" fill="url(#atmGlow)"/>
+<circle cx="340" cy="200" r="150" fill="url(#sphereFill)"/>
+<g clip-path="url(#sphereClip)" stroke="#bcd4f5" stroke-width="0.6" fill="none" opacity="0.12">
+<ellipse cx="340" cy="200" rx="150" ry="150"/>
+<ellipse cx="340" cy="200" rx="150" ry="96"/>
+<ellipse cx="340" cy="200" rx="150" ry="44"/>
+</g>
+<circle cx="340" cy="200" r="150" fill="none" stroke="#dba642" stroke-width="1.5" opacity="0.7"/>
+<circle cx="340" cy="200" r="163" fill="none" stroke="#dba642" stroke-width="0.5" opacity="0.26"/>
+<g stroke="#bcd4f5" stroke-width="0.6" opacity="0.3">
+<line x1="340" y1="70" x2="463.6" y2="159.8"/>
+<line x1="463.6" y1="159.8" x2="416.4" y2="305.2"/>
+<line x1="416.4" y1="305.2" x2="263.6" y2="305.2"/>
+<line x1="263.6" y1="305.2" x2="216.4" y2="159.8"/>
+<line x1="216.4" y1="159.8" x2="340" y2="70"/>
+</g>
+<circle cx="340" cy="200" r="105" fill="#04060d" opacity="0.4"/>
+<path d="M 413 261 A 95 95 0 1 1 413 139" fill="none" stroke="url(#whiteMono)" stroke-width="12" stroke-linecap="round"/>
+<path d="M 340 150 C 388 150, 388 197, 340 200 C 292 203, 292 250, 340 250" fill="none" stroke="url(#goldMono)" stroke-width="15" stroke-linecap="round"/>
+<circle cx="340" cy="70" r="7" fill="#3b82f6"/>
+<circle cx="463.6" cy="159.8" r="7" fill="#ef4444"/>
+<circle cx="416.4" cy="305.2" r="7" fill="#22c55e"/>
+<circle cx="263.6" cy="305.2" r="7" fill="#9ca3af"/>
+<circle cx="216.4" cy="159.8" r="7" fill="#f97316"/>
+</svg>
