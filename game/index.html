@@ -2767,6 +2767,18 @@ async function _redeemLicenseKey(rawKey) {
     _debugLog('getIdToken FAILED: ' + e.message);
   }
 
+  // Guard: never let an already-licensed account consume a second key slot
+  // (e.g. if a transient read failure re-showed this screen to them).
+  try {
+    const existing = await _fbDB.ref('users/' + user.uid + '/license').get();
+    if (existing.exists() && existing.val()) {
+      _debugLog('account already licensed with ' + existing.val() + ' — not consuming another key');
+      return { ok: true };
+    }
+  } catch (e) {
+    _debugLog('existing-license check failed: ' + e.code + ' ' + e.message);
+  }
+
   const keyPath = 'licenseKeys/' + _sanitizeKey(key);
   const keyRef  = _fbDB.ref(keyPath);
 
