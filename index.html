@@ -585,21 +585,25 @@ nav{backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:
     <div class="nsep"></div>
     <div class="nsub">Where Leaders<br>Are Made</div>
   </div>
-  <ul class="nlinks">
-    <li><button data-page="nations"   data-page-btn="nations">Nations</button></li>
-    <li><button data-page="roles"      data-page-btn="roles">Roles</button></li>
-    <li><button data-page="mechanics"  data-page-btn="mechanics">Mechanics</button></li>
-    <li><button data-page="resources"  data-page-btn="resources">Resources</button></li>
-    <li><button id="sound-btn" class="sound-toggle" title="Toggle Ambient Sound">🔇</button></li>
-    <li><button id="btnSiteSignIn" onclick="siteSignIn()" style="padding:7px 14px;border-radius:6px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.05);color:var(--ink);font-family:'Inter',sans-serif;font-size:0.8rem;font-weight:600;cursor:pointer;">Sign In</button></li>
-    <li id="siteAuthUser" style="display:none;align-items:center;gap:6px;padding:3px 8px 3px 3px;border-radius:20px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);">
+  <div style="display:flex;align-items:center;gap:10px;">
+    <!-- Always visible regardless of screen width — not part of .nlinks,
+         which is hidden below 900px with no mobile-menu replacement. -->
+    <button id="btnSiteSignIn" onclick="siteSignIn()" style="padding:7px 14px;border-radius:6px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.05);color:var(--ink);font-family:'Inter',sans-serif;font-size:0.8rem;font-weight:600;cursor:pointer;flex-shrink:0;">Sign In</button>
+    <div id="siteAuthUser" style="display:none;align-items:center;gap:6px;padding:3px 8px 3px 3px;border-radius:20px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);flex-shrink:0;">
       <img id="siteAuthAvatar" style="width:22px;height:22px;border-radius:50%;display:block;" />
       <span id="siteAuthName" style="font-size:0.75rem;color:var(--ink);max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
       <button onclick="siteSignOut()" style="padding:3px 9px;border-radius:6px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.05);color:var(--sub);font-size:0.7rem;cursor:pointer;">Sign out</button>
-    </li>
-    <li><button id="btnEditToggle" onclick="toggleEditMode()" style="display:none;padding:7px 14px;border-radius:6px;border:1px solid rgba(219,166,66,0.4);background:rgba(219,166,66,0.1);color:var(--gold);font-family:'Inter',sans-serif;font-size:0.8rem;font-weight:600;cursor:pointer;">✏ Edit</button></li>
-    <li><a href="/game/" target="_blank" rel="noopener noreferrer" data-external class="ncta">Start Game →</a></li>
-  </ul>
+    </div>
+    <button id="btnEditToggle" onclick="toggleEditMode()" style="display:none;padding:7px 14px;border-radius:6px;border:1px solid rgba(219,166,66,0.4);background:rgba(219,166,66,0.1);color:var(--gold);font-family:'Inter',sans-serif;font-size:0.8rem;font-weight:600;cursor:pointer;flex-shrink:0;">✏ Edit</button>
+    <ul class="nlinks">
+      <li><button data-page="nations"   data-page-btn="nations">Nations</button></li>
+      <li><button data-page="roles"      data-page-btn="roles">Roles</button></li>
+      <li><button data-page="mechanics"  data-page-btn="mechanics">Mechanics</button></li>
+      <li><button data-page="resources"  data-page-btn="resources">Resources</button></li>
+      <li><button id="sound-btn" class="sound-toggle" title="Toggle Ambient Sound">🔇</button></li>
+      <li><a href="/game/" target="_blank" rel="noopener noreferrer" data-external class="ncta">Start Game →</a></li>
+    </ul>
+  </div>
 </nav>
 
 <!-- HERO -->
