@@ -2605,11 +2605,16 @@ function _initFirebaseAuth() {
           sessionStorage.setItem('_cloudSyncBooted', '1');
           showToastMsg && showToastMsg('☁️ Signed in as ' + (user.displayName || user.email) + ' — loading cloud save...');
           setTimeout(() => location.reload(), 700);
+        } else if (sessionStorage.getItem('_pendingAdminPanel') === '1') {
+          sessionStorage.removeItem('_pendingAdminPanel');
+          if (typeof maybeShowAdminPanel === 'function') maybeShowAdminPanel();
         } else if (typeof _resumePendingHostEntry === 'function') {
           _resumePendingHostEntry();
+          if (typeof maybeShowAdminPanel === 'function') maybeShowAdminPanel();
         }
       } else {
         window.storage = undefined;
+        if (typeof maybeShowAdminPanel === 'function') maybeShowAdminPanel();
       }
     });
   } catch (e) {
@@ -2772,7 +2777,7 @@ async function _redeemLicenseKey(rawKey) {
   try {
     const existing = await _fbDB.ref('users/' + user.uid + '/license').get();
     if (existing.exists() && existing.val()) {
-      _debugLog('account already licensed with ' + existing.val() + ' — not consuming another key');
+      _debugLog('account already licensed with ' + JSON.stringify(existing.val()) + ' — not consuming another key');
       return { ok: true };
     }
   } catch (e) {
@@ -2821,7 +2826,12 @@ async function _redeemLicenseKey(rawKey) {
   }
 
   try {
-    await _fbDB.ref('users/' + user.uid + '/license').set(key);
+    await _fbDB.ref('users/' + user.uid + '/license').set({
+      key: key,
+      email: user.email || null,
+      displayName: user.displayName || null,
+      redeemedAt: Date.now(),
+    });
   } catch (e) {
     _debugLog('license write FAILED: ' + e.code + ' ' + e.message);
     return { ok: false, error: 'Key accepted but could not save to your account. Try again.' };
@@ -2836,6 +2846,124 @@ function _resumePendingHostEntry() {
     _requireTeacherAccess();
   }
 }
+
+// ── Admin: license management (?admin=1) ────────────────────
+async function _isAdmin(uid) {
+  try {
+    const snap = await _fbDB.ref('admins/' + uid).get();
+    return snap.exists() && snap.val() === true;
+  } catch (e) {
+    return false;
+  }
+}
+
+async function maybeShowAdminPanel() {
+  if (new URLSearchParams(location.search).get('admin') !== '1') return;
+
+  if (!_fbAuth) {
+    let waited = 0;
+    while (!_fbAuth && waited < 5000) { await new Promise(r => setTimeout(r, 200)); waited += 200; }
+  }
+  if (!_fbAuth) return;
+
+  const user = _fbAuth.currentUser;
+  if (!user) {
+    renderAdminSignInPrompt();
+    return;
+  }
+  const isAdmin = await _isAdmin(user.uid);
+  if (!isAdmin) {
+    showToastMsg && showToastMsg('⚠️ This account is not authorized for license management');
+    return;
+  }
+  renderAdminPanel();
+}
+
+function renderAdminSignInPrompt() {
+  const modal = document.getElementById('adminPanelModal');
+  const body  = document.getElementById('adminPanelBody');
+  body.innerHTML = `
+    <div style="text-align:center;padding:20px 0;">
+      <div style="font-size:1.8rem;margin-bottom:10px;">🔐</div>
+      <div style="margin-bottom:16px;">Sign in with an authorized Google account to manage licenses.</div>
+      <button onclick="_adminGateSignIn()" style="padding:10px 18px;border-radius:8px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.08);color:#edf0fa;font-family:'Orbitron',sans-serif;font-size:0.62rem;font-weight:800;letter-spacing:1px;cursor:pointer;">🔐 Sign in with Google</button>
+    </div>
+  `;
+  modal.style.display = 'flex';
+}
+
+window._adminGateSignIn = async function() {
+  sessionStorage.setItem('_pendingAdminPanel', '1');
+  await window.googleSignIn();
+};
+
+async function renderAdminPanel() {
+  const modal = document.getElementById('adminPanelModal');
+  const body  = document.getElementById('adminPanelBody');
+  modal.style.display = 'flex';
+  body.textContent = 'Loading...';
+
+  let usersSnap, keysSnap;
+  try {
+    [usersSnap, keysSnap] = await Promise.all([
+      _fbDB.ref('users').get(),
+      _fbDB.ref('licenseKeys').get(),
+    ]);
+  } catch (e) {
+    body.textContent = 'Failed to load: ' + e.message;
+    return;
+  }
+
+  const usersObj = usersSnap.val() || {};
+  const keysObj  = keysSnap.val() || {};
+
+  const rows = Object.entries(usersObj).filter(([, u]) => u && u.license);
+
+  let html = `
+    <div style="margin-bottom:16px;padding:10px 12px;border-radius:8px;background:rgba(255,255,255,0.04);">
+      <div style="font-weight:700;color:#edf0fa;margin-bottom:4px;">License Keys</div>
+      ${Object.entries(keysObj).map(([k, v]) => `<div>${k}: ${v.usesCount || 0} / ${v.maxUses} used ${v.valid ? '' : '(disabled)'}</div>`).join('') || '<div>None</div>'}
+    </div>
+  `;
+
+  if (!rows.length) {
+    html += '<div>No licensed users yet.</div>';
+  } else {
+    html += rows.map(([uid, u]) => {
+      const lic   = u.license;
+      const key   = typeof lic === 'object' ? lic.key : lic;
+      const email = typeof lic === 'object' && lic.email ? lic.email : uid;
+      const when  = typeof lic === 'object' && lic.redeemedAt ? new Date(lic.redeemedAt).toLocaleString() : '';
+      return `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,0.08);gap:10px;">
+          <div style="min-width:0;">
+            <div style="color:#edf0fa;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${email}</div>
+            <div style="font-size:0.65rem;color:#6b7d96;">key: ${key}${when ? ' · ' + when : ''}</div>
+          </div>
+          <button onclick="revokeLicense('${uid}','${key}')" style="flex-shrink:0;padding:6px 12px;border-radius:6px;border:1px solid rgba(239,68,68,0.4);background:rgba(239,68,68,0.12);color:#f87171;font-size:0.62rem;font-weight:700;cursor:pointer;">Revoke</button>
+        </div>
+      `;
+    }).join('');
+  }
+
+  body.innerHTML = html;
+}
+
+window.revokeLicense = async function(uid, key) {
+  try {
+    await _fbDB.ref('users/' + uid + '/license').remove();
+    const keyRef = _fbDB.ref('licenseKeys/' + _sanitizeKey(key));
+    const snap = await keyRef.get();
+    if (snap.exists()) {
+      const val = snap.val();
+      await keyRef.update({ usesCount: Math.max(0, (val.usesCount || 0) - 1) });
+    }
+    showToastMsg && showToastMsg('✓ License revoked');
+  } catch (e) {
+    showToastMsg && showToastMsg('⚠️ Revoke failed: ' + e.message);
+  }
+  renderAdminPanel();
+};
 
 window._fb = {
   mode:     null,
@@ -8527,6 +8655,17 @@ window.fbToggleViewers = function() {
 <div id="licenseGateModal" style="display:none;position:fixed;inset:0;z-index:99998;background:rgba(4,6,13,0.92);align-items:center;justify-content:center;">
   <div style="width:min(90vw,380px);background:#0c1020;border:1px solid rgba(219,166,66,0.3);border-radius:16px;padding:28px 24px;text-align:center;">
     <div id="licenseGateBody"></div>
+  </div>
+</div>
+
+<!-- ═══ ADMIN: LICENSE MANAGEMENT (visit ?admin=1 while signed in as an admin) ═══ -->
+<div id="adminPanelModal" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(4,6,13,0.95);align-items:flex-start;justify-content:center;overflow-y:auto;">
+  <div style="width:min(92vw,720px);background:#0c1020;border:1px solid rgba(219,166,66,0.3);border-radius:16px;padding:28px 24px;margin:40px 0;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+      <div style="font-family:'Orbitron',sans-serif;font-size:0.9rem;font-weight:800;letter-spacing:1px;color:#edf0fa;">🔑 License Management</div>
+      <button onclick="document.getElementById('adminPanelModal').style.display='none';" style="padding:6px 12px;border-radius:6px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.05);color:#6b7d96;font-size:0.65rem;cursor:pointer;">Close</button>
+    </div>
+    <div id="adminPanelBody" style="font-size:0.72rem;color:#a8b3c7;"></div>
   </div>
 </div>
 
