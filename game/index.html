@@ -2520,6 +2520,17 @@ html, body { max-width: 100vw; overflow-x: hidden; }
 </style>
 <!-- ═══ FIREBASE LIVE SYNC ═══ -->
 <script>
+// True if this page load is resuming a sign-in that was started from the
+// license gate or admin panel (set right before the reload that follows a
+// Google sign-in). While true, the cinematic loading screen and the plain
+// landing screen must stay up so the raw scoreboard never flashes through
+// before the resumed gate has decided what to show.
+window._resumingAuthFlow = (function() {
+  try {
+    return sessionStorage.getItem('_pendingHostEntry') === '1' || sessionStorage.getItem('_pendingAdminPanel') === '1';
+  } catch (e) { return false; }
+})();
+
 // Safe Firebase init — runs after CDN scripts load
 var _fbDB = null;
 function _initFirebase() {
@@ -2605,17 +2616,12 @@ function _initFirebaseAuth() {
           sessionStorage.setItem('_cloudSyncBooted', '1');
           showToastMsg && showToastMsg('☁️ Signed in as ' + (user.displayName || user.email) + ' — loading cloud save...');
           setTimeout(() => location.reload(), 700);
-        } else if (sessionStorage.getItem('_pendingAdminPanel') === '1') {
-          sessionStorage.removeItem('_pendingAdminPanel');
-          if (typeof maybeShowAdminPanel === 'function') maybeShowAdminPanel();
-        } else if (typeof _resumePendingHostEntry === 'function') {
-          _resumePendingHostEntry();
-          if (typeof maybeShowAdminPanel === 'function') maybeShowAdminPanel();
+          return; // the reload will re-run this whole handler; resolve pending flows then
         }
       } else {
         window.storage = undefined;
-        if (typeof maybeShowAdminPanel === 'function') maybeShowAdminPanel();
       }
+      _resolvePendingAuthFlows();
     });
   } catch (e) {
     console.warn('Firebase auth init failed:', e.message);
@@ -2839,11 +2845,32 @@ async function _redeemLicenseKey(rawKey) {
   return { ok: true };
 }
 
-// Resume the host-entry flow automatically after a sign-in-triggered reload.
-function _resumePendingHostEntry() {
-  if (sessionStorage.getItem('_pendingHostEntry') === '1') {
-    sessionStorage.removeItem('_pendingHostEntry');
-    _requireTeacherAccess();
+// Resolve any pending host-entry / admin-panel flow once auth state is known
+// (called on every onAuthStateChanged firing, whether signed in or out).
+// Always ends by clearing _resumingAuthFlow and dismissing the loading
+// overlay if it was being held open for this — including the edge case where
+// a sign-in was cancelled and neither flag was actually consumed here.
+function _resolvePendingAuthFlows() {
+  var pendingHost  = sessionStorage.getItem('_pendingHostEntry') === '1';
+  var pendingAdmin = sessionStorage.getItem('_pendingAdminPanel') === '1';
+  var onAdminUrl   = new URLSearchParams(location.search).get('admin') === '1';
+
+  if (pendingHost)  sessionStorage.removeItem('_pendingHostEntry');
+  if (pendingAdmin) sessionStorage.removeItem('_pendingAdminPanel');
+
+  var work = [];
+  if (pendingHost && typeof _requireTeacherAccess === 'function') {
+    work.push(_requireTeacherAccess());
+  }
+  if ((pendingAdmin || onAdminUrl) && typeof maybeShowAdminPanel === 'function') {
+    work.push(maybeShowAdminPanel());
+  }
+
+  if (pendingHost || pendingAdmin || window._resumingAuthFlow) {
+    Promise.all(work).catch(function() {}).finally(function() {
+      window._resumingAuthFlow = false;
+      showLoadingOverlay(false);
+    });
   }
 }
 
@@ -11330,8 +11357,15 @@ async function loadAll() {
   // Keep loading screen visible for 1.5–2.5s minimum for the cinematic effect
   var minDelay = 1500 + Math.random() * 1000;
   setTimeout(function() {
-    showLoadingOverlay(false);
-    init();
+    if (window._resumingAuthFlow) {
+      // A pending sign-in/license/admin flow is resuming after reload — keep
+      // the overlay up so nothing flashes through. Whoever resolves that flow
+      // (see _resolvePendingAuthFlows) dismisses it.
+      init();
+    } else {
+      showLoadingOverlay(false);
+      init();
+    }
   }, minDelay);
 }
 
