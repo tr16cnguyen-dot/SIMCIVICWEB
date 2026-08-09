@@ -2743,13 +2743,31 @@ window._submitLicenseKey = async function() {
 async function _redeemLicenseKey(rawKey) {
   const key  = String(rawKey || '').trim().toUpperCase();
   const user = _fbAuth && _fbAuth.currentUser;
+  console.log('[license] redeem attempt', { key, uid: user && user.uid, authCurrentUser: !!user });
   if (!key)  return { ok: false, error: 'Enter a license key.' };
   if (!user) return { ok: false, error: 'Not signed in.' };
 
-  const keyRef = _fbDB.ref('licenseKeys/' + _sanitizeKey(key));
+  try {
+    const token = await user.getIdToken();
+    console.log('[license] got ID token, length', token.length);
+  } catch (e) {
+    console.log('[license] getIdToken FAILED', e.message);
+  }
+
+  const keyPath = 'licenseKeys/' + _sanitizeKey(key);
+  const keyRef  = _fbDB.ref(keyPath);
+
+  try {
+    const preSnap = await keyRef.get();
+    console.log('[license] pre-read', keyPath, preSnap.exists(), preSnap.val());
+  } catch (e) {
+    console.log('[license] pre-read FAILED', e.code, e.message);
+  }
+
   let result;
   try {
     result = await keyRef.transaction(function(cur) {
+      console.log('[license] transaction fn called with cur=', cur);
       if (!cur || cur.valid !== true) return; // abort — missing or invalid
       const used = cur.usesCount || 0;
       const max  = cur.maxUses != null ? cur.maxUses : 1;
@@ -2757,7 +2775,9 @@ async function _redeemLicenseKey(rawKey) {
       cur.usesCount = used + 1;
       return cur;
     });
+    console.log('[license] transaction result', { committed: result.committed, val: result.snapshot && result.snapshot.val() });
   } catch (e) {
+    console.log('[license] transaction THREW', e.code, e.message);
     return { ok: false, error: 'Could not verify key — try again.' };
   }
 
@@ -2768,6 +2788,7 @@ async function _redeemLicenseKey(rawKey) {
   try {
     await _fbDB.ref('users/' + user.uid + '/license').set(key);
   } catch (e) {
+    console.log('[license] license write FAILED', e.code, e.message);
     return { ok: false, error: 'Key accepted but could not save to your account. Try again.' };
   }
   return { ok: true };
