@@ -659,12 +659,12 @@ nav{backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:
   <div class="wrap">
     <div class="about-grid">
       <div class="rev">
-        <div class="eye">What Is SimCivic?</div>
-        <h2 class="sh">A Living,<br>Breathing <em>World</em></h2>
-        <p class="sp">Created by Truc Nguyen during her work with Fayette County Public Schools, SimCivic puts student teams in charge of fictional nations — managing 7 resources, negotiating formal trades, forging alliances, and building real physical cities to compete for the highest score.</p>
+        <div class="eye" data-editable="about-eyebrow">What Is SimCivic?</div>
+        <h2 class="sh" data-editable="about-heading">A Living,<br>Breathing <em>World</em></h2>
+        <p class="sp" data-editable="about-paragraph">Created by Truc Nguyen during her work with Fayette County Public Schools, SimCivic puts student teams in charge of fictional nations — managing 7 resources, negotiating formal trades, forging alliances, and building real physical cities to compete for the highest score.</p>
         <div class="about-q">
-          <div class="aq-label">Pilot Results — Stonewall Elementary, April 2026</div>
-          <p class="aq-p">33 fifth-graders participated (31/33 completed the survey). 93% said they'd do it again. Average enjoyment: 4.2 out of 5. 74% wanted an after-school SimCivic club.</p>
+          <div class="aq-label" data-editable="about-pilot-label">Pilot Results — Stonewall Elementary, April 2026</div>
+          <p class="aq-p" data-editable="about-pilot-paragraph">33 fifth-graders participated (31/33 completed the survey). 93% said they'd do it again. Average enjoyment: 4.2 out of 5. 74% wanted an after-school SimCivic club.</p>
         </div>
         <div class="pilot-vis rev">
           <div class="pilot-ring-wrap">
@@ -704,8 +704,8 @@ nav{backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:
   <!-- WORLD MAP TERRITORY SELECTOR -->
   <div class="worldmap-container">
     <div class="wm-nations-title">
-      <span class="eye">The Nations</span>
-      <h2>Five Territories. <em>One World.</em></h2>
+      <span class="eye" data-editable="nations-eyebrow">The Nations</span>
+      <h2 data-editable="nations-heading">Five Territories. <em>One World.</em></h2>
     </div>
     <canvas id="wm-globe"></canvas>
     <div class="wm-hint">Drag to spin · Click a territory to enter</div>
@@ -717,41 +717,41 @@ nav{backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:
     <div class="ngrid">
       <div id="azure"     class="ncard"    style="--nc:var(--azure)">
         <span class="nf">💧</span>
-        <div class="nn">Azure</div>
-        <div class="nsb">The Maritime Trade Hub</div>
-        <div class="nd">A peninsula nation commanding global sea trade. Fertile coasts, powerful fleets, and an economy built on the water.</div>
+        <div class="nn" data-editable="ncard-azure-name">Azure</div>
+        <div class="nsb" data-editable="ncard-azure-subtitle">The Maritime Trade Hub</div>
+        <div class="nd" data-editable="ncard-azure-desc">A peninsula nation commanding global sea trade. Fertile coasts, powerful fleets, and an economy built on the water.</div>
         <div class="ntags"><span class="ntag">Maritime Hub</span><span class="ntag">Water Rich</span><span class="ntag">High Capital</span></div>
         <div class="ncard-cta">Explore Nation →</div>
       </div>
       <div id="synapse"   class="ncard"    style="--nc:var(--synapse)">
         <span class="nf">⚡</span>
-        <div class="nn">Synapse</div>
-        <div class="nsb">The Tech Nation</div>
-        <div class="nd">Silicon Valley at scale. Dominant in research and capital — but critically dependent on others for food and water.</div>
+        <div class="nn" data-editable="ncard-synapse-name">Synapse</div>
+        <div class="nsb" data-editable="ncard-synapse-subtitle">The Tech Nation</div>
+        <div class="nd" data-editable="ncard-synapse-desc">Silicon Valley at scale. Dominant in research and capital — but critically dependent on others for food and water.</div>
         <div class="ntags"><span class="ntag">Tech Hub</span><span class="ntag">Low Resources</span><span class="ntag">High Capital</span></div>
         <div class="ncard-cta">Explore Nation →</div>
       </div>
       <div id="ironvale"  class="ncard"    style="--nc:var(--ironvale)">
         <span class="nf">⚙️</span>
-        <div class="nn">Ironvale</div>
-        <div class="nsb">The Industrial Core</div>
-        <div class="nd">Mountains of raw industry. Generates massive capital and materials — at enormous environmental and social cost.</div>
+        <div class="nn" data-editable="ncard-ironvale-name">Ironvale</div>
+        <div class="nsb" data-editable="ncard-ironvale-subtitle">The Industrial Core</div>
+        <div class="nd" data-editable="ncard-ironvale-desc">Mountains of raw industry. Generates massive capital and materials — at enormous environmental and social cost.</div>
         <div class="ntags"><span class="ntag">Raw Mats</span><span class="ntag">High Capital</span><span class="ntag">High Pollution</span></div>
         <div class="ncard-cta">Explore Nation →</div>
       </div>
       <div id="verdantia" class="ncard"    style="--nc:var(--verdantia)">
         <span class="nf">🌿</span>
-        <div class="nn">Verdantia</div>
-        <div class="nsb">The Green Republic</div>
-        <div class="nd">A living paradise built on ecological balance. Diplomacy and sustainability are its greatest — and only — weapons.</div>
+        <div class="nn" data-editable="ncard-verdantia-name">Verdantia</div>
+        <div class="nsb" data-editable="ncard-verdantia-subtitle">The Green Republic</div>
+        <div class="nd" data-editable="ncard-verdantia-desc">A living paradise built on ecological balance. Diplomacy and sustainability are its greatest — and only — weapons.</div>
         <div class="ntags"><span class="ntag">Forest Rich</span><span class="ntag">High Happiness</span><span class="ntag">Low Pollution</span></div>
         <div class="ncard-cta">Explore Nation →</div>
       </div>
       <div id="novan"     class="ncard"    style="--nc:var(--novan)">
         <span class="nf">☀️</span>
-        <div class="nn">Novan</div>
-        <div class="nsb">The Land of Dreamers</div>
-        <div class="nd">Vast, untapped, and ungoverned. The wild card whose biggest challenge isn't resources — it's itself.</div>
+        <div class="nn" data-editable="ncard-novan-name">Novan</div>
+        <div class="nsb" data-editable="ncard-novan-subtitle">The Land of Dreamers</div>
+        <div class="nd" data-editable="ncard-novan-desc">Vast, untapped, and ungoverned. The wild card whose biggest challenge isn't resources — it's itself.</div>
         <div class="ntags"><span class="ntag">Untapped</span><span class="ntag">No Alliances</span><span class="ntag">Wild Card</span></div>
         <div class="ncard-cta">Explore Nation →</div>
       </div>
@@ -794,9 +794,9 @@ nav{backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:
   <div class="nd-wrap">
     <button class="nd-back-btn" data-page="nations">All Nations</button>
     <span class="nd-flag2">💧</span>
-    <div class="nd-name2" style="color:var(--azure)">Azure</div>
-    <div class="nd-tagline">The Maritime Trade Hub</div>
-    <p class="nd-lore">The world's largest maritime trade hub. A peninsula nation with a strategic coastal position, highly fertile inland plains, and fishing fleets that anchor its economy. Azure's waters are the lifeblood of global trade — control the seas, control the game.</p>
+    <div class="nd-name2" style="color:var(--azure)" data-editable="azure-name">Azure</div>
+    <div class="nd-tagline" data-editable="azure-tagline">The Maritime Trade Hub</div>
+    <p class="nd-lore" data-editable="azure-lore">The world's largest maritime trade hub. A peninsula nation with a strategic coastal position, highly fertile inland plains, and fishing fleets that anchor its economy. Azure's waters are the lifeblood of global trade — control the seas, control the game.</p>
     </div>
     <div class="nd-stats">
       <div class="nd-stat" style="--nc:var(--azure)"><div class="nd-sv">High</div><div class="nd-sl">Capital</div></div>
@@ -804,11 +804,11 @@ nav{backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:
       <div class="nd-stat" style="--nc:var(--azure)"><div class="nd-sv">Strong</div><div class="nd-sl">Food Output</div></div>
     </div>
     <div class="nd-strat">
-      <div class="nd-st">Strategic Playbook</div>
-      <div class="nd-si">Leverage your water surplus — trade it to Synapse at a premium for their Capital and tech edge.</div>
-      <div class="nd-si">Forge early alliances with Verdantia to dominate diplomacy and lock in dual food security.</div>
-      <div class="nd-si">Use your Capital advantage to build ports and markets early for a high City Building score.</div>
-      <div class="nd-si">Your Negotiator is your greatest weapon — keep them at the table at all times.</div>
+      <div class="nd-st" data-editable="azure-strat-title">Strategic Playbook</div>
+      <div class="nd-si" data-editable="azure-strat-1">Leverage your water surplus — trade it to Synapse at a premium for their Capital and tech edge.</div>
+      <div class="nd-si" data-editable="azure-strat-2">Forge early alliances with Verdantia to dominate diplomacy and lock in dual food security.</div>
+      <div class="nd-si" data-editable="azure-strat-3">Use your Capital advantage to build ports and markets early for a high City Building score.</div>
+      <div class="nd-si" data-editable="azure-strat-4">Your Negotiator is your greatest weapon — keep them at the table at all times.</div>
     </div>
   </div>
 </section>
@@ -863,9 +863,9 @@ nav{backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:
   <div class="nd-wrap">
     <button class="nd-back-btn" data-page="nations">All Nations</button>
     <span class="nd-flag2">⚡</span>
-    <div class="nd-name2" style="color:var(--synapse)">Synapse</div>
-    <div class="nd-tagline">The Tech Nation</div>
-    <p class="nd-lore">A large-scale Silicon Valley built on innovation and research. Technologically dominant but under constant strain from limited access to essential resources like food and water. Synapse lives and dies by its ability to trade Capital for survival.</p>
+    <div class="nd-name2" style="color:var(--synapse)" data-editable="synapse-name">Synapse</div>
+    <div class="nd-tagline" data-editable="synapse-tagline">The Tech Nation</div>
+    <p class="nd-lore" data-editable="synapse-lore">A large-scale Silicon Valley built on innovation and research. Technologically dominant but under constant strain from limited access to essential resources like food and water. Synapse lives and dies by its ability to trade Capital for survival.</p>
     </div>
     <div class="nd-stats">
       <div class="nd-stat" style="--nc:var(--synapse)"><div class="nd-sv">Very High</div><div class="nd-sl">Capital</div></div>
@@ -873,11 +873,11 @@ nav{backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:
       <div class="nd-stat" style="--nc:var(--synapse)"><div class="nd-sv">Critical</div><div class="nd-sl">Water Deficit</div></div>
     </div>
     <div class="nd-strat">
-      <div class="nd-st">Strategic Playbook</div>
-      <div class="nd-si">Your survival depends on trade — broker deals for Food and Water early before reserves run dry.</div>
-      <div class="nd-si">Use your Capital surplus to purchase political alliances and pass Global Policy Resolutions.</div>
-      <div class="nd-si">Target Verdantia and Azure as essential partners — they have what you lack.</div>
-      <div class="nd-si">Declare war only as a last resort; you cannot afford the resource cost with empty reserves.</div>
+      <div class="nd-st" data-editable="synapse-strat-title">Strategic Playbook</div>
+      <div class="nd-si" data-editable="synapse-strat-1">Your survival depends on trade — broker deals for Food and Water early before reserves run dry.</div>
+      <div class="nd-si" data-editable="synapse-strat-2">Use your Capital surplus to purchase political alliances and pass Global Policy Resolutions.</div>
+      <div class="nd-si" data-editable="synapse-strat-3">Target Verdantia and Azure as essential partners — they have what you lack.</div>
+      <div class="nd-si" data-editable="synapse-strat-4">Declare war only as a last resort; you cannot afford the resource cost with empty reserves.</div>
     </div>
   </div>
 </section>
@@ -929,9 +929,9 @@ nav{backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:
   <div class="nd-wrap">
     <button class="nd-back-btn" data-page="nations">All Nations</button>
     <span class="nd-flag2">⚙️</span>
-    <div class="nd-name2" style="color:var(--ironvale)">Ironvale</div>
-    <div class="nd-tagline">The Industrial Core</div>
-    <p class="nd-lore">The gray nation — rugged mountain ranges and dense industrial corridors. Ironvale generates massive raw materials and capital, but at enormous environmental and social cost. Its mountains never sleep and its smokestacks never cool.</p>
+    <div class="nd-name2" style="color:var(--ironvale)" data-editable="ironvale-name">Ironvale</div>
+    <div class="nd-tagline" data-editable="ironvale-tagline">The Industrial Core</div>
+    <p class="nd-lore" data-editable="ironvale-lore">The gray nation — rugged mountain ranges and dense industrial corridors. Ironvale generates massive raw materials and capital, but at enormous environmental and social cost. Its mountains never sleep and its smokestacks never cool.</p>
     </div>
     <div class="nd-stats">
       <div class="nd-stat" style="--nc:var(--ironvale)"><div class="nd-sv">Massive</div><div class="nd-sl">Raw Materials</div></div>
@@ -939,11 +939,11 @@ nav{backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:
       <div class="nd-stat" style="--nc:var(--ironvale)"><div class="nd-sv">Critical</div><div class="nd-sl">Pollution Level</div></div>
     </div>
     <div class="nd-strat">
-      <div class="nd-st">Strategic Playbook</div>
-      <div class="nd-si">Trade Raw Materials aggressively — every other nation needs them for city building.</div>
-      <div class="nd-si">Manage Pollution before it tanks your Happiness and Population scores.</div>
-      <div class="nd-si">Your City Planner can build industrial structures worth max points — invest in them early.</div>
-      <div class="nd-si">Avoid long wars; your industrial base is valuable but your social stats are your weakness.</div>
+      <div class="nd-st" data-editable="ironvale-strat-title">Strategic Playbook</div>
+      <div class="nd-si" data-editable="ironvale-strat-1">Trade Raw Materials aggressively — every other nation needs them for city building.</div>
+      <div class="nd-si" data-editable="ironvale-strat-2">Manage Pollution before it tanks your Happiness and Population scores.</div>
+      <div class="nd-si" data-editable="ironvale-strat-3">Your City Planner can build industrial structures worth max points — invest in them early.</div>
+      <div class="nd-si" data-editable="ironvale-strat-4">Avoid long wars; your industrial base is valuable but your social stats are your weakness.</div>
     </div>
   </div>
 </section>
@@ -1014,9 +1014,9 @@ nav{backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:
   <div class="nd-wrap">
     <button class="nd-back-btn" data-page="nations">All Nations</button>
     <span class="nd-flag2">🌿</span>
-    <div class="nd-name2" style="color:var(--verdantia)">Verdantia</div>
-    <div class="nd-tagline">The Green Republic</div>
-    <p class="nd-lore">Often called a "Paradise." Founded on ecological balance and long-term citizen well-being. Verdantia's forests never burn, its rivers run clean, and its people vote. Diplomacy and sustainability are its greatest weapons — and its greatest vulnerabilities.</p>
+    <div class="nd-name2" style="color:var(--verdantia)" data-editable="verdantia-name">Verdantia</div>
+    <div class="nd-tagline" data-editable="verdantia-tagline">The Green Republic</div>
+    <p class="nd-lore" data-editable="verdantia-lore">Often called a "Paradise." Founded on ecological balance and long-term citizen well-being. Verdantia's forests never burn, its rivers run clean, and its people vote. Diplomacy and sustainability are its greatest weapons — and its greatest vulnerabilities.</p>
     </div>
     <div class="nd-stats">
       <div class="nd-stat" style="--nc:var(--verdantia)"><div class="nd-sv">Very High</div><div class="nd-sl">Happiness</div></div>
@@ -1024,11 +1024,11 @@ nav{backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:
       <div class="nd-stat" style="--nc:var(--verdantia)"><div class="nd-sv">Near Zero</div><div class="nd-sl">Pollution</div></div>
     </div>
     <div class="nd-strat">
-      <div class="nd-st">Strategic Playbook</div>
-      <div class="nd-si">Your Diplomat is your MVP — push Global Policy Resolutions early to gain political dominance.</div>
-      <div class="nd-si">Trade Food surplus to Synapse and Ironvale; they'll pay anything to feed their populations.</div>
-      <div class="nd-si">Use your Happiness advantage to withstand wars — your population won't fracture under pressure.</div>
-      <div class="nd-si">Build parks, schools, and hospitals for maximum city building points; it fits your identity.</div>
+      <div class="nd-st" data-editable="verdantia-strat-title">Strategic Playbook</div>
+      <div class="nd-si" data-editable="verdantia-strat-1">Your Diplomat is your MVP — push Global Policy Resolutions early to gain political dominance.</div>
+      <div class="nd-si" data-editable="verdantia-strat-2">Trade Food surplus to Synapse and Ironvale; they'll pay anything to feed their populations.</div>
+      <div class="nd-si" data-editable="verdantia-strat-3">Use your Happiness advantage to withstand wars — your population won't fracture under pressure.</div>
+      <div class="nd-si" data-editable="verdantia-strat-4">Build parks, schools, and hospitals for maximum city building points; it fits your identity.</div>
     </div>
   </div>
 </section>
@@ -1088,9 +1088,9 @@ nav{backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:
   <div class="nd-wrap">
     <button class="nd-back-btn" data-page="nations">All Nations</button>
     <span class="nd-flag2">☀️</span>
-    <div class="nd-name2" style="color:var(--novan)">Novan</div>
-    <div class="nd-tagline">The Land of Dreamers</div>
-    <p class="nd-lore">Vast, resource-rich, and largely untapped. The wild card — an early-stage nation with no established alliances whose biggest challenge is internal governance. Novan can become anything, or it can collapse into nothing. Everything depends on your first moves.</p>
+    <div class="nd-name2" style="color:var(--novan)" data-editable="novan-name">Novan</div>
+    <div class="nd-tagline" data-editable="novan-tagline">The Land of Dreamers</div>
+    <p class="nd-lore" data-editable="novan-lore">Vast, resource-rich, and largely untapped. The wild card — an early-stage nation with no established alliances whose biggest challenge is internal governance. Novan can become anything, or it can collapse into nothing. Everything depends on your first moves.</p>
     </div>
     <div class="nd-stats">
       <div class="nd-stat" style="--nc:var(--novan)"><div class="nd-sv">Abundant</div><div class="nd-sl">Raw Materials</div></div>
@@ -1098,11 +1098,11 @@ nav{backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:
       <div class="nd-stat" style="--nc:var(--novan)"><div class="nd-sv">Wild Card</div><div class="nd-sl">Unpredictable</div></div>
     </div>
     <div class="nd-strat">
-      <div class="nd-st">Strategic Playbook</div>
-      <div class="nd-si">Build alliances immediately — your isolation is your greatest vulnerability in Round 1.</div>
-      <div class="nd-si">Use your Raw Material surplus as a bargaining chip; every nation needs them to build.</div>
-      <div class="nd-si">Your President must be decisive and vocal — Novan's story is written by how boldly you lead.</div>
-      <div class="nd-si">Stay neutral long enough to pick the winning side, then commit fully to that alliance.</div>
+      <div class="nd-st" data-editable="novan-strat-title">Strategic Playbook</div>
+      <div class="nd-si" data-editable="novan-strat-1">Build alliances immediately — your isolation is your greatest vulnerability in Round 1.</div>
+      <div class="nd-si" data-editable="novan-strat-2">Use your Raw Material surplus as a bargaining chip; every nation needs them to build.</div>
+      <div class="nd-si" data-editable="novan-strat-3">Your President must be decisive and vocal — Novan's story is written by how boldly you lead.</div>
+      <div class="nd-si" data-editable="novan-strat-4">Stay neutral long enough to pick the winning side, then commit fully to that alliance.</div>
     </div>
   </div>
 </section>
@@ -1112,14 +1112,14 @@ nav{backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:
   <div class="wrap">
 
     <div class="roles-hd rev">
-      <div class="eye">Team Roles</div>
-      <h2 class="sh">Every Role. Every <em>Decision.</em></h2>
-      <p class="sp">Six specialized roles run each city. A weak Financial Planner can sink a thriving empire. A skilled Diplomat can turn enemies into allies overnight.</p>
+      <div class="eye" data-editable="roles-eyebrow">Team Roles</div>
+      <h2 class="sh" data-editable="roles-heading">Every Role. Every <em>Decision.</em></h2>
+      <p class="sp" data-editable="roles-paragraph">Six specialized roles run each city. A weak Financial Planner can sink a thriving empire. A skilled Diplomat can turn enemies into allies overnight.</p>
     </div>
 
     <div class="rbanner rev">
-      <span class="rbl">Budget Rule</span>
-      <span class="rbr">Correct budget = <strong>+5 Capital</strong>&nbsp;&nbsp;·&nbsp;&nbsp;Incorrect budget = <span class="neg">−5 Capital</span></span>
+      <span class="rbl" data-editable="roles-budget-label">Budget Rule</span>
+      <span class="rbr" data-editable="roles-budget-text">Correct budget = <strong>+5 Capital</strong>&nbsp;&nbsp;·&nbsp;&nbsp;Incorrect budget = <span class="neg">−5 Capital</span></span>
     </div>
 
     <div class="rgrid2">
@@ -1128,8 +1128,8 @@ nav{backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:
         <div class="rc2-inner">
           <div class="rc2-front">
             <span class="rc2-icon">👑</span>
-            <div class="rc2-name">President</div>
-            <div class="rc2-desc">The strategic leader. Sets direction, holds the device during choice events, communicates with the host, and calls the Global Summit — once per game.</div>
+            <div class="rc2-name" data-editable="role-president-name">President</div>
+            <div class="rc2-desc" data-editable="role-president-desc">The strategic leader. Sets direction, holds the device during choice events, communicates with the host, and calls the Global Summit — once per game.</div>
             <div class="rc2-tags"><span class="rc2-tag">SUMMIT</span><span class="rc2-tag">EVENTS</span><span class="rc2-tag">RECORDS</span></div>
             <div class="rc2-flip-hint">Click to flip →</div>
           </div>
@@ -1149,8 +1149,8 @@ nav{backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:
         <div class="rc2-inner">
           <div class="rc2-front">
             <span class="rc2-icon">💰</span>
-            <div class="rc2-name">Financial Planner</div>
-            <div class="rc2-desc">Tracks all 7 resources each round. Records trade and materials costs. Submits the budget — precision is everything.</div>
+            <div class="rc2-name" data-editable="role-financial-name">Financial Planner</div>
+            <div class="rc2-desc" data-editable="role-financial-desc">Tracks all 7 resources each round. Records trade and materials costs. Submits the budget — precision is everything.</div>
             <div class="rc2-tags"><span class="rc2-tag">BUDGET</span><span class="rc2-tag">TRADE CALCS</span><span class="rc2-tag">RESOURCES</span></div>
             <div class="rc2-flip-hint">Click to flip →</div>
           </div>
@@ -1170,8 +1170,8 @@ nav{backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:
         <div class="rc2-inner">
           <div class="rc2-front">
             <span class="rc2-icon">🤝</span>
-            <div class="rc2-name">Negotiator</div>
-            <div class="rc2-desc">Conducts formal negotiations at the Negotiation Table — 5 minutes per session. Both parties must sign the deal. Submits signed copies to the host.</div>
+            <div class="rc2-name" data-editable="role-negotiator-name">Negotiator</div>
+            <div class="rc2-desc" data-editable="role-negotiator-desc">Conducts formal negotiations at the Negotiation Table — 5 minutes per session. Both parties must sign the deal. Submits signed copies to the host.</div>
             <div class="rc2-tags"><span class="rc2-tag">TRADE</span><span class="rc2-tag">ALLIANCES</span><span class="rc2-tag">SIGN</span></div>
             <div class="rc2-flip-hint">Click to flip →</div>
           </div>
@@ -1191,8 +1191,8 @@ nav{backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:
         <div class="rc2-inner">
           <div class="rc2-front">
             <span class="rc2-icon">🌍</span>
-            <div class="rc2-name">Diplomat</div>
-            <div class="rc2-desc">Creates Global Policy Resolutions and collects 5 signatures to pass them. Tracks political rankings and advises on alliances, enemies, and war.</div>
+            <div class="rc2-name" data-editable="role-diplomat-name">Diplomat</div>
+            <div class="rc2-desc" data-editable="role-diplomat-desc">Creates Global Policy Resolutions and collects 5 signatures to pass them. Tracks political rankings and advises on alliances, enemies, and war.</div>
             <div class="rc2-tags"><span class="rc2-tag">GLOBAL POLICY</span><span class="rc2-tag">RELATIONS</span><span class="rc2-tag">WAR</span></div>
             <div class="rc2-flip-hint">Click to flip →</div>
           </div>
@@ -1212,8 +1212,8 @@ nav{backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:
         <div class="rc2-inner">
           <div class="rc2-front">
             <span class="rc2-icon">🏛️</span>
-            <div class="rc2-name">City Planner</div>
-            <div class="rc2-desc">Decides what to build, destroy, buy, and sell. Scores structures based on materials, explanation, location, and contribution to the nation's story.</div>
+            <div class="rc2-name" data-editable="role-cityplanner-name">City Planner</div>
+            <div class="rc2-desc" data-editable="role-cityplanner-desc">Decides what to build, destroy, buy, and sell. Scores structures based on materials, explanation, location, and contribution to the nation's story.</div>
             <div class="rc2-tags"><span class="rc2-tag">BUILDS</span><span class="rc2-tag">BUY/SELL</span><span class="rc2-tag">SCORE</span></div>
             <div class="rc2-flip-hint">Click to flip →</div>
           </div>
@@ -1233,8 +1233,8 @@ nav{backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:
         <div class="rc2-inner">
           <div class="rc2-front">
             <span class="rc2-icon">🔧</span>
-            <div class="rc2-name">Engineer</div>
-            <div class="rc2-desc">Draws blueprints, buys from the materials store, records purchase orders, and calculates store and labor costs each round.</div>
+            <div class="rc2-name" data-editable="role-engineer-name">Engineer</div>
+            <div class="rc2-desc" data-editable="role-engineer-desc">Draws blueprints, buys from the materials store, records purchase orders, and calculates store and labor costs each round.</div>
             <div class="rc2-tags"><span class="rc2-tag">BLUEPRINTS</span><span class="rc2-tag">MATERIALS</span><span class="rc2-tag">LABOR COSTS</span></div>
             <div class="rc2-flip-hint">Click to flip →</div>
           </div>
@@ -1262,20 +1262,20 @@ nav{backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:
 <section id="mechanics" class="mech" data-section="mechanics" style="display:none;padding-top:82px;">
   <div class="wrap">
     <div class="mtop">
-      <div class="rev"><div class="eye">Game Mechanics</div><h2 class="sh">How SimCivic <em>Works</em></h2></div>
-      <div class="rev d1"><p class="sp">Six interconnected systems determine your fate. Master all of them — or find allies who cover your weaknesses.</p></div>
+      <div class="rev"><div class="eye" data-editable="mechanics-eyebrow">Game Mechanics</div><h2 class="sh" data-editable="mechanics-heading">How SimCivic <em>Works</em></h2></div>
+      <div class="rev d1"><p class="sp" data-editable="mechanics-paragraph">Six interconnected systems determine your fate. Master all of them — or find allies who cover your weaknesses.</p></div>
     </div>
     <div class="mech-progress">
       <div class="mp-dot"></div><div class="mp-dot"></div><div class="mp-dot"></div>
       <div class="mp-dot"></div><div class="mp-dot"></div><div class="mp-dot"></div>
     </div>
     <div class="mgrid">
-      <div class="mc rev">   <div class="mn">01</div><div class="mt2">Resources & Budget</div>  <div class="md">Every round applies passive changes to your 7 core resources. Financial Planners must track everything precisely.</div><div class="mrules"><div class="mr">+3 Capital, +2 Happiness, +3 Raw Mats every round</div><div class="mr">−3 Food and −3 Water consumed every round</div><div class="mr">Correct budget = +5 Capital / Incorrect = −5 Capital</div></div></div>
-      <div class="mc rev d1"><div class="mn">02</div><div class="mt2">Diplomacy & Trade</div>  <div class="md">Political rankings rise and fall through trades, alliances, and aid. Every transaction has diplomatic consequences.</div><div class="mrules"><div class="mr">+1% political ranking per trade occurrence</div><div class="mr">Ongoing alliances grant +2% per round</div><div class="mr">Breaking alliance: −10% political + both nations become ENEMIES</div></div></div>
-      <div class="mc rev d2"><div class="mn">03</div><div class="mt2">War System</div>          <div class="md">Nations can declare war — but the costs are real. Winners gain from losers; all allies are affected.</div><div class="mrules"><div class="mr">Declaring war costs −10 Capital and −10% political</div><div class="mr">Winner gains +6 Food, Water, Raw Mats & Capital</div><div class="mr">Losing nation protected from war for 2 rounds; allies of winner get +2 all stats</div></div></div>
-      <div class="mc rev">   <div class="mn">04</div><div class="mt2">City Building</div>       <div class="md">Building physical structures earns score points. Judged on materials, explanation, location, and real-world purpose.</div><div class="mrules"><div class="mr">Support (roads, bridges, ports): 1–3 pts</div><div class="mr">Amenities & Necessities (parks, hospitals, schools): 3–8 pts</div><div class="mr">Creative structures with a purpose: 0–15 pts</div></div></div>
-      <div class="mc rev d1"><div class="mn">05</div><div class="mt2">Global Policy</div>       <div class="md">Pass resolutions that reshape the rules of the game. Get 5 signatures from other nations' key roles.</div><div class="mrules"><div class="mr">5 signatures from other nations required to pass</div><div class="mr">Each passed policy = +3% political score</div><div class="mr">Coordinator can veto unbalanced policies</div></div></div>
-      <div class="mc rev d2"><div class="mn">06</div><div class="mt2">Aid System</div>          <div class="md">Nations can request and receive aid at any time. Post-war nations get a special Aid Request system.</div><div class="mrules"><div class="mr">Any nation can request aid at any time</div><div class="mr">Declining ally aid causes greater relation damage</div><div class="mr">Relationship strength shapes aid impact</div></div></div>
+      <div class="mc rev">   <div class="mn">01</div><div class="mt2" data-editable="mech-1-title">Resources & Budget</div>  <div class="md" data-editable="mech-1-desc">Every round applies passive changes to your 7 core resources. Financial Planners must track everything precisely.</div><div class="mrules"><div class="mr">+3 Capital, +2 Happiness, +3 Raw Mats every round</div><div class="mr">−3 Food and −3 Water consumed every round</div><div class="mr">Correct budget = +5 Capital / Incorrect = −5 Capital</div></div></div>
+      <div class="mc rev d1"><div class="mn">02</div><div class="mt2" data-editable="mech-2-title">Diplomacy & Trade</div>  <div class="md" data-editable="mech-2-desc">Political rankings rise and fall through trades, alliances, and aid. Every transaction has diplomatic consequences.</div><div class="mrules"><div class="mr">+1% political ranking per trade occurrence</div><div class="mr">Ongoing alliances grant +2% per round</div><div class="mr">Breaking alliance: −10% political + both nations become ENEMIES</div></div></div>
+      <div class="mc rev d2"><div class="mn">03</div><div class="mt2" data-editable="mech-3-title">War System</div>          <div class="md" data-editable="mech-3-desc">Nations can declare war — but the costs are real. Winners gain from losers; all allies are affected.</div><div class="mrules"><div class="mr">Declaring war costs −10 Capital and −10% political</div><div class="mr">Winner gains +6 Food, Water, Raw Mats & Capital</div><div class="mr">Losing nation protected from war for 2 rounds; allies of winner get +2 all stats</div></div></div>
+      <div class="mc rev">   <div class="mn">04</div><div class="mt2" data-editable="mech-4-title">City Building</div>       <div class="md" data-editable="mech-4-desc">Building physical structures earns score points. Judged on materials, explanation, location, and real-world purpose.</div><div class="mrules"><div class="mr">Support (roads, bridges, ports): 1–3 pts</div><div class="mr">Amenities & Necessities (parks, hospitals, schools): 3–8 pts</div><div class="mr">Creative structures with a purpose: 0–15 pts</div></div></div>
+      <div class="mc rev d1"><div class="mn">05</div><div class="mt2" data-editable="mech-5-title">Global Policy</div>       <div class="md" data-editable="mech-5-desc">Pass resolutions that reshape the rules of the game. Get 5 signatures from other nations' key roles.</div><div class="mrules"><div class="mr">5 signatures from other nations required to pass</div><div class="mr">Each passed policy = +3% political score</div><div class="mr">Coordinator can veto unbalanced policies</div></div></div>
+      <div class="mc rev d2"><div class="mn">06</div><div class="mt2" data-editable="mech-6-title">Aid System</div>          <div class="md" data-editable="mech-6-desc">Nations can request and receive aid at any time. Post-war nations get a special Aid Request system.</div><div class="mrules"><div class="mr">Any nation can request aid at any time</div><div class="mr">Declining ally aid causes greater relation damage</div><div class="mr">Relationship strength shapes aid impact</div></div></div>
     </div>
   </div>
 </section>
@@ -1284,9 +1284,9 @@ nav{backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:
 <section id="resources" class="res" data-section="resources" style="display:none;padding-top:82px;">
   <div class="wrap">
     <div class="rev">
-      <div class="eye">Resource Guide</div>
-      <h2 class="sh">Thresholds That <em>Change Everything</em></h2>
-      <p class="sp">These automatic triggers fire at the end of every round. Financial Planners must watch these numbers constantly — one wrong move can spiral into crisis.</p>
+      <div class="eye" data-editable="resources-eyebrow">Resource Guide</div>
+      <h2 class="sh" data-editable="resources-heading">Thresholds That <em>Change Everything</em></h2>
+      <p class="sp" data-editable="resources-paragraph">These automatic triggers fire at the end of every round. Financial Planners must watch these numbers constantly — one wrong move can spiral into crisis.</p>
     </div>
     <div class="rlyt">
       <div class="rp rev">
@@ -1321,9 +1321,9 @@ nav{backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:
   <div class="ctabg"></div>
   <div class="ctabw">LEAD</div>
   <div class="ctain rev">
-    <div class="ctaeye">Ready to Compete?</div>
-    <h2 class="ctah">Build. Lead.<br><em>Dominate.</em></h2>
-    <p class="ctap">Every round is a new challenge. Every decision has consequences. Will your nation rise to the top — or fall to war, poverty, and poor planning?</p>
+    <div class="ctaeye" data-editable="cta-eyebrow">Ready to Compete?</div>
+    <h2 class="ctah" data-editable="cta-heading">Build. Lead.<br><em>Dominate.</em></h2>
+    <p class="ctap" data-editable="cta-paragraph">Every round is a new challenge. Every decision has consequences. Will your nation rise to the top — or fall to war, poverty, and poor planning?</p>
     <div class="ctaa">
       <a href="/game/" target="_blank" rel="noopener noreferrer" data-external class="btn-p">Start Game →</a>
       <button data-page="nations" class="btn-o">Explore Nations</button>
@@ -1335,7 +1335,7 @@ nav{backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:
 <footer>
   <div class="fbrand">
     <div><span class="fs">SIM</span><span class="fc">CIVIC</span></div>
-    <div class="fsub">Where Leaders Are Made</div>
+    <div class="fsub" data-editable="footer-tagline">Where Leaders Are Made</div>
   </div>
   <div class="flinks">
     <button data-page="nations">Nations</button>
@@ -1344,7 +1344,7 @@ nav{backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:
     <button data-page="resources">Resources</button>
     <a href="/game/" data-external>Dashboard</a>
   </div>
-  <div class="fcopy">PBL City &amp; Nation Simulation</div>
+  <div class="fcopy" data-editable="footer-copy">PBL City &amp; Nation Simulation</div>
 </footer>
 
 <!-- ═══ IN-PAGE EDIT MODE (admin-only, Firebase-backed) ═══ -->
