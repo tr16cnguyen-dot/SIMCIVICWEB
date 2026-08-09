@@ -2646,7 +2646,12 @@ window.googleSignOut = async function() {
   try { await _fbAuth.signOut(); } catch (e) {}
   window.storage = undefined;
   sessionStorage.removeItem('_cloudSyncBooted');
-  showToastMsg && showToastMsg('Signed out — using local save only');
+  sessionStorage.removeItem('_pendingHostEntry');
+  sessionStorage.removeItem('_pendingAdminPanel');
+  showToastMsg && showToastMsg('Signed out');
+  // Go back to the plain student/teacher choice screen — strip any
+  // ?host=1 / ?admin=1 / ?join=... so nothing re-opens automatically.
+  setTimeout(() => { window.location.href = window.location.pathname; }, 400);
 };
 
 // ── Teacher-only license gate ──────────────────────────────
