@@ -2605,6 +2605,8 @@ function _initFirebaseAuth() {
           sessionStorage.setItem('_cloudSyncBooted', '1');
           showToastMsg && showToastMsg('☁️ Signed in as ' + (user.displayName || user.email) + ' — loading cloud save...');
           setTimeout(() => location.reload(), 700);
+        } else if (typeof _resumePendingHostEntry === 'function') {
+          _resumePendingHostEntry();
         }
       } else {
         window.storage = undefined;
@@ -2635,6 +2637,149 @@ window.googleSignOut = async function() {
   sessionStorage.removeItem('_cloudSyncBooted');
   showToastMsg && showToastMsg('Signed out — using local save only');
 };
+
+// ── Teacher-only license gate ──────────────────────────────
+// Students join via 6-digit code with no login. Only the host
+// (teacher) must sign in with Google and redeem a license key.
+
+async function hostEnterClicked() {
+  try { playSuccess(); } catch (e) {}
+  await _requireTeacherAccess();
+}
+
+function _enterHostView() {
+  hideLicenseGate();
+  document.getElementById('fbLandingScreen').style.display = 'none';
+}
+
+async function _requireTeacherAccess() {
+  if (!_fbAuth) {
+    let waited = 0;
+    while (!_fbAuth && waited < 5000) { await new Promise(r => setTimeout(r, 200)); waited += 200; }
+  }
+  if (!_fbAuth) {
+    showToastMsg && showToastMsg('⚠️ Firebase unavailable — check your internet connection');
+    return;
+  }
+  const user = _fbAuth.currentUser;
+  if (!user) {
+    renderLicenseGateSignIn();
+    return;
+  }
+  const hasLicense = await _checkLicense(user.uid);
+  if (hasLicense) {
+    _enterHostView();
+  } else {
+    renderLicenseGateKeyEntry();
+  }
+}
+
+async function _checkLicense(uid) {
+  try {
+    const snap = await _fbDB.ref('users/' + uid + '/license').get();
+    return snap.exists() && !!snap.val();
+  } catch (e) {
+    console.warn('License check failed:', e.message);
+    return false;
+  }
+}
+
+function hideLicenseGate() {
+  const modal = document.getElementById('licenseGateModal');
+  if (modal) modal.style.display = 'none';
+}
+
+function renderLicenseGateSignIn() {
+  const modal = document.getElementById('licenseGateModal');
+  const body  = document.getElementById('licenseGateBody');
+  body.innerHTML = `
+    <div style="font-size:1.8rem;margin-bottom:10px;">🔐</div>
+    <div style="font-family:'Orbitron',sans-serif;font-size:0.85rem;font-weight:800;letter-spacing:1px;color:#edf0fa;margin-bottom:8px;">Teacher Sign-In Required</div>
+    <div style="font-size:0.72rem;color:#6b7d96;margin-bottom:20px;line-height:1.5;">Sign in with Google to access the host dashboard.</div>
+    <button onclick="_gateSignIn()" style="width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.08);color:#edf0fa;font-family:'Orbitron',sans-serif;font-size:0.62rem;font-weight:800;letter-spacing:1px;cursor:pointer;margin-bottom:10px;">🔐 Sign in with Google</button>
+    <button onclick="hideLicenseGate()" style="width:100%;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.08);background:transparent;color:#6b7d96;font-size:0.65rem;cursor:pointer;">Cancel</button>
+  `;
+  modal.style.display = 'flex';
+}
+
+function renderLicenseGateKeyEntry(errorMsg) {
+  const modal = document.getElementById('licenseGateModal');
+  const body  = document.getElementById('licenseGateBody');
+  body.innerHTML = `
+    <div style="font-size:1.8rem;margin-bottom:10px;">🔑</div>
+    <div style="font-family:'Orbitron',sans-serif;font-size:0.85rem;font-weight:800;letter-spacing:1px;color:#edf0fa;margin-bottom:8px;">Enter License Key</div>
+    <div style="font-size:0.72rem;color:#6b7d96;margin-bottom:16px;line-height:1.5;">This account doesn't have a redeemed license yet.</div>
+    <input id="licenseKeyInput" type="text" placeholder="e.g. SCHOOL2026A" autocomplete="off" style="width:100%;box-sizing:border-box;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.05);color:#edf0fa;font-family:'JetBrains Mono',monospace;font-size:0.75rem;text-align:center;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;" />
+    <div id="licenseKeyError" style="font-size:0.65rem;color:#f87171;min-height:16px;margin-bottom:6px;">${errorMsg ? errorMsg : ''}</div>
+    <button id="licenseKeySubmitBtn" onclick="_submitLicenseKey()" style="width:100%;padding:10px;border-radius:8px;border:1px solid rgba(219,166,66,0.5);background:rgba(219,166,66,0.15);color:#f0c060;font-family:'Orbitron',sans-serif;font-size:0.62rem;font-weight:800;letter-spacing:1px;cursor:pointer;margin-bottom:10px;">Redeem Key</button>
+    <button onclick="hideLicenseGate()" style="width:100%;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.08);background:transparent;color:#6b7d96;font-size:0.65rem;cursor:pointer;">Cancel</button>
+  `;
+  modal.style.display = 'flex';
+  const input = document.getElementById('licenseKeyInput');
+  input.focus();
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') _submitLicenseKey(); });
+}
+
+window._gateSignIn = async function() {
+  sessionStorage.setItem('_pendingHostEntry', '1');
+  await window.googleSignIn();
+};
+
+window._submitLicenseKey = async function() {
+  const input = document.getElementById('licenseKeyInput');
+  const btn   = document.getElementById('licenseKeySubmitBtn');
+  const key   = input.value;
+  btn.disabled = true;
+  btn.textContent = 'Checking...';
+  const result = await _redeemLicenseKey(key);
+  if (result.ok) {
+    showToastMsg && showToastMsg('✓ License activated');
+    _enterHostView();
+  } else {
+    renderLicenseGateKeyEntry(result.error);
+  }
+};
+
+async function _redeemLicenseKey(rawKey) {
+  const key  = String(rawKey || '').trim().toUpperCase();
+  const user = _fbAuth && _fbAuth.currentUser;
+  if (!key)  return { ok: false, error: 'Enter a license key.' };
+  if (!user) return { ok: false, error: 'Not signed in.' };
+
+  const keyRef = _fbDB.ref('licenseKeys/' + _sanitizeKey(key));
+  let result;
+  try {
+    result = await keyRef.transaction(function(cur) {
+      if (!cur || cur.valid !== true) return; // abort — missing or invalid
+      const used = cur.usesCount || 0;
+      const max  = cur.maxUses != null ? cur.maxUses : 1;
+      if (used >= max) return; // abort — exhausted
+      cur.usesCount = used + 1;
+      return cur;
+    });
+  } catch (e) {
+    return { ok: false, error: 'Could not verify key — try again.' };
+  }
+
+  if (!result.committed) {
+    return { ok: false, error: 'Invalid or expired license key.' };
+  }
+
+  try {
+    await _fbDB.ref('users/' + user.uid + '/license').set(key);
+  } catch (e) {
+    return { ok: false, error: 'Key accepted but could not save to your account. Try again.' };
+  }
+  return { ok: true };
+}
+
+// Resume the host-entry flow automatically after a sign-in-triggered reload.
+function _resumePendingHostEntry() {
+  if (sessionStorage.getItem('_pendingHostEntry') === '1') {
+    sessionStorage.removeItem('_pendingHostEntry');
+    _requireTeacherAccess();
+  }
+}
 
 window._fb = {
   mode:     null,
@@ -8303,7 +8448,7 @@ window.fbToggleViewers = function() {
       <div class="landing-divider"></div>
 
       <!-- Host button -->
-      <button class="landing-btn landing-btn-host" onclick="(function(){try{playSuccess();}catch(e){}document.getElementById('fbLandingScreen').style.display='none';})()">
+      <button class="landing-btn landing-btn-host" onclick="hostEnterClicked()">
         <span class="landing-btn-icon">🖥️</span>
         I'M THE TEACHER (HOST)
       </button>
@@ -8319,6 +8464,13 @@ window.fbToggleViewers = function() {
         STUDENTS · Click Join and enter your teacher's 6-digit code
       </div>
     </div>
+  </div>
+</div>
+
+<!-- ═══ TEACHER LICENSE GATE ═══ -->
+<div id="licenseGateModal" style="display:none;position:fixed;inset:0;z-index:99998;background:rgba(4,6,13,0.92);align-items:center;justify-content:center;">
+  <div style="width:min(90vw,380px);background:#0c1020;border:1px solid rgba(219,166,66,0.3);border-radius:16px;padding:28px 24px;text-align:center;">
+    <div id="licenseGateBody"></div>
   </div>
 </div>
 
