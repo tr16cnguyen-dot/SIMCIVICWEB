@@ -2757,8 +2757,17 @@ window._submitLicenseKey = async function() {
   const result = await _redeemLicenseKey(key);
   _debugLog('Final result: ' + JSON.stringify(result));
   if (result.ok) {
-    showToastMsg && showToastMsg('✓ License activated');
-    _enterHostView();
+    if (result.freshlyRedeemed) {
+      // Reload so the app boots fresh from the now-cleared storage instead
+      // of keeping whatever round descriptions/draft/teacher names were
+      // already loaded into memory before this key was redeemed.
+      showToastMsg && showToastMsg('✓ License activated — loading your fresh dashboard...');
+      sessionStorage.setItem('_pendingHostEntry', '1');
+      setTimeout(() => location.reload(), 700);
+    } else {
+      showToastMsg && showToastMsg('✓ License activated');
+      _enterHostView();
+    }
   } else {
     renderLicenseGateKeyEntry(result.error);
   }
@@ -2784,7 +2793,7 @@ async function _redeemLicenseKey(rawKey) {
     const existing = await _fbDB.ref('users/' + user.uid + '/license').get();
     if (existing.exists() && existing.val()) {
       _debugLog('account already licensed with ' + JSON.stringify(existing.val()) + ' — not consuming another key');
-      return { ok: true };
+      return { ok: true, freshlyRedeemed: false };
     }
   } catch (e) {
     _debugLog('existing-license check failed: ' + e.code + ' ' + e.message);
@@ -2842,7 +2851,32 @@ async function _redeemLicenseKey(rawKey) {
     _debugLog('license write FAILED: ' + e.code + ' ' + e.message);
     return { ok: false, error: 'Key accepted but could not save to your account. Try again.' };
   }
-  return { ok: true };
+
+  // Give a newly-licensed account a clean slate: round descriptions, team
+  // draft, and teacher names must be empty — never the built-in demo
+  // content, and never whatever another teacher's testing left behind in
+  // this browser's local cache (localStorage isn't scoped per account).
+  try {
+    var emptyDescs = {};
+    var emptyDraft = {
+      pool: [],
+      rosters: (typeof initDraftRosters === 'function') ? initDraftRosters() : {},
+      teacherNames: [],
+      teacherAssign: {},
+      roleAssignments: {},
+    };
+    localStorage.setItem(ROUND_DESC_SK, JSON.stringify(emptyDescs));
+    localStorage.setItem(DRAFT_SK, JSON.stringify(emptyDraft));
+    await Promise.all([
+      window.storage && window.storage.set(ROUND_DESC_SK, JSON.stringify(emptyDescs)),
+      window.storage && window.storage.set(DRAFT_SK, JSON.stringify(emptyDraft)),
+    ]);
+    _debugLog('clean slate written for new license');
+  } catch (e) {
+    _debugLog('clean-slate reset failed: ' + e.message);
+  }
+
+  return { ok: true, freshlyRedeemed: true };
 }
 
 // Resolve any pending host-entry / admin-panel flow once auth state is known
