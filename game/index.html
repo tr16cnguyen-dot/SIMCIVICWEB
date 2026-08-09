@@ -2770,23 +2770,33 @@ async function _redeemLicenseKey(rawKey) {
   const keyPath = 'licenseKeys/' + _sanitizeKey(key);
   const keyRef  = _fbDB.ref(keyPath);
 
+  // Pre-read so we have a known-good fallback: .transaction() calls its update
+  // function with null on the first pass when the ref has no warm cache, even
+  // when the data genuinely exists — without this fallback that null gets
+  // mistaken for "key doesn't exist" and the transaction aborts prematurely.
+  let fallback = null;
   try {
     const preSnap = await keyRef.get();
+    fallback = preSnap.exists() ? preSnap.val() : null;
     _debugLog('pre-read ' + keyPath + ' exists=' + preSnap.exists() + ' val=' + JSON.stringify(preSnap.val()));
   } catch (e) {
     _debugLog('pre-read FAILED: ' + e.code + ' ' + e.message);
   }
 
+  if (!fallback || fallback.valid !== true) {
+    return { ok: false, error: 'Invalid or expired license key.' };
+  }
+
   let result;
   try {
     result = await keyRef.transaction(function(cur) {
-      _debugLog('transaction fn called with cur=' + JSON.stringify(cur));
-      if (!cur || cur.valid !== true) return; // abort — missing or invalid
-      const used = cur.usesCount || 0;
-      const max  = cur.maxUses != null ? cur.maxUses : 1;
+      const data = cur || fallback;
+      _debugLog('transaction fn called with cur=' + JSON.stringify(cur) + ' using=' + JSON.stringify(data));
+      if (!data || data.valid !== true) return; // abort — missing or invalid
+      const used = data.usesCount || 0;
+      const max  = data.maxUses != null ? data.maxUses : 1;
       if (used >= max) return; // abort — exhausted
-      cur.usesCount = used + 1;
-      return cur;
+      return { valid: data.valid, maxUses: max, usesCount: used + 1 };
     });
     _debugLog('transaction result: committed=' + result.committed + ' val=' + JSON.stringify(result.snapshot && result.snapshot.val()));
   } catch (e) {
