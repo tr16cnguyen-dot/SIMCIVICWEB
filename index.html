@@ -2211,26 +2211,107 @@ ScrollTrigger.create({
   }
 })();
 
-// ── FEATURE 12: AMBIENT SOUND TOGGLE ──────────────────────────────────────
-let audioCtx=null,ambNodes=[];
+// ── FEATURE 12: PROCEDURAL SCORE — futuristic/competitive nation-sim theme ─
+// A small generative composition (no audio files): a driving bass pulse,
+// a sci-fi arpeggiated synth lead, and a sustained pad with a slow filter
+// sweep, scheduled with the standard Web Audio lookahead-scheduler pattern
+// so timing stays sample-accurate regardless of setTimeout jitter.
+let audioCtx=null, musicMaster=null, musicPad=null, schedulerId=null;
+let nextStepTime=0, stepIndex=0;
+const MUSIC_BPM=124;
+const STEP_DUR=60/MUSIC_BPM/4; // 16th-note step
+// A natural minor, two octaves: A B C D E F G A — kept diatonic throughout.
+const SCALE=[220.00,246.94,261.63,293.66,329.63,349.23,392.00,440.00];
+// 16-step arpeggio pattern (scale degree indices) — rising/falling motion
+// around the root and fifth, the classic synth-arpeggiator sci-fi shape.
+const ARP_PATTERN=[0,4,2,4, 0,4,3,4, 0,4,2,4, 0,4,1,4];
+
+function _scheduleArpNote(freq,time){
+  const osc=audioCtx.createOscillator();
+  const filt=audioCtx.createBiquadFilter();
+  const gain=audioCtx.createGain();
+  osc.type='sawtooth';osc.frequency.value=freq;
+  filt.type='lowpass';filt.frequency.value=2000;filt.Q.value=6;
+  gain.gain.setValueAtTime(0,time);
+  gain.gain.linearRampToValueAtTime(0.05,time+0.004);
+  gain.gain.exponentialRampToValueAtTime(0.0001,time+0.11);
+  osc.connect(filt);filt.connect(gain);gain.connect(musicMaster);
+  osc.start(time);osc.stop(time+0.13);
+}
+function _scheduleBassNote(freq,time){
+  const osc=audioCtx.createOscillator();
+  const filt=audioCtx.createBiquadFilter();
+  const gain=audioCtx.createGain();
+  osc.type='triangle';osc.frequency.value=freq;
+  filt.type='lowpass';filt.frequency.value=420;
+  gain.gain.setValueAtTime(0,time);
+  gain.gain.linearRampToValueAtTime(0.11,time+0.008);
+  gain.gain.exponentialRampToValueAtTime(0.0001,time+0.38);
+  osc.connect(filt);filt.connect(gain);gain.connect(musicMaster);
+  osc.start(time);osc.stop(time+0.4);
+}
+function _scheduleTick(time){
+  const bufSize=audioCtx.sampleRate*0.03;
+  const buf=audioCtx.createBuffer(1,bufSize,audioCtx.sampleRate);
+  const data=buf.getChannelData(0);
+  for(let i=0;i<bufSize;i++) data[i]=(Math.random()*2-1)*(1-i/bufSize);
+  const noise=audioCtx.createBufferSource();noise.buffer=buf;
+  const filt=audioCtx.createBiquadFilter();filt.type='highpass';filt.frequency.value=6000;
+  const gain=audioCtx.createGain();gain.gain.value=0.025;
+  noise.connect(filt);filt.connect(gain);gain.connect(musicMaster);
+  noise.start(time);
+}
+function _musicSchedulerTick(){
+  while(nextStepTime<audioCtx.currentTime+0.15){
+    const step=stepIndex%16;
+    _scheduleArpNote(SCALE[ARP_PATTERN[step]]*2,nextStepTime);
+    if(step===0||step===8) _scheduleBassNote(110,nextStepTime);
+    if(step%2===0) _scheduleTick(nextStepTime);
+    nextStepTime+=STEP_DUR;
+    stepIndex++;
+  }
+  schedulerId=setTimeout(_musicSchedulerTick,50);
+}
+function _startPad(){
+  musicPad=[];
+  [220.00,261.63,329.63].forEach((f,i)=>{
+    const osc=audioCtx.createOscillator();
+    const filt=audioCtx.createBiquadFilter();
+    const gain=audioCtx.createGain();
+    osc.type=i===0?'triangle':'sawtooth';osc.frequency.value=f;osc.detune.value=(i-1)*4;
+    filt.type='lowpass';filt.frequency.value=900;
+    const lfo=audioCtx.createOscillator();const lfoGain=audioCtx.createGain();
+    lfo.frequency.value=0.07;lfoGain.gain.value=220;
+    lfo.connect(lfoGain);lfoGain.connect(filt.frequency);lfo.start();
+    gain.gain.setValueAtTime(0,audioCtx.currentTime);
+    gain.gain.linearRampToValueAtTime(0.028,audioCtx.currentTime+3);
+    osc.connect(filt);filt.connect(gain);gain.connect(musicMaster);
+    osc.start();
+    musicPad.push({osc,gain,lfo});
+  });
+}
 function toggleSound(){
   const btn=document.getElementById('sound-btn');
   if(!btn)return;
   if(!audioCtx){
     audioCtx=new(window.AudioContext||window.webkitAudioContext)();
-    [55,110,165,220].forEach((f,i)=>{
-      const osc=audioCtx.createOscillator();
-      const gain=audioCtx.createGain();
-      osc.type='sine';osc.frequency.value=f;
-      gain.gain.setValueAtTime(0,audioCtx.currentTime);
-      gain.gain.linearRampToValueAtTime(Math.max(0,0.03-i*0.006),audioCtx.currentTime+2);
-      osc.connect(gain);gain.connect(audioCtx.destination);
-      osc.start();ambNodes.push({osc,gain});
-    });
+    musicMaster=audioCtx.createGain();
+    musicMaster.gain.setValueAtTime(0,audioCtx.currentTime);
+    musicMaster.gain.linearRampToValueAtTime(1,audioCtx.currentTime+1.2);
+    musicMaster.connect(audioCtx.destination);
+    nextStepTime=audioCtx.currentTime+0.1;stepIndex=0;
+    _musicSchedulerTick();
+    _startPad();
     btn.textContent='🔊';btn.classList.add('on');
   } else {
-    ambNodes.forEach(n=>{n.gain.gain.linearRampToValueAtTime(0,audioCtx.currentTime+1.5);setTimeout(()=>{try{n.osc.stop();}catch(e){}},1600);});
-    ambNodes=[];setTimeout(()=>{if(audioCtx){audioCtx.close();audioCtx=null;}},1700);
+    if(schedulerId){clearTimeout(schedulerId);schedulerId=null;}
+    if(musicPad) musicPad.forEach(n=>{try{n.lfo.stop();}catch(e){}});
+    if(musicMaster) musicMaster.gain.linearRampToValueAtTime(0,audioCtx.currentTime+1.2);
+    setTimeout(()=>{
+      if(musicPad) musicPad.forEach(n=>{try{n.osc.stop();}catch(e){}});
+      musicPad=[];
+      if(audioCtx){audioCtx.close();audioCtx=null;}
+    },1300);
     btn.textContent='🔇';btn.classList.remove('on');
   }
 }
