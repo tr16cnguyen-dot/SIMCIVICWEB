@@ -787,7 +787,14 @@ document.querySelectorAll('#navMenuDropdown button').forEach(function(b) {
 // caption elements exist before the Firebase content-override loader (which
 // runs later, after async CDN scripts) queries for [data-editable].
 (function(){
-  const PILOT_TOTAL = 31;
+  // Explicit filename list (rather than a fixed numeric-padding formula) so
+  // new photos can be appended in any format/size without disturbing the
+  // slide numbers — and therefore the data-editable caption keys — already
+  // assigned to existing photos.
+  const PILOT_FILES = [];
+  for (let i = 1; i <= 31; i++) PILOT_FILES.push('pilot-' + String(i).padStart(2, '0') + '.png');
+  PILOT_FILES.push('pilot-32.jpg', 'pilot-33.jpg', 'pilot-34.jpg'); // higher-resolution originals
+  const PILOT_TOTAL = PILOT_FILES.length;
   let pilotIndex = 1;
   let pilotAutoTimer = null;
 
@@ -804,7 +811,7 @@ document.querySelectorAll('#navMenuDropdown button').forEach(function(b) {
   function pilotShow(n) {
     pilotIndex = n;
     const img = document.getElementById('pilotImg');
-    img.src = '/pilot-photos/pilot-' + String(n).padStart(2, '0') + '.png';
+    img.src = '/pilot-photos/' + PILOT_FILES[n - 1];
     document.getElementById('pilotCounter').textContent = n + ' / ' + PILOT_TOTAL;
     document.querySelectorAll('.pilot-caption-item').forEach(function(el) {
       el.classList.toggle('active', Number(el.dataset.slide) === n);
