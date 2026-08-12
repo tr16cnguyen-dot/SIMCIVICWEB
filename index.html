@@ -2299,11 +2299,20 @@ let audioCtx=null, musicMaster=null, musicPad=null, schedulerId=null;
 let nextStepTime=0, stepIndex=0;
 const MUSIC_BPM=124;
 const STEP_DUR=60/MUSIC_BPM/4; // 16th-note step
-// A natural minor, two octaves: A B C D E F G A — kept diatonic throughout.
-const SCALE=[220.00,246.94,261.63,293.66,329.63,349.23,392.00,440.00];
-// 16-step arpeggio pattern (scale degree indices) — rising/falling motion
-// around the root and fifth, the classic synth-arpeggiator sci-fi shape.
-const ARP_PATTERN=[0,4,2,4, 0,4,3,4, 0,4,2,4, 0,4,1,4];
+// i–VI–III–VII in A minor (Am–F–C–G) — a driving, slightly melancholic
+// progression common in game/film scores. Each chord holds for 4 bars (64
+// steps) before moving on, so the piece actually goes somewhere instead of
+// looping one static harmony forever.
+const CHORDS=[
+  {bass:110.00, notes:[220.00,261.63,329.63]}, // Am
+  {bass:87.31,  notes:[174.61,220.00,261.63]}, // F
+  {bass:130.81, notes:[261.63,329.63,392.00]}, // C
+  {bass:98.00,  notes:[196.00,246.94,293.66]}, // G
+];
+// Two alternating 4-note melodic shapes (root/5th/3rd/5th vs root/3rd/5th/3rd)
+// swapped every other bar, so consecutive bars don't repeat identically.
+const ARP_TEMPLATE_A=[0,2,1,2];
+const ARP_TEMPLATE_B=[0,1,2,1];
 
 function _scheduleArpNote(freq,time){
   const osc=audioCtx.createOscillator();
@@ -2343,13 +2352,26 @@ function _scheduleTick(time){
 function _musicSchedulerTick(){
   while(nextStepTime<audioCtx.currentTime+0.15){
     const step=stepIndex%16;
-    _scheduleArpNote(SCALE[ARP_PATTERN[step]]*2,nextStepTime);
-    if(step===0||step===8) _scheduleBassNote(110,nextStepTime);
+    const bar=Math.floor(stepIndex/16);
+    const chordIdx=Math.floor(stepIndex/64)%CHORDS.length;
+    const chord=CHORDS[chordIdx];
+    const template=(bar%2===0)?ARP_TEMPLATE_A:ARP_TEMPLATE_B;
+    _scheduleArpNote(chord.notes[template[step%4]]*2,nextStepTime);
+    if(step===0||step===8) _scheduleBassNote(chord.bass,nextStepTime);
     if(step%2===0) _scheduleTick(nextStepTime);
+    if(step===0 && stepIndex%64===0) _movePadToChord(chord);
     nextStepTime+=STEP_DUR;
     stepIndex++;
   }
   schedulerId=setTimeout(_musicSchedulerTick,50);
+}
+function _movePadToChord(chord){
+  if(!musicPad) return;
+  const t=audioCtx.currentTime+0.05;
+  musicPad.forEach((voice,i)=>{
+    voice.osc.frequency.cancelScheduledValues(t);
+    voice.osc.frequency.linearRampToValueAtTime(chord.notes[i],t+1.8);
+  });
 }
 function _startPad(){
   musicPad=[];
