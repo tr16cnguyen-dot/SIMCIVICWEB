@@ -592,6 +592,7 @@ nav{backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:
     <div id="siteAuthUser" style="display:none;align-items:center;gap:6px;padding:3px 8px 3px 3px;border-radius:20px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);flex-shrink:0;">
       <img id="siteAuthAvatar" style="width:22px;height:22px;border-radius:50%;display:block;" />
       <span id="siteAuthName" style="font-size:0.75rem;color:var(--ink);max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+      <span id="siteAuthAdminBadge" style="display:none;padding:2px 7px;border-radius:5px;background:rgba(219,166,66,0.15);border:1px solid rgba(219,166,66,0.4);color:var(--gold);font-family:'Syne',sans-serif;font-size:0.6rem;font-weight:800;letter-spacing:0.05em;">ADMIN</span>
       <button onclick="siteSignOut()" style="padding:3px 9px;border-radius:6px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.05);color:var(--sub);font-size:0.7rem;cursor:pointer;">Sign out</button>
     </div>
     <button id="btnEditToggle" onclick="toggleEditMode()" style="display:none;padding:7px 14px;border-radius:6px;border:1px solid rgba(219,166,66,0.4);background:rgba(219,166,66,0.1);color:var(--gold);font-family:'Inter',sans-serif;font-size:0.8rem;font-weight:600;cursor:pointer;flex-shrink:0;">✏ Edit</button>
@@ -1396,7 +1397,10 @@ function _initSiteFirebase() {
           if (avatar) avatar.src = user.photoURL || '';
           if (name)   name.textContent = user.displayName || user.email || 'Signed in';
         }
-        if (editBtn) editBtn.style.display = (await _isSiteAdmin(user.uid)) ? '' : 'none';
+        const isAdmin = await _isSiteAdmin(user.uid);
+        if (editBtn) editBtn.style.display = isAdmin ? '' : 'none';
+        const adminBadge = document.getElementById('siteAuthAdminBadge');
+        if (adminBadge) adminBadge.style.display = isAdmin ? 'inline-block' : 'none';
       } else {
         if (signInBtn) signInBtn.style.display = '';
         if (userBox) userBox.style.display = 'none';

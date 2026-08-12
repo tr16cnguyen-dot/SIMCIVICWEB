@@ -2590,7 +2590,7 @@ function _makeCloudStorage(uid) {
   };
 }
 
-function _setAuthUI(user) {
+async function _setAuthUI(user) {
   const signInBtn = document.getElementById('btnGoogleSignIn');
   const userBox   = document.getElementById('authUser');
   if (user) {
@@ -2602,11 +2602,38 @@ function _setAuthUI(user) {
       if (avatar) avatar.src = user.photoURL || '';
       if (name)   name.textContent = user.displayName || user.email || 'Signed in';
     }
+    const badge = document.getElementById('authAdminBadge');
+    if (badge) {
+      try { badge.style.display = (await _isAdmin(user.uid)) ? 'inline-block' : 'none'; }
+      catch (e) { badge.style.display = 'none'; }
+    }
+    _populateLicenseKeySwitcher(user.uid);
   } else {
     if (signInBtn) signInBtn.style.display = 'flex';
     if (userBox) userBox.style.display = 'none';
   }
 }
+
+async function _populateLicenseKeySwitcher(uid) {
+  const sel = document.getElementById('licenseKeySwitcher');
+  if (!sel) return;
+  let keys;
+  try { keys = [...(await _getMyLicenseKeys(uid))]; } catch (e) { keys = []; }
+  if (keys.length < 2) { sel.style.display = 'none'; sel.innerHTML = ''; return; }
+
+  let active = null;
+  try { active = localStorage.getItem('_activeLicenseKey'); } catch (e) {}
+  if (!active || !keys.includes(active)) active = keys[0];
+
+  sel.innerHTML = keys.map(k => `<option value="${k}"${k === active ? ' selected' : ''}>${k}</option>`).join('');
+  sel.style.display = '';
+  try { localStorage.setItem('_activeLicenseKey', active); } catch (e) {}
+}
+
+window.switchActiveLicenseKey = function(key) {
+  try { localStorage.setItem('_activeLicenseKey', key); } catch (e) {}
+  showToastMsg && showToastMsg('Switched to license: ' + key);
+};
 
 function _initFirebaseAuth() {
   try {
@@ -9393,6 +9420,8 @@ window.fbToggleViewers = function() {
       <div id="authUser" style="display:none;align-items:center;gap:6px;padding:3px 8px 3px 3px;border-radius:20px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);">
         <img id="authAvatar" style="width:20px;height:20px;border-radius:50%;display:block;" />
         <span id="authName" style="font-size:0.6rem;color:var(--text-dim);max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+        <span id="authAdminBadge" style="display:none;padding:2px 7px;border-radius:5px;background:rgba(219,166,66,0.15);border:1px solid rgba(219,166,66,0.4);color:#f0c060;font-family:'Orbitron',sans-serif;font-size:0.46rem;font-weight:800;letter-spacing:1px;">ADMIN</span>
+        <select id="licenseKeySwitcher" onchange="switchActiveLicenseKey(this.value)" title="Switch active license key" style="display:none;padding:3px 6px;border-radius:6px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.05);color:var(--text-dim);font-size:0.52rem;max-width:100px;"></select>
         <button onclick="promptAddLicenseKey()" title="Redeem another license key on this account" style="padding:3px 8px;border-radius:6px;border:1px solid rgba(219,166,66,0.3);background:rgba(219,166,66,0.08);color:#f0c060;font-size:0.52rem;cursor:pointer;">+ Key</button>
         <button onclick="googleSignOut()" style="padding:3px 8px;border-radius:6px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.05);color:var(--text-muted);font-size:0.52rem;cursor:pointer;">Sign out</button>
       </div>
