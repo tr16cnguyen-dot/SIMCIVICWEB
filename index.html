@@ -788,13 +788,13 @@ document.querySelectorAll('#navMenuDropdown button').forEach(function(b) {
 // runs later, after async CDN scripts) queries for [data-editable].
 (function(){
   // Explicit filename list (rather than a fixed numeric-padding formula) so
-  // new photos can be appended in any format/size without disturbing the
-  // slide numbers — and therefore the data-editable caption keys — already
-  // assigned to existing photos.
+  // photos can be added/removed freely without needing the slide numbers to
+  // line up with filenames. The original low-resolution screenshot batch
+  // (pilot-01..31.png) was removed — too low-source-res to look sharp at
+  // carousel size — leaving only the genuinely high-resolution originals.
   const PILOT_FILES = [];
-  for (let i = 1; i <= 31; i++) PILOT_FILES.push('pilot-' + String(i).padStart(2, '0') + '.png');
-  PILOT_FILES.push('pilot-32.jpg', 'pilot-33.jpg', 'pilot-34.jpg'); // higher-resolution originals
-  for (let i = 35; i <= 59; i++) PILOT_FILES.push('pilot-' + i + '.jpg'); // more high-resolution originals
+  PILOT_FILES.push('pilot-32.jpg', 'pilot-33.jpg', 'pilot-34.jpg');
+  for (let i = 35; i <= 59; i++) PILOT_FILES.push('pilot-' + i + '.jpg');
   const PILOT_TOTAL = PILOT_FILES.length;
   let pilotIndex = 1;
   let pilotAutoTimer = null;
