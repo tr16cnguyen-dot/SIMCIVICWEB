@@ -191,8 +191,11 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:62px;display:flex;ali
 .pilot-captions{position:relative;min-height:34px;margin-top:16px;text-align:center;}
 .pilot-caption-item{position:absolute;inset:0;opacity:0;pointer-events:none;transition:opacity 0.3s;font-family:'Playfair Display',serif;font-style:italic;font-size:0.95rem;color:var(--sub);}
 .pilot-caption-item.active{opacity:1;pointer-events:auto;position:static;}
-body.site-edit-mode .pilot-captions{display:flex;flex-direction:column;gap:8px;text-align:left;max-width:640px;margin:20px auto 0;max-height:260px;overflow-y:auto;padding:14px;border:1px dashed rgba(219,166,66,0.3);border-radius:10px;}
-body.site-edit-mode .pilot-caption-item{position:static!important;opacity:1!important;pointer-events:auto!important;padding:6px 10px;border-radius:6px;font-style:normal;}
+/* In edit mode, only the currently-viewed slide's caption is visible (same
+   as normal view) — it inherits the sitewide [data-editable] dashed-outline
+   treatment automatically. Navigate the carousel to edit each photo's
+   caption in place, rather than editing all 28 at once out of context. */
+body.site-edit-mode .pilot-caption-item.active{font-style:normal;}
 
 /* ── NATIONS ── */
 .nations{padding:120px 0;position:relative;z-index:1;background:linear-gradient(180deg,transparent,rgba(219,166,66,0.012) 50%,transparent);}
