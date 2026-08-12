@@ -428,6 +428,24 @@ footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:38
 /* ── RESPONSIVE ── */
 @media(max-width:1100px){.ngrid{grid-template-columns:repeat(3,1fr)}.ncard{border-bottom:1px solid var(--border)}.hinner{grid-template-columns:1fr}.hright{display:none}}
 @media(max-width:900px){nav{padding:0 24px}.nlinks{display:none}.hero{padding:120px 24px 0}.wrap{padding:0 24px}.about-grid{grid-template-columns:1fr;gap:40px}.ngrid{grid-template-columns:1fr 1fr}.rlayout{grid-template-columns:1fr;gap:40px}.rsticky{position:static}.rgrid{grid-template-columns:1fr}.mgrid{grid-template-columns:1fr}.mtop{flex-direction:column;align-items:flex-start}.rlyt{grid-template-columns:1fr}footer{padding:28px 24px}.nd-stats{grid-template-columns:1fr 1fr}.nd-wrap{padding:0 24px 60px}}
+/* Narrow-header fix: below ~640px the full button row (hamburger, sound,
+   sign-in, Start Game) plus the logo subtitle no longer fit — since nav is
+   position:fixed, overflow here doesn't create a scrollbar, it just makes
+   the tail-end buttons permanently unreachable. Trim the logo and move
+   Start Game into the dropdown (already duplicated there) to keep every
+   remaining control reachable. */
+@media(max-width:640px){
+  #navLogoSep,#navLogoSub{display:none!important}
+  #navMainStartGame{display:none!important}
+  #navMenuStartGame{display:block!important}
+  nav>div:last-child{gap:6px}
+}
+@media(max-width:420px){
+  nav{padding:0 12px}
+  .nwm{font-size:0.92rem}
+  #btnNavMenu,#sound-btn{width:30px!important;height:30px!important;font-size:0.95rem!important}
+  #btnSiteSignIn{padding:6px 9px!important;font-size:0.68rem!important}
+}
 
 /* ── CUSTOM MAGNETIC CURSOR ── */
 body{cursor:none !important;}
@@ -582,15 +600,20 @@ nav{backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:
 <nav>
   <div class="nlogo" data-page="home">
     <div class="nwm"><span class="ns">SIM</span><span class="nc">CIVIC</span></div>
-    <div class="nsep"></div>
-    <div class="nsub">Where Leaders<br>Are Made</div>
+    <div class="nsep" id="navLogoSep"></div>
+    <div class="nsub" id="navLogoSub">Where Leaders<br>Are Made</div>
   </div>
   <div style="display:flex;align-items:center;gap:10px;">
     <!-- Always visible regardless of screen width (nothing here is hidden
-         below 900px, unlike the old .nlinks list this replaced). -->
+         below 900px, unlike the old .nlinks list this replaced). At very
+         narrow widths (see #navResponsive style below) the logo subtitle
+         and the main-row Start Game button hide to keep everything else
+         reachable — Start Game is duplicated inside the dropdown so it's
+         never actually lost, just relocated. -->
     <div style="position:relative;flex-shrink:0;">
       <button id="btnNavMenu" onclick="toggleNavMenu(event)" aria-label="Site navigation" aria-expanded="false" style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:6px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.05);color:var(--ink);font-size:1.1rem;cursor:pointer;">☰</button>
       <div id="navMenuDropdown" style="display:none;position:absolute;top:calc(100% + 8px);left:0;min-width:170px;background:#0c1020;border:1px solid var(--border);border-radius:10px;padding:6px;box-shadow:0 12px 32px rgba(0,0,0,0.5);z-index:300;flex-direction:column;gap:2px;">
+        <a id="navMenuStartGame" href="/game/" target="_blank" rel="noopener noreferrer" data-external onclick="closeNavMenu()" style="display:none;text-align:left;padding:9px 12px;border-radius:6px;background:rgba(219,166,66,0.12);color:var(--gold);font-family:'Syne',sans-serif;font-weight:700;font-size:0.85rem;text-decoration:none;margin-bottom:4px;">Start Game →</a>
         <button data-page="nations"   data-page-btn="nations"   onclick="closeNavMenu()" style="text-align:left;padding:9px 12px;border-radius:6px;border:none;background:none;color:var(--sub);font-family:'Inter',sans-serif;font-size:0.85rem;cursor:pointer;">Nations</button>
         <button data-page="roles"      data-page-btn="roles"      onclick="closeNavMenu()" style="text-align:left;padding:9px 12px;border-radius:6px;border:none;background:none;color:var(--sub);font-family:'Inter',sans-serif;font-size:0.85rem;cursor:pointer;">Roles</button>
         <button data-page="mechanics"  data-page-btn="mechanics"  onclick="closeNavMenu()" style="text-align:left;padding:9px 12px;border-radius:6px;border:none;background:none;color:var(--sub);font-family:'Inter',sans-serif;font-size:0.85rem;cursor:pointer;">Mechanics</button>
@@ -607,7 +630,7 @@ nav{backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:
       <button onclick="siteSignOut()" style="padding:3px 9px;border-radius:6px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.05);color:var(--sub);font-size:0.7rem;cursor:pointer;">Sign out</button>
     </div>
     <button id="btnEditToggle" onclick="toggleEditMode()" style="display:none;padding:7px 14px;border-radius:6px;border:1px solid rgba(219,166,66,0.4);background:rgba(219,166,66,0.1);color:var(--gold);font-family:'Inter',sans-serif;font-size:0.8rem;font-weight:600;cursor:pointer;flex-shrink:0;">✏ Edit</button>
-    <a href="/game/" target="_blank" rel="noopener noreferrer" data-external class="ncta" style="flex-shrink:0;">Start Game →</a>
+    <a id="navMainStartGame" href="/game/" target="_blank" rel="noopener noreferrer" data-external class="ncta" style="flex-shrink:0;">Start Game →</a>
   </div>
 </nav>
 <script>
