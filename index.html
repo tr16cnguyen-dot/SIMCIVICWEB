@@ -794,6 +794,7 @@ document.querySelectorAll('#navMenuDropdown button').forEach(function(b) {
   const PILOT_FILES = [];
   for (let i = 1; i <= 31; i++) PILOT_FILES.push('pilot-' + String(i).padStart(2, '0') + '.png');
   PILOT_FILES.push('pilot-32.jpg', 'pilot-33.jpg', 'pilot-34.jpg'); // higher-resolution originals
+  for (let i = 35; i <= 59; i++) PILOT_FILES.push('pilot-' + i + '.jpg'); // more high-resolution originals
   const PILOT_TOTAL = PILOT_FILES.length;
   let pilotIndex = 1;
   let pilotAutoTimer = null;
