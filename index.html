@@ -586,8 +586,19 @@ nav{backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:
     <div class="nsub">Where Leaders<br>Are Made</div>
   </div>
   <div style="display:flex;align-items:center;gap:10px;">
-    <!-- Always visible regardless of screen width — not part of .nlinks,
-         which is hidden below 900px with no mobile-menu replacement. -->
+    <!-- Always visible regardless of screen width (nothing here is hidden
+         below 900px, unlike the old .nlinks list this replaced). -->
+    <div style="position:relative;flex-shrink:0;">
+      <button id="btnNavMenu" onclick="toggleNavMenu(event)" aria-label="Site navigation" aria-expanded="false" style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:6px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.05);color:var(--ink);font-size:1.1rem;cursor:pointer;">☰</button>
+      <div id="navMenuDropdown" style="display:none;position:absolute;top:calc(100% + 8px);left:0;min-width:170px;background:#0c1020;border:1px solid var(--border);border-radius:10px;padding:6px;box-shadow:0 12px 32px rgba(0,0,0,0.5);z-index:300;flex-direction:column;gap:2px;">
+        <button data-page="nations"   data-page-btn="nations"   onclick="closeNavMenu()" style="text-align:left;padding:9px 12px;border-radius:6px;border:none;background:none;color:var(--sub);font-family:'Inter',sans-serif;font-size:0.85rem;cursor:pointer;">Nations</button>
+        <button data-page="roles"      data-page-btn="roles"      onclick="closeNavMenu()" style="text-align:left;padding:9px 12px;border-radius:6px;border:none;background:none;color:var(--sub);font-family:'Inter',sans-serif;font-size:0.85rem;cursor:pointer;">Roles</button>
+        <button data-page="mechanics"  data-page-btn="mechanics"  onclick="closeNavMenu()" style="text-align:left;padding:9px 12px;border-radius:6px;border:none;background:none;color:var(--sub);font-family:'Inter',sans-serif;font-size:0.85rem;cursor:pointer;">Mechanics</button>
+        <button data-page="resources"  data-page-btn="resources"  onclick="closeNavMenu()" style="text-align:left;padding:9px 12px;border-radius:6px;border:none;background:none;color:var(--sub);font-family:'Inter',sans-serif;font-size:0.85rem;cursor:pointer;">Resources</button>
+        <button data-page="contact"    data-page-btn="contact"    onclick="closeNavMenu()" style="text-align:left;padding:9px 12px;border-radius:6px;border:none;background:none;color:var(--sub);font-family:'Inter',sans-serif;font-size:0.85rem;cursor:pointer;">Contact</button>
+      </div>
+    </div>
+    <button id="sound-btn" class="sound-toggle" title="Toggle Ambient Sound" style="flex-shrink:0;">🔇</button>
     <button id="btnSiteSignIn" onclick="siteSignIn()" style="padding:7px 14px;border-radius:6px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.05);color:var(--ink);font-family:'Inter',sans-serif;font-size:0.8rem;font-weight:600;cursor:pointer;flex-shrink:0;">Sign In</button>
     <div id="siteAuthUser" style="display:none;align-items:center;gap:6px;padding:3px 8px 3px 3px;border-radius:20px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);flex-shrink:0;">
       <img id="siteAuthAvatar" style="width:22px;height:22px;border-radius:50%;display:block;" />
@@ -596,17 +607,36 @@ nav{backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:
       <button onclick="siteSignOut()" style="padding:3px 9px;border-radius:6px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.05);color:var(--sub);font-size:0.7rem;cursor:pointer;">Sign out</button>
     </div>
     <button id="btnEditToggle" onclick="toggleEditMode()" style="display:none;padding:7px 14px;border-radius:6px;border:1px solid rgba(219,166,66,0.4);background:rgba(219,166,66,0.1);color:var(--gold);font-family:'Inter',sans-serif;font-size:0.8rem;font-weight:600;cursor:pointer;flex-shrink:0;">✏ Edit</button>
-    <ul class="nlinks">
-      <li><button data-page="nations"   data-page-btn="nations">Nations</button></li>
-      <li><button data-page="roles"      data-page-btn="roles">Roles</button></li>
-      <li><button data-page="mechanics"  data-page-btn="mechanics">Mechanics</button></li>
-      <li><button data-page="resources"  data-page-btn="resources">Resources</button></li>
-      <li><button data-page="contact"    data-page-btn="contact">Contact</button></li>
-      <li><button id="sound-btn" class="sound-toggle" title="Toggle Ambient Sound">🔇</button></li>
-      <li><a href="/game/" target="_blank" rel="noopener noreferrer" data-external class="ncta">Start Game →</a></li>
-    </ul>
+    <a href="/game/" target="_blank" rel="noopener noreferrer" data-external class="ncta" style="flex-shrink:0;">Start Game →</a>
   </div>
 </nav>
+<script>
+window.toggleNavMenu = function(e) {
+  if (e) e.stopPropagation();
+  const dd  = document.getElementById('navMenuDropdown');
+  const btn = document.getElementById('btnNavMenu');
+  const open = dd.style.display === 'flex';
+  dd.style.display = open ? 'none' : 'flex';
+  if (btn) btn.setAttribute('aria-expanded', open ? 'false' : 'true');
+};
+window.closeNavMenu = function() {
+  const dd  = document.getElementById('navMenuDropdown');
+  const btn = document.getElementById('btnNavMenu');
+  if (dd)  dd.style.display = 'none';
+  if (btn) btn.setAttribute('aria-expanded', 'false');
+};
+document.addEventListener('click', function(e) {
+  const wrap = document.getElementById('navMenuDropdown');
+  const btn  = document.getElementById('btnNavMenu');
+  if (wrap && wrap.style.display === 'flex' && !wrap.contains(e.target) && e.target !== btn) {
+    closeNavMenu();
+  }
+});
+document.querySelectorAll('#navMenuDropdown button').forEach(function(b) {
+  b.addEventListener('mouseover', function() { b.style.background = 'rgba(255,255,255,0.06)'; b.style.color = 'var(--ink)'; });
+  b.addEventListener('mouseout',  function() { b.style.background = 'none'; b.style.color = 'var(--sub)'; });
+});
+</script>
 
 <!-- HERO -->
 <section class="hero" data-section="home">
