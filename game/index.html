@@ -11630,6 +11630,12 @@ async function loadAll() {
     console.warn('loadAll error:', e);
   }
 
+  // Bootstrap a "start of round" boundary for the currently-live round if it doesn't have
+  // one yet — covers brand-new games (round 1) and games already in progress when full
+  // round-undo shipped (their live round predates this snapshot timing). Without this,
+  // undoing the live round once it's applied would have nothing accurate to restore to.
+  if (!snapshots[currentRound]) snapshots[currentRound] = _snapshotCurrentState();
+
   // Load city card picks
   if (!Object.keys(cityCardPicks || {}).length) loadCityCardPicks();
 
@@ -19098,24 +19104,35 @@ function renderResourceGuide() {
   el.innerHTML = html;
 }
 
+// Full snapshot of every piece of state a round-undo needs to restore, including
+// map items (ownership/lease can change mid-round via Sell/Lease/Move trades).
+function _snapshotCurrentState() {
+  return {
+    data:            JSON.parse(JSON.stringify(data)),
+    politicalRanks:  JSON.parse(JSON.stringify(politicalRanks)),
+    cityRelations:   JSON.parse(JSON.stringify(cityRelations)),
+    warState:        JSON.parse(JSON.stringify(warState)),
+    warImmuneRounds: JSON.parse(JSON.stringify(warImmuneRounds)),
+    policyPicks:     JSON.parse(JSON.stringify(policyPicks)),
+    usedPolicyCards: [...usedPolicyCards],
+    cityCardPicks:   JSON.parse(JSON.stringify(cityCardPicks)),
+    draftRosters:    JSON.parse(JSON.stringify(draftRosters)),
+    roleAssignments: JSON.parse(JSON.stringify(roleAssignments)),
+    cityRules:       JSON.parse(JSON.stringify(cityRules)),
+    mapItemTypes:    JSON.parse(JSON.stringify(mapItemTypes)),
+    mapItems:        JSON.parse(JSON.stringify(mapItems)),
+  };
+}
+
 function applyRound() {
   // Reset per-round trade tracker (Open Harbor Act gate)
   resourceTradeHappenedThisRound = false;
 
-  // Full state snapshot before applying round
-  snapshots[currentRound] = {
-    data:           JSON.parse(JSON.stringify(data)),
-    politicalRanks: JSON.parse(JSON.stringify(politicalRanks)),
-    cityRelations:  JSON.parse(JSON.stringify(cityRelations)),
-    warState:       JSON.parse(JSON.stringify(warState)),
-    warImmuneRounds:JSON.parse(JSON.stringify(warImmuneRounds)),
-    policyPicks:    JSON.parse(JSON.stringify(policyPicks)),
-    usedPolicyCards:[...usedPolicyCards],
-    cityCardPicks:  JSON.parse(JSON.stringify(cityCardPicks)),
-    draftRosters:   JSON.parse(JSON.stringify(draftRosters)),
-    roleAssignments:JSON.parse(JSON.stringify(roleAssignments)),
-    cityRules:      JSON.parse(JSON.stringify(cityRules)),
-  };
+  // NOTE: snapshots[currentRound] — the state at the START of this round, before any of
+  // its trades/cards/effects — was already captured when the round began (either at the
+  // end of the previous applyRound() call, or at game start/reset for round 1). That's
+  // what "Undo Round" restores, so undoing reverts everything from the round, not just
+  // the round-effect calculation below.
 
   const changes = [];
   for (const c of CITIES) {
@@ -19218,6 +19235,11 @@ function applyRound() {
 
   currentRound++;
   viewingRound = null;
+
+  // Capture the start-of-round boundary for the round that's now beginning, so
+  // undoing IT later reverts everything that happens during it (trades included).
+  snapshots[currentRound] = _snapshotCurrentState();
+
   save();
   renderScoreboard();
   renderRelationsMatrix();
@@ -19255,6 +19277,8 @@ function _applySnapshotToLive(snap) {
   if (snap.draftRosters)    { draftRosters    = JSON.parse(JSON.stringify(snap.draftRosters)); }
   if (snap.roleAssignments) { roleAssignments = JSON.parse(JSON.stringify(snap.roleAssignments)); }
   if (snap.cityRules)       { cityRules       = JSON.parse(JSON.stringify(snap.cityRules)); }
+  if (snap.mapItemTypes)    { mapItemTypes    = JSON.parse(JSON.stringify(snap.mapItemTypes)); }
+  if (snap.mapItems)        { mapItems        = JSON.parse(JSON.stringify(snap.mapItems)); }
 }
 
 // ── Fully undo the last applied round ────────────────────────────────
@@ -19273,8 +19297,9 @@ function _showUndoConfirmPopup(round) {
     +'<div style="font-size:2.4rem;margin-bottom:10px;">↩</div>'
     +'<div style="font-family:Orbitron,sans-serif;font-size:0.8rem;font-weight:900;color:#f87171;letter-spacing:2px;margin-bottom:8px;">UNDO ROUND '+round+'?</div>'
     +'<div style="font-size:0.6rem;color:rgba(255,255,255,0.45);line-height:1.7;margin-bottom:20px;">'
-      +'This will revert all resource changes from Round '+round+'<br>'
-      +'and return to Round '+round+'. This cannot be re-done.'
+      +'This reverts EVERYTHING from Round '+round+' — trades, map item actions,<br>'
+      +'card enactments, and resource calculations — back to the start of the round.'
+      +' This cannot be re-done.'
     +'</div>'
     +'<div style="display:flex;gap:10px;justify-content:center;">'
       +'<button onclick="document.getElementById(\'undoConfirmPopup\').remove()" style="'
@@ -19300,16 +19325,19 @@ function _doUndoRound() {
   const snap = snapshots[maxAppliedRound];
   if (!snap) return;
 
+  // snapshots[maxAppliedRound] is the state from the START of this round — before any of
+  // its trades, card enactments, or people trades happened, not just its round-effect
+  // calculation — so restoring it undoes everything from the round in one step.
   _applySnapshotToLive(snap);
-  delete snapshots[maxAppliedRound];
+  // Keep this snapshot (don't delete it): it's still the correct "start of round N"
+  // boundary if the round gets replayed and needs undoing again, and it backs the
+  // round-history scrubber.
 
   // Remove the round's history entry (first matching round entry)
   const idx = roundHistory.findIndex(h => h.round === maxAppliedRound);
   if (idx !== -1) roundHistory.splice(idx, 1);
 
-  // Recalculate maxAppliedRound from remaining snapshots
-  const remaining = Object.keys(snapshots).map(Number).filter(n => !isNaN(n) && n > 0);
-  maxAppliedRound = remaining.length ? Math.max(...remaining) : 0;
+  maxAppliedRound = maxAppliedRound - 1;
   currentRound    = maxAppliedRound + 1;
   viewingRound    = null;
 
@@ -23107,6 +23135,9 @@ async function confirmReset() {
       try { _fbDB.ref('games/'+window._fb.code+'/events/'+node).remove(); } catch {}
     });
   }
+
+  // ── Bootstrap the Round 1 "start of round" boundary for full round-undo ──
+  snapshots[1] = _snapshotCurrentState();
 
   // ── Re-render everything ──
   renderScoreboard();
