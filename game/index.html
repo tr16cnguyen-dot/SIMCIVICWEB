@@ -2615,23 +2615,47 @@ async function _setAuthUI(user) {
 }
 
 async function _populateLicenseKeySwitcher(uid) {
-  const sel = document.getElementById('licenseKeySwitcher');
-  if (!sel) return;
+  const sel   = document.getElementById('licenseKeySwitcher');
+  const badge = document.getElementById('activeLicenseBadge');
+  const badgeText = document.getElementById('activeLicenseBadgeText');
   let keys;
   try { keys = [...(await _getMyLicenseKeys(uid))]; } catch (e) { keys = []; }
-  if (keys.length < 2) { sel.style.display = 'none'; sel.innerHTML = ''; return; }
+
+  if (keys.length === 0) {
+    if (sel) { sel.style.display = 'none'; sel.innerHTML = ''; }
+    if (badge) badge.style.display = 'none';
+    return;
+  }
 
   let active = null;
   try { active = localStorage.getItem('_activeLicenseKey'); } catch (e) {}
   if (!active || !keys.includes(active)) active = keys[0];
-
-  sel.innerHTML = keys.map(k => `<option value="${k}"${k === active ? ' selected' : ''}>${k}</option>`).join('');
-  sel.style.display = '';
   try { localStorage.setItem('_activeLicenseKey', active); } catch (e) {}
+
+  // The badge is always shown once an account has any redeemed key, so it's
+  // clear at a glance which license this session is running under — even
+  // with just one key. The dropdown (for switching) only makes sense with
+  // 2 or more.
+  if (badge && badgeText) {
+    badgeText.textContent = active;
+    badge.style.display = 'flex';
+  }
+
+  if (sel) {
+    if (keys.length < 2) {
+      sel.style.display = 'none';
+      sel.innerHTML = '';
+    } else {
+      sel.innerHTML = keys.map(k => `<option value="${k}"${k === active ? ' selected' : ''}>${k}</option>`).join('');
+      sel.style.display = '';
+    }
+  }
 }
 
 window.switchActiveLicenseKey = function(key) {
   try { localStorage.setItem('_activeLicenseKey', key); } catch (e) {}
+  const badgeText = document.getElementById('activeLicenseBadgeText');
+  if (badgeText) badgeText.textContent = key;
   showToastMsg && showToastMsg('Switched to license: ' + key);
 };
 
@@ -9394,6 +9418,9 @@ window.fbToggleViewers = function() {
           <div class="logo-title">NATION RESOURCE MONITOR</div>
           <div class="logo-sub">Nation Simulation Tracker</div>
         </div>
+      </div>
+      <div id="activeLicenseBadge" title="The license key this session is running under" style="display:none;align-items:center;gap:5px;padding:4px 11px;border-radius:20px;border:1px solid rgba(219,166,66,0.4);background:rgba(219,166,66,0.1);font-family:'Orbitron',sans-serif;font-size:0.58rem;font-weight:800;letter-spacing:0.5px;color:#f0c060;">
+        🔑 <span id="activeLicenseBadgeText">—</span>
       </div>
 
       <!-- PAGE TABS -->
