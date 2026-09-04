@@ -17736,6 +17736,19 @@ function mapItemMove(itemId) {
   showToastMsg && showToastMsg(`🚚 Moved ${type ? type.icon + ' ' + type.name : 'item'} to ${CITIES.find(c=>c.id===targetId)?.name || ''}`);
 }
 
+// Plain removal — deletes the instance with no resource effect (for fixing mistakes, unlike Destroy).
+function mapItemRemove(itemId) {
+  const item = mapItems.find(it => it.id === itemId);
+  if (!item) return;
+  const type = mapItemTypes.find(t => t.id === item.typeId);
+  if (!confirm('Remove this item from the map? This does NOT change any resources — use Destroy if you want the resource payout.')) return;
+  mapItems = mapItems.filter(it => it.id !== itemId);
+  renderMapItemsNations();
+  save();
+  playClick();
+  showToastMsg && showToastMsg(`🗑️ Removed ${type ? type.icon + ' ' + type.name : 'item'} — no resource effect`);
+}
+
 function renderMapItemsNations() {
   const wrap = document.getElementById('mapItemsNationGrid');
   if (!wrap) return;
@@ -17768,6 +17781,7 @@ function renderMapItemsNations() {
           ${t.saleMode==='continuous' ? `<button onclick="mapItemLease('${it.id}')" style="padding:3px 8px;border-radius:5px;border:1px solid rgba(245,158,11,0.35);background:rgba(245,158,11,0.08);color:#f59e0b;font-size:0.58rem;cursor:pointer;">Lease</button>` : ''}
           <button onclick="mapItemMove('${it.id}')" style="padding:3px 8px;border-radius:5px;border:1px solid rgba(6,182,212,0.35);background:rgba(6,182,212,0.08);color:var(--cyan);font-size:0.58rem;cursor:pointer;">Move</button>
           <button onclick="mapItemDestroy('${it.id}')" style="padding:3px 8px;border-radius:5px;border:1px solid rgba(239,68,68,0.35);background:rgba(239,68,68,0.08);color:#ef4444;font-size:0.58rem;cursor:pointer;">Destroy</button>
+          <button onclick="mapItemRemove('${it.id}')" title="Remove with no resource effect" style="padding:3px 8px;border-radius:5px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.04);color:var(--text-muted);font-size:0.58rem;cursor:pointer;">Remove</button>
         </div>
       </div>`;
     }).join('') : '<div style="font-size:0.58rem;color:var(--text-muted);font-style:italic;padding:2px 0 8px;">No map items yet.</div>';
