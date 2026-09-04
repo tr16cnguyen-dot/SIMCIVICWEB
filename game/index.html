@@ -10546,15 +10546,15 @@ window.fbToggleViewers = function() {
       </div>
       <div class="section-body" id="mapItemsBody">
         <p style="font-size:0.62rem;color:var(--text-muted);margin-bottom:12px;line-height:1.5;">
-          Define reusable item types (boats, tech hubs, factories, hills…) with a fixed resource effect, then place instances on nations' maps.
-          Host-controlled — Sell / Lease transfer the item per its fixed type (continuous income or one-time payout), Destroy always pays out once, Move relocates with no payout.
+          Define reusable item types (boats, tech hubs, factories, hills…) — each can affect multiple resources, and Sell / Lease / Move / Destroy
+          can each pay out something different (or nothing at all). Host-controlled.
         </p>
 
         <!-- Item type templates -->
         <div style="font-size:0.55rem;font-family:'Orbitron',sans-serif;letter-spacing:1px;color:var(--text-muted);text-transform:uppercase;margin-bottom:6px;">Item Type Templates</div>
         <div id="mapItemTypesList" style="margin-bottom:10px;"></div>
         <div style="padding:10px 12px;border-radius:8px;border:1px solid rgba(16,185,129,0.2);background:rgba(16,185,129,0.05);margin-bottom:18px;">
-          <div style="display:grid;grid-template-columns:2fr 1fr;gap:8px;margin-bottom:8px;">
+          <div style="display:grid;grid-template-columns:2fr 1fr;gap:8px;margin-bottom:10px;">
             <div class="add-rule-field">
               <label>Item name</label>
               <input type="text" id="mitName" placeholder="e.g. Boat, Tech Hub, Hills" style="width:100%;padding:5px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:0.72rem;box-sizing:border-box;">
@@ -10564,24 +10564,39 @@ window.fbToggleViewers = function() {
               <input type="text" id="mitIcon" placeholder="🚤" maxlength="4" style="width:100%;padding:5px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:0.72rem;box-sizing:border-box;">
             </div>
           </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
-            <div class="add-rule-field">
-              <label>Resource affected</label>
-              <select id="mitResource" style="width:100%;padding:5px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:0.72rem;"></select>
-            </div>
-            <div class="add-rule-field">
-              <label>Amount</label>
-              <input type="number" id="mitDelta" value="1" step="0.1" style="font-family:'JetBrains Mono',monospace;text-align:center;width:100%;padding:5px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);box-sizing:border-box;">
-            </div>
-          </div>
-          <div style="display:flex;gap:14px;align-items:center;margin-bottom:10px;">
+          <div style="display:flex;gap:14px;align-items:center;margin-bottom:12px;">
             <label style="display:flex;align-items:center;gap:5px;font-size:0.62rem;color:var(--text);cursor:pointer;">
-              <input type="radio" name="mitSaleMode" value="continuous" checked> 🔁 Continuous (per round)
+              <input type="radio" name="mitSaleMode" value="continuous" checked onchange="_mitOnSaleModeChange()"> 🔁 Continuous (per round)
             </label>
             <label style="display:flex;align-items:center;gap:5px;font-size:0.62rem;color:var(--text);cursor:pointer;">
-              <input type="radio" name="mitSaleMode" value="onetime"> ⚡ One-time
+              <input type="radio" name="mitSaleMode" value="onetime" onchange="_mitOnSaleModeChange()"> ⚡ One-time (Destroy only)
             </label>
           </div>
+
+          <div id="mitRoundEffectSection" style="margin-bottom:12px;">
+            <div style="font-size:0.55rem;font-family:'Orbitron',sans-serif;letter-spacing:0.5px;color:var(--cyan);margin-bottom:4px;">🔁 ROUND EFFECT — applies every round to whoever owns/leases it</div>
+            <div id="mitRows_effects"></div>
+          </div>
+
+          <div style="font-size:0.55rem;color:var(--text-muted);margin:10px 0 6px;">Optional one-time payout per action — leave empty for no resource change:</div>
+
+          <div id="mitSellSection" style="margin-bottom:10px;">
+            <div style="font-size:0.55rem;font-family:'Orbitron',sans-serif;letter-spacing:0.5px;color:#22c55e;margin-bottom:4px;">🤝 SELL PAYOUT (to buyer)</div>
+            <div id="mitRows_sellEffects"></div>
+          </div>
+          <div id="mitLeaseSection" style="margin-bottom:10px;">
+            <div style="font-size:0.55rem;font-family:'Orbitron',sans-serif;letter-spacing:0.5px;color:#f59e0b;margin-bottom:4px;">📜 LEASE PAYOUT (to lessee)</div>
+            <div id="mitRows_leaseEffects"></div>
+          </div>
+          <div id="mitMoveSection" style="margin-bottom:10px;">
+            <div style="font-size:0.55rem;font-family:'Orbitron',sans-serif;letter-spacing:0.5px;color:var(--cyan);margin-bottom:4px;">🚚 MOVE PAYOUT (to destination)</div>
+            <div id="mitRows_moveEffects"></div>
+          </div>
+          <div style="margin-bottom:12px;">
+            <div style="font-size:0.55rem;font-family:'Orbitron',sans-serif;letter-spacing:0.5px;color:#ef4444;margin-bottom:4px;">💥 DESTROY PAYOUT (to current owner)</div>
+            <div id="mitRows_destroyEffects"></div>
+          </div>
+
           <button onclick="addMapItemType()" style="padding:7px 20px;border-radius:8px;border:1px solid rgba(16,185,129,0.4);background:rgba(16,185,129,0.12);color:#34d399;font-family:'Orbitron',sans-serif;font-size:0.62rem;font-weight:700;letter-spacing:1px;cursor:pointer;">🗺️ Add Item Type</button>
         </div>
 
@@ -17564,47 +17579,96 @@ function buildDefaultMapItems() {
   return items;
 }
 
-// Normalize a type's per-round effects / destroy payout, tolerating the legacy
-// single {resourceId,delta} shape from before this file supported multi-resource items.
+// Normalize a type's per-action resource effects, tolerating the legacy
+// single {resourceId,delta} shape and pre-per-action-effects types.
 function _typeEffects(type) {
   if (Array.isArray(type.effects)) return type.effects;
   if (type.resourceId) return [{ resourceId: type.resourceId, delta: type.delta }];
   return [];
 }
 function _typeDestroyEffects(type) {
-  if (Array.isArray(type.destroyEffects) && type.destroyEffects.length) return type.destroyEffects;
+  if (Array.isArray(type.destroyEffects)) return type.destroyEffects;
   return _typeEffects(type);
+}
+function _typeSellEffects(type) {
+  if (Array.isArray(type.sellEffects)) return type.sellEffects;
+  return type.saleMode === 'onetime' ? _typeDestroyEffects(type) : [];
+}
+function _typeLeaseEffects(type) {
+  if (Array.isArray(type.leaseEffects)) return type.leaseEffects;
+  return type.saleMode === 'onetime' ? _typeDestroyEffects(type) : [];
+}
+function _typeMoveEffects(type) {
+  return Array.isArray(type.moveEffects) ? type.moveEffects : [];
 }
 function _effectsLabel(effects) {
   return effects.map(e => `${resourceMeta(e.resourceId).icon} ${e.delta>0?'+':''}${e.delta} ${resourceMeta(e.resourceId).name}`).join(', ');
 }
 
-function _populateMapItemResourceSelect() {
-  const sel = document.getElementById('mitResource');
-  if (!sel || sel.options.length) return;
-  sel.innerHTML = RESOURCES.map(r => `<option value="${r.id}">${r.icon} ${r.name}</option>`).join('');
+// ── Add Item Type form: multi-row resource-effect editor, one row-set per action ──
+let _mitDraft = { effects: [], sellEffects: [], leaseEffects: [], moveEffects: [], destroyEffects: [] };
+const _MIT_ROW_KEYS = ['effects', 'sellEffects', 'leaseEffects', 'moveEffects', 'destroyEffects'];
+
+function _mitRenderRows(key) {
+  const wrap = document.getElementById('mitRows_' + key);
+  if (!wrap) return;
+  const rows = _mitDraft[key];
+  const rowsHtml = rows.map((row, i) => `
+    <div style="display:flex;gap:5px;align-items:center;margin-bottom:5px;">
+      <select onchange="_mitUpdateRow('${key}',${i},'resourceId',this.value)" style="flex:1;padding:4px 6px;border-radius:5px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:0.62rem;">
+        ${RESOURCES.map(r => `<option value="${r.id}" ${r.id===row.resourceId?'selected':''}>${r.icon} ${r.name}</option>`).join('')}
+      </select>
+      <input type="number" value="${row.delta}" step="0.1" oninput="_mitUpdateRow('${key}',${i},'delta',parseFloat(this.value)||0)" style="width:64px;padding:4px 6px;border-radius:5px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-family:'JetBrains Mono',monospace;text-align:center;">
+      <button onclick="_mitRemoveRow('${key}',${i})" style="padding:3px 7px;border-radius:5px;border:1px solid rgba(239,68,68,0.3);background:rgba(239,68,68,0.08);color:#ef4444;font-size:0.58rem;cursor:pointer;">✕</button>
+    </div>`).join('');
+  wrap.innerHTML = (rowsHtml || '<div style="font-size:0.55rem;color:var(--text-muted);font-style:italic;margin-bottom:5px;">No resource effect.</div>')
+    + `<button onclick="_mitAddRow('${key}')" style="padding:3px 9px;border-radius:5px;border:1px solid rgba(6,182,212,0.3);background:rgba(6,182,212,0.06);color:var(--cyan);font-size:0.56rem;cursor:pointer;">+ Add Resource</button>`;
+}
+function _mitAddRow(key) { _mitDraft[key].push({ resourceId: 'capital', delta: 1 }); _mitRenderRows(key); }
+function _mitRemoveRow(key, i) { _mitDraft[key].splice(i, 1); _mitRenderRows(key); }
+function _mitUpdateRow(key, i, field, value) { _mitDraft[key][i][field] = value; }
+
+function _mitOnSaleModeChange() {
+  const mode = document.querySelector('input[name="mitSaleMode"]:checked')?.value || 'continuous';
+  const isContinuous = mode === 'continuous';
+  ['mitRoundEffectSection','mitSellSection','mitLeaseSection','mitMoveSection'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = isContinuous ? '' : 'none';
+  });
+}
+
+function _mitResetDraftForm() {
+  _mitDraft = { effects: [], sellEffects: [], leaseEffects: [], moveEffects: [], destroyEffects: [] };
+  _MIT_ROW_KEYS.forEach(_mitRenderRows);
+  _mitOnSaleModeChange();
 }
 
 function addMapItemType() {
-  _populateMapItemResourceSelect();
   const name = document.getElementById('mitName').value.trim();
   const icon = document.getElementById('mitIcon').value.trim() || '📦';
-  const resourceId = document.getElementById('mitResource').value;
-  const delta = parseFloat(document.getElementById('mitDelta').value);
   const saleMode = document.querySelector('input[name="mitSaleMode"]:checked')?.value || 'continuous';
-  if (!name || isNaN(delta) || delta === 0) {
-    showToastMsg && showToastMsg('⚠️ Enter an item name and non-zero amount');
+  const hasAnyEffect = _MIT_ROW_KEYS.some(k => _mitDraft[k].length > 0);
+  if (!name) {
+    showToastMsg && showToastMsg('⚠️ Enter an item name');
     playError && playError();
     return;
   }
-  const row = [{ resourceId, delta }];
+  if (!hasAnyEffect) {
+    showToastMsg && showToastMsg('⚠️ Add at least one resource effect');
+    playError && playError();
+    return;
+  }
   mapItemTypes.push({
     id: 'mit-' + Date.now() + '-' + Math.floor(Math.random()*1000), name, icon, saleMode,
-    effects:        saleMode === 'continuous' ? row : [],
-    destroyEffects: row,
+    effects:        saleMode === 'continuous' ? [..._mitDraft.effects]        : [],
+    sellEffects:    saleMode === 'continuous' ? [..._mitDraft.sellEffects]    : [],
+    leaseEffects:   saleMode === 'continuous' ? [..._mitDraft.leaseEffects]   : [],
+    moveEffects:    saleMode === 'continuous' ? [..._mitDraft.moveEffects]    : [],
+    destroyEffects: [..._mitDraft.destroyEffects],
   });
   document.getElementById('mitName').value = '';
-  document.getElementById('mitDelta').value = 1;
+  document.getElementById('mitIcon').value = '';
+  _mitResetDraftForm();
   renderMapItemTypes();
   renderMapItemsNations();
   save();
@@ -17630,14 +17694,17 @@ function renderMapItemTypes() {
     return;
   }
   wrap.innerHTML = mapItemTypes.map(t => {
-    const roundLabel   = t.saleMode === 'continuous' ? `🔁 ${_effectsLabel(_typeEffects(t))}/round` : '';
-    const destroyLabel = `💥 ${_effectsLabel(_typeDestroyEffects(t))}`;
+    const lines = [];
+    if (t.saleMode === 'continuous' && _typeEffects(t).length) lines.push(`🔁 ${_effectsLabel(_typeEffects(t))}/round`);
+    if (_typeSellEffects(t).length)  lines.push(`🤝 sell: ${_effectsLabel(_typeSellEffects(t))}`);
+    if (_typeLeaseEffects(t).length) lines.push(`📜 lease: ${_effectsLabel(_typeLeaseEffects(t))}`);
+    if (_typeMoveEffects(t).length)  lines.push(`🚚 move: ${_effectsLabel(_typeMoveEffects(t))}`);
+    lines.push(_typeDestroyEffects(t).length ? `💥 destroy: ${_effectsLabel(_typeDestroyEffects(t))}` : `💥 destroy: no payout`);
     return `<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:7px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.02);margin-bottom:6px;">
       <span style="font-size:1rem;">${t.icon}</span>
       <div style="flex:1;min-width:0;">
         <div style="font-size:0.7rem;font-weight:700;color:var(--text);">${t.name}</div>
-        ${roundLabel ? `<div style="font-size:0.58rem;color:var(--text-muted);">${roundLabel}</div>` : ''}
-        <div style="font-size:0.58rem;color:var(--text-muted);">${destroyLabel} <span style="opacity:0.6;">(destroy payout)</span></div>
+        ${lines.map(l => `<div style="font-size:0.56rem;color:var(--text-muted);">${l}</div>`).join('')}
       </div>
       <button onclick="deleteMapItemType('${t.id}')" style="padding:4px 9px;border-radius:6px;border:1px solid rgba(239,68,68,0.3);background:rgba(239,68,68,0.08);color:#ef4444;font-size:0.6rem;cursor:pointer;">✕</button>
     </div>`;
@@ -17667,12 +17734,10 @@ function mapItemDestroy(itemId) {
   if (!confirm('Destroy this item? It gives a one-time resource payout to its current nation and is removed permanently.')) return;
   if (type) {
     const cityId = item.cityId;
-    for (const eff of _typeDestroyEffects(type)) {
-      const before = data[cityId][eff.resourceId]?.value ?? 0;
-      const after = round2(Math.max(0, before + eff.delta));
-      data[cityId][eff.resourceId] = { value: after, prevValue: before };
-    }
-    showToastMsg && showToastMsg(`💥 Destroyed ${type.icon} ${type.name} — ${CITIES.find(c=>c.id===cityId)?.name || ''} ${_effectsLabel(_typeDestroyEffects(type))}`);
+    const payout = _typeDestroyEffects(type);
+    _applyEffectsTo(cityId, payout);
+    const payoutLabel = payout.length ? ` ${_effectsLabel(payout)}` : ' (no payout)';
+    showToastMsg && showToastMsg(`💥 Destroyed ${type.icon} ${type.name} — ${CITIES.find(c=>c.id===cityId)?.name || ''}${payoutLabel}`);
   }
   mapItems = mapItems.filter(it => it.id !== itemId);
   renderMapItemsNations();
@@ -17681,25 +17746,30 @@ function mapItemDestroy(itemId) {
   playClick();
 }
 
+function _applyEffectsTo(cityId, effects) {
+  for (const eff of effects) {
+    const before = data[cityId][eff.resourceId]?.value ?? 0;
+    const after = round2(Math.max(0, before + eff.delta));
+    data[cityId][eff.resourceId] = { value: after, prevValue: before };
+  }
+}
+
 function mapItemSell(itemId) {
   const item = mapItems.find(it => it.id === itemId);
   if (!item) return;
   const targetId = _mapItemTarget(itemId);
   const type = mapItemTypes.find(t => t.id === item.typeId);
   if (!targetId || !type) return;
+  const payout = _typeSellEffects(type);
+  _applyEffectsTo(targetId, payout);
+  const payoutLabel = payout.length ? ` — ${CITIES.find(c=>c.id===targetId)?.name || ''} ${_effectsLabel(payout)}` : '';
   if (type.saleMode === 'continuous') {
     item.cityId = targetId;
     item.leasedTo = null;
-    showToastMsg && showToastMsg(`🤝 Sold ${type.icon} ${type.name} to ${CITIES.find(c=>c.id===targetId)?.name || ''}`);
   } else {
-    for (const eff of _typeDestroyEffects(type)) {
-      const before = data[targetId][eff.resourceId]?.value ?? 0;
-      const after = round2(Math.max(0, before + eff.delta));
-      data[targetId][eff.resourceId] = { value: after, prevValue: before };
-    }
     mapItems = mapItems.filter(it => it.id !== itemId);
-    showToastMsg && showToastMsg(`🤝 Sold ${type.icon} ${type.name} — ${CITIES.find(c=>c.id===targetId)?.name || ''} ${_effectsLabel(_typeDestroyEffects(type))}`);
   }
+  showToastMsg && showToastMsg(`🤝 Sold ${type.icon} ${type.name} to ${CITIES.find(c=>c.id===targetId)?.name || ''}${payoutLabel}`);
   renderMapItemsNations();
   renderScoreboard();
   save();
@@ -17712,12 +17782,25 @@ function mapItemLease(itemId) {
   const targetId = _mapItemTarget(itemId);
   const type = mapItemTypes.find(t => t.id === item.typeId);
   if (!targetId || !type) return;
-  if (type.saleMode !== 'continuous') { mapItemSell(itemId); return; }
-  item.leasedTo = targetId === item.cityId ? null : targetId;
-  showToastMsg && showToastMsg(item.leasedTo
-    ? `📜 Leased ${type.icon} ${type.name} income to ${CITIES.find(c=>c.id===targetId)?.name || ''}`
-    : `📜 Lease cleared — ${type.icon} ${type.name} income returns to its owner`);
+  const payout = _typeLeaseEffects(type);
+  if (type.saleMode === 'continuous') {
+    const clearing = targetId === item.cityId;
+    item.leasedTo = clearing ? null : targetId;
+    if (!clearing) {
+      _applyEffectsTo(targetId, payout);
+      const payoutLabel = payout.length ? ` — ${CITIES.find(c=>c.id===targetId)?.name || ''} ${_effectsLabel(payout)}` : '';
+      showToastMsg && showToastMsg(`📜 Leased ${type.icon} ${type.name} income to ${CITIES.find(c=>c.id===targetId)?.name || ''}${payoutLabel}`);
+    } else {
+      showToastMsg && showToastMsg(`📜 Lease cleared — ${type.icon} ${type.name} income returns to its owner`);
+    }
+  } else {
+    _applyEffectsTo(targetId, payout);
+    const payoutLabel = payout.length ? ` — ${CITIES.find(c=>c.id===targetId)?.name || ''} ${_effectsLabel(payout)}` : '';
+    mapItems = mapItems.filter(it => it.id !== itemId);
+    showToastMsg && showToastMsg(`📜 Leased ${type.icon} ${type.name}${payoutLabel}`);
+  }
   renderMapItemsNations();
+  renderScoreboard();
   save();
   playClick();
 }
@@ -17728,12 +17811,16 @@ function mapItemMove(itemId) {
   const targetId = _mapItemTarget(itemId);
   const type = mapItemTypes.find(t => t.id === item.typeId);
   if (!targetId) return;
+  const payout = type ? _typeMoveEffects(type) : [];
+  _applyEffectsTo(targetId, payout);
   item.cityId = targetId;
   item.leasedTo = null;
   renderMapItemsNations();
+  renderScoreboard();
   save();
   playClick();
-  showToastMsg && showToastMsg(`🚚 Moved ${type ? type.icon + ' ' + type.name : 'item'} to ${CITIES.find(c=>c.id===targetId)?.name || ''}`);
+  const payoutLabel = payout.length ? ` — ${_effectsLabel(payout)}` : '';
+  showToastMsg && showToastMsg(`🚚 Moved ${type ? type.icon + ' ' + type.name : 'item'} to ${CITIES.find(c=>c.id===targetId)?.name || ''}${payoutLabel}`);
 }
 
 // Plain removal — deletes the instance with no resource effect (for fixing mistakes, unlike Destroy).
@@ -24492,7 +24579,7 @@ function switchPage(page) {
       initPeopleTradeForm();
       renderAllianceBoard();
       initAllianceFormDropdowns();
-      _populateMapItemResourceSelect();
+      _mitResetDraftForm();
       renderMapItemTypes();
       renderMapItemsNations();
     }
