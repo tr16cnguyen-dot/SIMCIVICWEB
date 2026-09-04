@@ -188,6 +188,9 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:62px;display:flex;ali
 .pilot-nav:hover{border-color:var(--gold);color:var(--gold);background:rgba(4,6,13,0.85);}
 .pilot-prev{left:14px}.pilot-next{right:14px}
 .pilot-counter{position:absolute;bottom:12px;right:14px;font-family:'Space Mono',monospace;font-size:0.62rem;letter-spacing:0.05em;color:rgba(255,255,255,0.75);background:rgba(4,6,13,0.6);padding:4px 10px;border-radius:20px;backdrop-filter:blur(4px);}
+.pilot-focus-hint{display:none;position:absolute;top:12px;left:50%;transform:translateX(-50%);font-family:'Space Mono',monospace;font-size:0.6rem;letter-spacing:0.03em;color:#f0c060;background:rgba(4,6,13,0.75);padding:5px 12px;border-radius:20px;backdrop-filter:blur(4px);white-space:nowrap;pointer-events:none;}
+body.site-edit-mode .pilot-stage{cursor:crosshair;}
+body.site-edit-mode .pilot-focus-hint{display:block;}
 .pilot-captions{position:relative;min-height:34px;margin-top:16px;text-align:center;}
 .pilot-caption-item{position:absolute;inset:0;opacity:0;pointer-events:none;transition:opacity 0.3s;font-family:'Playfair Display',serif;font-style:italic;font-size:0.95rem;color:var(--sub);}
 .pilot-caption-item.active{opacity:1;pointer-events:auto;position:static;}
@@ -774,13 +777,15 @@ document.querySelectorAll('#navMenuDropdown button').forEach(function(b) {
     <div class="rev" style="margin-top:56px;">
       <div class="pilot-eye" data-editable="pilot-carousel-eyebrow">From The Classroom</div>
       <div class="pilot-carousel" id="pilotCarousel">
-        <div class="pilot-stage">
+        <div class="pilot-stage" id="pilotStage" onclick="pilotSetFocusFromClick(event)">
           <img id="pilotImg" src="/pilot-photos/pilot-01.png" alt="SimCivic Stonewall pilot session photo" loading="eager">
           <button class="pilot-nav pilot-prev" onclick="pilotNav(-1)" aria-label="Previous photo">‹</button>
           <button class="pilot-nav pilot-next" onclick="pilotNav(1)" aria-label="Next photo">›</button>
           <div class="pilot-counter" id="pilotCounter">1 / 31</div>
+          <div class="pilot-focus-hint">🎯 Click the photo to set what stays centered in frame</div>
         </div>
         <div class="pilot-captions" id="pilotCaptions"></div>
+        <div id="pilotFocusData" style="display:none;"></div>
       </div>
     </div>
   </div>
@@ -803,6 +808,7 @@ document.querySelectorAll('#navMenuDropdown button').forEach(function(b) {
   let pilotAutoTimer = null;
 
   const capContainer = document.getElementById('pilotCaptions');
+  const focusContainer = document.getElementById('pilotFocusData');
   for (let n = 1; n <= PILOT_TOTAL; n++) {
     const div = document.createElement('div');
     div.className = 'pilot-caption-item' + (n === 1 ? ' active' : '');
@@ -810,6 +816,15 @@ document.querySelectorAll('#navMenuDropdown button').forEach(function(b) {
     div.setAttribute('data-editable', 'pilot-caption-' + n);
     div.textContent = 'Stonewall Elementary pilot session — add a caption';
     capContainer.appendChild(div);
+
+    // Hidden per-photo focus point ("x,y" as percentages, 50,50 = centered).
+    // Reuses the exact same save/load system as captions — the generic
+    // editor sweep and Firebase override loader both just look for any
+    // [data-editable] element, so no separate persistence code is needed.
+    const focusDiv = document.createElement('div');
+    focusDiv.setAttribute('data-editable', 'pilot-focus-' + n);
+    focusDiv.textContent = '50,50';
+    focusContainer.appendChild(focusDiv);
   }
 
   function pilotShow(n) {
@@ -820,7 +835,25 @@ document.querySelectorAll('#navMenuDropdown button').forEach(function(b) {
     document.querySelectorAll('.pilot-caption-item').forEach(function(el) {
       el.classList.toggle('active', Number(el.dataset.slide) === n);
     });
+    const focusEl = document.querySelector('[data-editable="pilot-focus-' + n + '"]');
+    const focus = (focusEl && focusEl.textContent.trim()) || '50,50';
+    img.style.objectPosition = focus.replace(',', '% ') + '%';
   }
+
+  window.pilotSetFocusFromClick = function(e) {
+    if (!document.body.classList.contains('site-edit-mode')) return;
+    // Ignore clicks on the nav arrows/counter/hint — only clicks on the
+    // photo itself (or the empty stage background) should set a focus point.
+    if (e.target.closest('.pilot-nav')) return;
+    const stage = document.getElementById('pilotStage');
+    const rect = stage.getBoundingClientRect();
+    const xPct = Math.round(((e.clientX - rect.left) / rect.width) * 100);
+    const yPct = Math.round(((e.clientY - rect.top) / rect.height) * 100);
+    document.getElementById('pilotImg').style.objectPosition = xPct + '% ' + yPct + '%';
+    const focusEl = document.querySelector('[data-editable="pilot-focus-' + pilotIndex + '"]');
+    if (focusEl) focusEl.textContent = xPct + ',' + yPct;
+    window.showToastMsg && window.showToastMsg('Focus point set — click Save changes to keep it');
+  };
 
   window.pilotNav = function(dir) {
     let n = pilotIndex + dir;
