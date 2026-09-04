@@ -11464,8 +11464,8 @@ function buildDefaultCityRules() {
 }
 
 let cityRules = buildDefaultCityRules();
-let mapItemTypes = [];   // [{id,name,icon,resourceId,delta,saleMode:'continuous'|'onetime'}] — reusable templates, host-defined
-let mapItems     = [];   // [{id,typeId,cityId,leasedTo}] — physical instances placed on a nation's map
+let mapItemTypes = buildDefaultMapItemTypes();   // [{id,name,icon,effects,destroyEffects,saleMode:'continuous'|'onetime'}] — reusable templates
+let mapItems     = buildDefaultMapItems();       // [{id,typeId,cityId,leasedTo}] — physical instances placed on a nation's map
 let currentRound     = 1;
 let maxAppliedRound  = 0;
 let viewingRound     = null;
@@ -17507,10 +17507,12 @@ function computeRoundEffects(cityId) {
     if (!type || type.saleMode !== 'continuous') continue;
     const beneficiary = item.leasedTo || item.cityId;
     if (beneficiary !== cityId) continue;
-    if (deltas[type.resourceId] === undefined) continue;
-    deltas[type.resourceId] += type.delta;
-    expl[type.resourceId] = expl[type.resourceId] || [];
-    expl[type.resourceId].push(type.icon + ' ' + type.name + (item.leasedTo ? ' (leased)' : '') + ` → ${type.delta > 0?'+':''}${type.delta}`);
+    for (const eff of _typeEffects(type)) {
+      if (deltas[eff.resourceId] === undefined) continue;
+      deltas[eff.resourceId] += eff.delta;
+      expl[eff.resourceId] = expl[eff.resourceId] || [];
+      expl[eff.resourceId].push(type.icon + ' ' + type.name + (item.leasedTo ? ' (leased)' : '') + ` → ${eff.delta > 0?'+':''}${eff.delta}`);
+    }
   }
   return { deltas, expl };
 }
@@ -17520,6 +17522,62 @@ function computeRoundEffects(cityId) {
 // ════════════════════════════════════════════════════════
 
 function resourceMeta(resId) { return RESOURCES.find(r => r.id === resId) || { icon:'', name: resId, unit:'' }; }
+
+// Default item-type templates + starting placements, sourced from the SimCivic master doc
+// (each nation's Map section). Continuous items apply `effects` every round; `destroyEffects`
+// is the one-time Destroy payout, which can differ from the continuous effect per the doc.
+// Destroy-only items (Bare Mountain, Hills) have no continuous effect at all.
+function buildDefaultMapItemTypes() {
+  return [
+    { id: 'mit-boat', name: 'Fishing Boat', icon: '🚤', saleMode: 'continuous',
+      effects:        [{ resourceId:'food', delta:1 }],
+      destroyEffects: [{ resourceId:'food', delta:1 }] },
+    { id: 'mit-tech-hub', name: 'Tech Hub', icon: '💻', saleMode: 'continuous',
+      effects:        [{ resourceId:'capital', delta:2 }, { resourceId:'pollution', delta:1 }],
+      destroyEffects: [{ resourceId:'pollution', delta:4 }, { resourceId:'capital', delta:6 }] },
+    { id: 'mit-forest', name: 'Forest', icon: '🌲', saleMode: 'continuous',
+      effects:        [{ resourceId:'raw-materials', delta:2 }, { resourceId:'food', delta:1 }, { resourceId:'pollution', delta:-2 }],
+      destroyEffects: [{ resourceId:'raw-materials', delta:6 }, { resourceId:'food', delta:4 }, { resourceId:'pollution', delta:6 }] },
+    { id: 'mit-bare-mountain', name: 'Bare Mountain', icon: '🏔️', saleMode: 'onetime',
+      effects:        [],
+      destroyEffects: [{ resourceId:'raw-materials', delta:4 }, { resourceId:'pollution', delta:5 }] },
+    { id: 'mit-factory', name: 'Factory', icon: '🏭', saleMode: 'continuous',
+      effects:        [{ resourceId:'raw-materials', delta:-3 }, { resourceId:'pollution', delta:3 }, { resourceId:'capital', delta:2 }, { resourceId:'population', delta:1 }],
+      destroyEffects: [{ resourceId:'pollution', delta:6 }, { resourceId:'raw-materials', delta:4 }, { resourceId:'capital', delta:-5 }, { resourceId:'population', delta:-4 }] },
+    { id: 'mit-hills', name: 'Hills', icon: '⛰️', saleMode: 'onetime',
+      effects:        [],
+      destroyEffects: [{ resourceId:'raw-materials', delta:2 }, { resourceId:'food', delta:2 }, { resourceId:'pollution', delta:3 }] },
+  ];
+}
+
+function buildDefaultMapItems() {
+  const items = [];
+  let n = 0;
+  const add = (typeId, cityId, count) => { for (let i=0;i<count;i++) items.push({ id:'mi-default-'+(n++), typeId, cityId, leasedTo:null }); };
+  add('mit-boat',          'azure-bay',    3); // Azure: 3 fishing boats
+  add('mit-tech-hub',      'synapse-city', 3); // Synapse: 3 tech hubs
+  add('mit-forest',        'verdantia',    4); // Verdantia: 4 forests
+  add('mit-bare-mountain', 'ironvale',     3); // Ironvale: 3 bare mountains
+  add('mit-factory',       'ironvale',     4); // Ironvale: 4 factories
+  add('mit-forest',        'nova-haven',   2); // Novan: 2 forests
+  add('mit-hills',         'nova-haven',   4); // Novan: 4 hills
+  return items;
+}
+
+// Normalize a type's per-round effects / destroy payout, tolerating the legacy
+// single {resourceId,delta} shape from before this file supported multi-resource items.
+function _typeEffects(type) {
+  if (Array.isArray(type.effects)) return type.effects;
+  if (type.resourceId) return [{ resourceId: type.resourceId, delta: type.delta }];
+  return [];
+}
+function _typeDestroyEffects(type) {
+  if (Array.isArray(type.destroyEffects) && type.destroyEffects.length) return type.destroyEffects;
+  return _typeEffects(type);
+}
+function _effectsLabel(effects) {
+  return effects.map(e => `${resourceMeta(e.resourceId).icon} ${e.delta>0?'+':''}${e.delta} ${resourceMeta(e.resourceId).name}`).join(', ');
+}
 
 function _populateMapItemResourceSelect() {
   const sel = document.getElementById('mitResource');
@@ -17539,7 +17597,12 @@ function addMapItemType() {
     playError && playError();
     return;
   }
-  mapItemTypes.push({ id: 'mit-' + Date.now() + '-' + Math.floor(Math.random()*1000), name, icon, resourceId, delta, saleMode });
+  const row = [{ resourceId, delta }];
+  mapItemTypes.push({
+    id: 'mit-' + Date.now() + '-' + Math.floor(Math.random()*1000), name, icon, saleMode,
+    effects:        saleMode === 'continuous' ? row : [],
+    destroyEffects: row,
+  });
   document.getElementById('mitName').value = '';
   document.getElementById('mitDelta').value = 1;
   renderMapItemTypes();
@@ -17567,15 +17630,14 @@ function renderMapItemTypes() {
     return;
   }
   wrap.innerHTML = mapItemTypes.map(t => {
-    const r = resourceMeta(t.resourceId);
-    const modeLabel = t.saleMode === 'continuous'
-      ? `🔁 ${t.delta > 0 ? '+' : ''}${t.delta} ${r.name}/round`
-      : `⚡ one-time ${t.delta > 0 ? '+' : ''}${t.delta} ${r.name}`;
+    const roundLabel   = t.saleMode === 'continuous' ? `🔁 ${_effectsLabel(_typeEffects(t))}/round` : '';
+    const destroyLabel = `💥 ${_effectsLabel(_typeDestroyEffects(t))}`;
     return `<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:7px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.02);margin-bottom:6px;">
       <span style="font-size:1rem;">${t.icon}</span>
       <div style="flex:1;min-width:0;">
         <div style="font-size:0.7rem;font-weight:700;color:var(--text);">${t.name}</div>
-        <div style="font-size:0.58rem;color:var(--text-muted);">${r.icon} ${modeLabel}</div>
+        ${roundLabel ? `<div style="font-size:0.58rem;color:var(--text-muted);">${roundLabel}</div>` : ''}
+        <div style="font-size:0.58rem;color:var(--text-muted);">${destroyLabel} <span style="opacity:0.6;">(destroy payout)</span></div>
       </div>
       <button onclick="deleteMapItemType('${t.id}')" style="padding:4px 9px;border-radius:6px;border:1px solid rgba(239,68,68,0.3);background:rgba(239,68,68,0.08);color:#ef4444;font-size:0.6rem;cursor:pointer;">✕</button>
     </div>`;
@@ -17605,10 +17667,12 @@ function mapItemDestroy(itemId) {
   if (!confirm('Destroy this item? It gives a one-time resource payout to its current nation and is removed permanently.')) return;
   if (type) {
     const cityId = item.cityId;
-    const before = data[cityId][type.resourceId]?.value ?? 0;
-    const after = round2(Math.max(0, before + type.delta));
-    data[cityId][type.resourceId] = { value: after, prevValue: before };
-    showToastMsg && showToastMsg(`💥 Destroyed ${type.icon} ${type.name} — ${CITIES.find(c=>c.id===cityId)?.name || ''} ${type.delta>0?'+':''}${type.delta} ${resourceMeta(type.resourceId).name}`);
+    for (const eff of _typeDestroyEffects(type)) {
+      const before = data[cityId][eff.resourceId]?.value ?? 0;
+      const after = round2(Math.max(0, before + eff.delta));
+      data[cityId][eff.resourceId] = { value: after, prevValue: before };
+    }
+    showToastMsg && showToastMsg(`💥 Destroyed ${type.icon} ${type.name} — ${CITIES.find(c=>c.id===cityId)?.name || ''} ${_effectsLabel(_typeDestroyEffects(type))}`);
   }
   mapItems = mapItems.filter(it => it.id !== itemId);
   renderMapItemsNations();
@@ -17628,11 +17692,13 @@ function mapItemSell(itemId) {
     item.leasedTo = null;
     showToastMsg && showToastMsg(`🤝 Sold ${type.icon} ${type.name} to ${CITIES.find(c=>c.id===targetId)?.name || ''}`);
   } else {
-    const before = data[targetId][type.resourceId]?.value ?? 0;
-    const after = round2(Math.max(0, before + type.delta));
-    data[targetId][type.resourceId] = { value: after, prevValue: before };
+    for (const eff of _typeDestroyEffects(type)) {
+      const before = data[targetId][eff.resourceId]?.value ?? 0;
+      const after = round2(Math.max(0, before + eff.delta));
+      data[targetId][eff.resourceId] = { value: after, prevValue: before };
+    }
     mapItems = mapItems.filter(it => it.id !== itemId);
-    showToastMsg && showToastMsg(`🤝 Sold ${type.icon} ${type.name} — ${CITIES.find(c=>c.id===targetId)?.name || ''} ${type.delta>0?'+':''}${type.delta} ${resourceMeta(type.resourceId).name}`);
+    showToastMsg && showToastMsg(`🤝 Sold ${type.icon} ${type.name} — ${CITIES.find(c=>c.id===targetId)?.name || ''} ${_effectsLabel(_typeDestroyEffects(type))}`);
   }
   renderMapItemsNations();
   renderScoreboard();
@@ -17678,13 +17744,15 @@ function renderMapItemsNations() {
     const itemsHtml = items.length ? items.map(it => {
       const t = mapItemTypes.find(x => x.id === it.typeId);
       if (!t) return '';
-      const r = resourceMeta(t.resourceId);
       const leaseTag = it.leasedTo
         ? `<div style="font-size:0.55rem;color:#f59e0b;margin-top:2px;">🔀 Leased to ${CITIES.find(x=>x.id===it.leasedTo)?.name || '?'} — they collect the income</div>`
         : '';
       const effectLabel = t.saleMode === 'continuous'
-        ? `${r.icon} ${t.delta>0?'+':''}${t.delta} ${r.name}/round`
-        : `${r.icon} one-time ${t.delta>0?'+':''}${t.delta} ${r.name}`;
+        ? `🔁 ${_effectsLabel(_typeEffects(t))}/round`
+        : `⚡ one-time ${_effectsLabel(_typeDestroyEffects(t))}`;
+      const destroyPreview = t.saleMode === 'continuous'
+        ? `<div style="font-size:0.55rem;color:var(--text-muted);opacity:0.7;">💥 destroy: ${_effectsLabel(_typeDestroyEffects(t))}</div>`
+        : '';
       const targetOptions = CITIES.filter(x => x.id !== c.id).map(x => `<option value="${x.id}">${x.icon} ${x.name}</option>`).join('');
       return `<div style="padding:8px 10px;border-radius:8px;border:1px solid ${c.color}25;background:${c.color}06;margin-bottom:6px;">
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
@@ -17692,6 +17760,7 @@ function renderMapItemsNations() {
           <span style="font-size:0.68rem;font-weight:700;color:var(--text);flex:1;">${t.name}</span>
         </div>
         <div style="font-size:0.58rem;color:var(--text-muted);">${effectLabel}</div>
+        ${destroyPreview}
         ${leaseTag}
         <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:6px;align-items:center;">
           <select id="mitTarget_${it.id}" style="padding:3px 5px;border-radius:5px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:0.58rem;">${targetOptions}</select>
