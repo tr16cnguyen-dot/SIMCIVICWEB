@@ -10534,6 +10534,63 @@ window.fbToggleViewers = function() {
       </div>
     </div>
 
+    <!-- Map Items -->
+    <div class="section-card" style="margin-bottom:20px;border-color:rgba(16,185,129,0.25);background:linear-gradient(135deg,rgba(15,22,35,0.85),rgba(6,35,25,0.4));">
+      <div class="section-header" onclick="toggleSection('mapItemsBody')" style="cursor:pointer;">
+        <div class="section-header-left">
+          <span class="section-icon">🗺️</span>
+          <span class="section-title" style="color:#34d399;">Map Items</span>
+          <span class="section-badge" style="background:rgba(16,185,129,0.15);color:#34d399;border:1px solid rgba(16,185,129,0.3);">PHYSICAL ASSETS</span>
+        </div>
+        <span class="section-chevron open" id="mapItemsChevron">▼</span>
+      </div>
+      <div class="section-body" id="mapItemsBody">
+        <p style="font-size:0.62rem;color:var(--text-muted);margin-bottom:12px;line-height:1.5;">
+          Define reusable item types (boats, tech hubs, factories, hills…) with a fixed resource effect, then place instances on nations' maps.
+          Host-controlled — Sell / Lease transfer the item per its fixed type (continuous income or one-time payout), Destroy always pays out once, Move relocates with no payout.
+        </p>
+
+        <!-- Item type templates -->
+        <div style="font-size:0.55rem;font-family:'Orbitron',sans-serif;letter-spacing:1px;color:var(--text-muted);text-transform:uppercase;margin-bottom:6px;">Item Type Templates</div>
+        <div id="mapItemTypesList" style="margin-bottom:10px;"></div>
+        <div style="padding:10px 12px;border-radius:8px;border:1px solid rgba(16,185,129,0.2);background:rgba(16,185,129,0.05);margin-bottom:18px;">
+          <div style="display:grid;grid-template-columns:2fr 1fr;gap:8px;margin-bottom:8px;">
+            <div class="add-rule-field">
+              <label>Item name</label>
+              <input type="text" id="mitName" placeholder="e.g. Boat, Tech Hub, Hills" style="width:100%;padding:5px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:0.72rem;box-sizing:border-box;">
+            </div>
+            <div class="add-rule-field">
+              <label>Icon (emoji)</label>
+              <input type="text" id="mitIcon" placeholder="🚤" maxlength="4" style="width:100%;padding:5px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:0.72rem;box-sizing:border-box;">
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+            <div class="add-rule-field">
+              <label>Resource affected</label>
+              <select id="mitResource" style="width:100%;padding:5px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:0.72rem;"></select>
+            </div>
+            <div class="add-rule-field">
+              <label>Amount</label>
+              <input type="number" id="mitDelta" value="1" step="0.1" style="font-family:'JetBrains Mono',monospace;text-align:center;width:100%;padding:5px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);box-sizing:border-box;">
+            </div>
+          </div>
+          <div style="display:flex;gap:14px;align-items:center;margin-bottom:10px;">
+            <label style="display:flex;align-items:center;gap:5px;font-size:0.62rem;color:var(--text);cursor:pointer;">
+              <input type="radio" name="mitSaleMode" value="continuous" checked> 🔁 Continuous (per round)
+            </label>
+            <label style="display:flex;align-items:center;gap:5px;font-size:0.62rem;color:var(--text);cursor:pointer;">
+              <input type="radio" name="mitSaleMode" value="onetime"> ⚡ One-time
+            </label>
+          </div>
+          <button onclick="addMapItemType()" style="padding:7px 20px;border-radius:8px;border:1px solid rgba(16,185,129,0.4);background:rgba(16,185,129,0.12);color:#34d399;font-family:'Orbitron',sans-serif;font-size:0.62rem;font-weight:700;letter-spacing:1px;cursor:pointer;">🗺️ Add Item Type</button>
+        </div>
+
+        <!-- Per-nation map items -->
+        <div style="font-size:0.55rem;font-family:'Orbitron',sans-serif;letter-spacing:1px;color:var(--text-muted);text-transform:uppercase;margin-bottom:6px;">Nation Maps</div>
+        <div id="mapItemsNationGrid"></div>
+      </div>
+    </div>
+
   </div><!-- end trade page inner -->
 </div><!-- end tradePage -->
 
@@ -11151,6 +11208,8 @@ const CITY_EVENTS_KEY    = 'city-monitor-city-events-v6';
 const GLOBAL_ENABLED_KEY = 'city-monitor-global-enabled-v5';
 const CITY_ENABLED_KEY   = 'city-monitor-city-enabled-v5';
 const DRAFT_SK           = 'city-monitor-draft';
+const MAP_ITEM_TYPES_SK  = 'city-monitor-map-item-types-v1';
+const MAP_ITEMS_SK       = 'city-monitor-map-items-v1';
 
 function loadEventsFromStorage(key, defaults) {
   try { const s = localStorage.getItem(key); if (s) return JSON.parse(s); } catch {}
@@ -11405,6 +11464,8 @@ function buildDefaultCityRules() {
 }
 
 let cityRules = buildDefaultCityRules();
+let mapItemTypes = [];   // [{id,name,icon,resourceId,delta,saleMode:'continuous'|'onetime'}] — reusable templates, host-defined
+let mapItems     = [];   // [{id,typeId,cityId,leasedTo}] — physical instances placed on a nation's map
 let currentRound     = 1;
 let maxAppliedRound  = 0;
 let viewingRound     = null;
@@ -11485,6 +11546,8 @@ async function save() {
     [ROUND_DESC_SK,     roundDescs],
     [ROUND_NOTES_SK,    roundNotes],
     [RULES_SK,          cityRules],
+    [MAP_ITEM_TYPES_SK, mapItemTypes],
+    [MAP_ITEMS_SK,      mapItems],
     [ROUND_SK,          { currentRound, maxAppliedRound }],
     [POL_HISTORY_SK,    politicalHistory.slice(0, 200)],
     [GLOBAL_EVENTS_KEY, globalEvents],
@@ -11530,7 +11593,8 @@ async function loadAll() {
       console.log('Clearing stale data — loading fresh DEFAULT_STATS');
       const allKeys = [SK, SNAP_SK, ROUND_DESC_SK, ROUND_NOTES_SK, RULES_SK, ROUND_SK,
         GLOBAL_EVENTS_KEY, CITY_EVENTS_KEY, GLOBAL_ENABLED_KEY, CITY_ENABLED_KEY, DRAFT_SK,
-        POLITICAL_SK, POLICY_SK, USED_POLICY_SK, RELATIONS_SK, WAR_SK, CARD_PICKS_SK, POL_HISTORY_SK];
+        POLITICAL_SK, POLICY_SK, USED_POLICY_SK, RELATIONS_SK, WAR_SK, CARD_PICKS_SK, POL_HISTORY_SK,
+        MAP_ITEM_TYPES_SK, MAP_ITEMS_SK];
       for (const key of allKeys) {
         try { localStorage.removeItem(key); } catch {}
         try { await window.storage?.delete(key); } catch {}
@@ -12080,13 +12144,13 @@ async function loadFromLocalStorage() {
   const [
     savedData, savedSnaps, savedDescs, savedNotes, savedRules, savedRound,
     savedGlobalEvts, savedCityEvts, savedGlobalEnabled, savedCityEnabled,
-    savedPolHistory
+    savedPolHistory, savedMapItemTypes, savedMapItems
   ] = await Promise.all([
     storageLoad(SK), storageLoad(SNAP_SK), storageLoad(ROUND_DESC_SK),
     storageLoad(ROUND_NOTES_SK), storageLoad(RULES_SK), storageLoad(ROUND_SK),
     storageLoad(GLOBAL_EVENTS_KEY), storageLoad(CITY_EVENTS_KEY),
     storageLoad(GLOBAL_ENABLED_KEY), storageLoad(CITY_ENABLED_KEY),
-    storageLoad(POL_HISTORY_SK),
+    storageLoad(POL_HISTORY_SK), storageLoad(MAP_ITEM_TYPES_SK), storageLoad(MAP_ITEMS_SK),
   ]);
   if (savedData) {
     // Only restore if version stamp matches AND data looks valid
@@ -12106,6 +12170,8 @@ async function loadFromLocalStorage() {
   if (savedDescs)         roundDescs   = savedDescs;
   if (savedNotes)         roundNotes   = savedNotes;
   if (savedRules)         cityRules    = savedRules;
+  if (savedMapItemTypes)  mapItemTypes = savedMapItemTypes;
+  if (savedMapItems)      mapItems     = savedMapItems;
   if (savedPolHistory)    { politicalHistory.length = 0; savedPolHistory.forEach(function(e){ politicalHistory.push(e); }); }
   if (savedRound) {
     currentRound    = savedRound.currentRound    || 1;
@@ -17434,7 +17500,223 @@ function computeRoundEffects(cityId) {
       expl[rule.resource_id].push((rule.label || 'City Rule') + (rule.condition ? ` (when ${rule.condition})` : '') + ` → ${rule.delta > 0?'+':''}${rule.delta}`);
     }
   }
+
+  // ── Map items (continuous physical assets — boats, tech hubs, etc.) ──
+  for (const item of mapItems) {
+    const type = mapItemTypes.find(t => t.id === item.typeId);
+    if (!type || type.saleMode !== 'continuous') continue;
+    const beneficiary = item.leasedTo || item.cityId;
+    if (beneficiary !== cityId) continue;
+    if (deltas[type.resourceId] === undefined) continue;
+    deltas[type.resourceId] += type.delta;
+    expl[type.resourceId] = expl[type.resourceId] || [];
+    expl[type.resourceId].push(type.icon + ' ' + type.name + (item.leasedTo ? ' (leased)' : '') + ` → ${type.delta > 0?'+':''}${type.delta}`);
+  }
   return { deltas, expl };
+}
+
+// ════════════════════════════════════════════════════════
+// MAP ITEMS SYSTEM
+// ════════════════════════════════════════════════════════
+
+function resourceMeta(resId) { return RESOURCES.find(r => r.id === resId) || { icon:'', name: resId, unit:'' }; }
+
+function _populateMapItemResourceSelect() {
+  const sel = document.getElementById('mitResource');
+  if (!sel || sel.options.length) return;
+  sel.innerHTML = RESOURCES.map(r => `<option value="${r.id}">${r.icon} ${r.name}</option>`).join('');
+}
+
+function addMapItemType() {
+  _populateMapItemResourceSelect();
+  const name = document.getElementById('mitName').value.trim();
+  const icon = document.getElementById('mitIcon').value.trim() || '📦';
+  const resourceId = document.getElementById('mitResource').value;
+  const delta = parseFloat(document.getElementById('mitDelta').value);
+  const saleMode = document.querySelector('input[name="mitSaleMode"]:checked')?.value || 'continuous';
+  if (!name || isNaN(delta) || delta === 0) {
+    showToastMsg && showToastMsg('⚠️ Enter an item name and non-zero amount');
+    playError && playError();
+    return;
+  }
+  mapItemTypes.push({ id: 'mit-' + Date.now() + '-' + Math.floor(Math.random()*1000), name, icon, resourceId, delta, saleMode });
+  document.getElementById('mitName').value = '';
+  document.getElementById('mitDelta').value = 1;
+  renderMapItemTypes();
+  renderMapItemsNations();
+  save();
+  playClick();
+}
+
+function deleteMapItemType(typeId) {
+  const inUse = mapItems.some(it => it.typeId === typeId);
+  if (inUse && !confirm('This item type is placed on one or more nations\' maps. Delete the type and remove all placed instances of it?')) return;
+  if (inUse) mapItems = mapItems.filter(it => it.typeId !== typeId);
+  mapItemTypes = mapItemTypes.filter(t => t.id !== typeId);
+  renderMapItemTypes();
+  renderMapItemsNations();
+  save();
+  playClick();
+}
+
+function renderMapItemTypes() {
+  const wrap = document.getElementById('mapItemTypesList');
+  if (!wrap) return;
+  if (!mapItemTypes.length) {
+    wrap.innerHTML = '<div style="font-size:0.62rem;color:var(--text-muted);font-style:italic;padding:4px 0;">No item types defined yet — add one below.</div>';
+    return;
+  }
+  wrap.innerHTML = mapItemTypes.map(t => {
+    const r = resourceMeta(t.resourceId);
+    const modeLabel = t.saleMode === 'continuous'
+      ? `🔁 ${t.delta > 0 ? '+' : ''}${t.delta} ${r.name}/round`
+      : `⚡ one-time ${t.delta > 0 ? '+' : ''}${t.delta} ${r.name}`;
+    return `<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:7px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.02);margin-bottom:6px;">
+      <span style="font-size:1rem;">${t.icon}</span>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:0.7rem;font-weight:700;color:var(--text);">${t.name}</div>
+        <div style="font-size:0.58rem;color:var(--text-muted);">${r.icon} ${modeLabel}</div>
+      </div>
+      <button onclick="deleteMapItemType('${t.id}')" style="padding:4px 9px;border-radius:6px;border:1px solid rgba(239,68,68,0.3);background:rgba(239,68,68,0.08);color:#ef4444;font-size:0.6rem;cursor:pointer;">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function addMapItemToCity(cityId) {
+  const sel = document.getElementById('mitAddType_' + cityId);
+  const typeId = sel && sel.value;
+  if (!typeId) return;
+  mapItems.push({ id: 'mi-' + Date.now() + '-' + Math.floor(Math.random()*1000), typeId, cityId, leasedTo: null });
+  renderMapItemsNations();
+  save();
+  playClick();
+  showToastMsg && showToastMsg('🗺️ Item added to ' + (CITIES.find(c => c.id === cityId)?.name || ''));
+}
+
+function _mapItemTarget(itemId) {
+  const sel = document.getElementById('mitTarget_' + itemId);
+  return sel ? sel.value : null;
+}
+
+function mapItemDestroy(itemId) {
+  const item = mapItems.find(it => it.id === itemId);
+  if (!item) return;
+  const type = mapItemTypes.find(t => t.id === item.typeId);
+  if (!confirm('Destroy this item? It gives a one-time resource payout to its current nation and is removed permanently.')) return;
+  if (type) {
+    const cityId = item.cityId;
+    const before = data[cityId][type.resourceId]?.value ?? 0;
+    const after = round2(Math.max(0, before + type.delta));
+    data[cityId][type.resourceId] = { value: after, prevValue: before };
+    showToastMsg && showToastMsg(`💥 Destroyed ${type.icon} ${type.name} — ${CITIES.find(c=>c.id===cityId)?.name || ''} ${type.delta>0?'+':''}${type.delta} ${resourceMeta(type.resourceId).name}`);
+  }
+  mapItems = mapItems.filter(it => it.id !== itemId);
+  renderMapItemsNations();
+  renderScoreboard();
+  save();
+  playClick();
+}
+
+function mapItemSell(itemId) {
+  const item = mapItems.find(it => it.id === itemId);
+  if (!item) return;
+  const targetId = _mapItemTarget(itemId);
+  const type = mapItemTypes.find(t => t.id === item.typeId);
+  if (!targetId || !type) return;
+  if (type.saleMode === 'continuous') {
+    item.cityId = targetId;
+    item.leasedTo = null;
+    showToastMsg && showToastMsg(`🤝 Sold ${type.icon} ${type.name} to ${CITIES.find(c=>c.id===targetId)?.name || ''}`);
+  } else {
+    const before = data[targetId][type.resourceId]?.value ?? 0;
+    const after = round2(Math.max(0, before + type.delta));
+    data[targetId][type.resourceId] = { value: after, prevValue: before };
+    mapItems = mapItems.filter(it => it.id !== itemId);
+    showToastMsg && showToastMsg(`🤝 Sold ${type.icon} ${type.name} — ${CITIES.find(c=>c.id===targetId)?.name || ''} ${type.delta>0?'+':''}${type.delta} ${resourceMeta(type.resourceId).name}`);
+  }
+  renderMapItemsNations();
+  renderScoreboard();
+  save();
+  playClick();
+}
+
+function mapItemLease(itemId) {
+  const item = mapItems.find(it => it.id === itemId);
+  if (!item) return;
+  const targetId = _mapItemTarget(itemId);
+  const type = mapItemTypes.find(t => t.id === item.typeId);
+  if (!targetId || !type) return;
+  if (type.saleMode !== 'continuous') { mapItemSell(itemId); return; }
+  item.leasedTo = targetId === item.cityId ? null : targetId;
+  showToastMsg && showToastMsg(item.leasedTo
+    ? `📜 Leased ${type.icon} ${type.name} income to ${CITIES.find(c=>c.id===targetId)?.name || ''}`
+    : `📜 Lease cleared — ${type.icon} ${type.name} income returns to its owner`);
+  renderMapItemsNations();
+  save();
+  playClick();
+}
+
+function mapItemMove(itemId) {
+  const item = mapItems.find(it => it.id === itemId);
+  if (!item) return;
+  const targetId = _mapItemTarget(itemId);
+  const type = mapItemTypes.find(t => t.id === item.typeId);
+  if (!targetId) return;
+  item.cityId = targetId;
+  item.leasedTo = null;
+  renderMapItemsNations();
+  save();
+  playClick();
+  showToastMsg && showToastMsg(`🚚 Moved ${type ? type.icon + ' ' + type.name : 'item'} to ${CITIES.find(c=>c.id===targetId)?.name || ''}`);
+}
+
+function renderMapItemsNations() {
+  const wrap = document.getElementById('mapItemsNationGrid');
+  if (!wrap) return;
+  wrap.innerHTML = CITIES.map(c => {
+    const items = mapItems.filter(it => it.cityId === c.id);
+    const itemsHtml = items.length ? items.map(it => {
+      const t = mapItemTypes.find(x => x.id === it.typeId);
+      if (!t) return '';
+      const r = resourceMeta(t.resourceId);
+      const leaseTag = it.leasedTo
+        ? `<div style="font-size:0.55rem;color:#f59e0b;margin-top:2px;">🔀 Leased to ${CITIES.find(x=>x.id===it.leasedTo)?.name || '?'} — they collect the income</div>`
+        : '';
+      const effectLabel = t.saleMode === 'continuous'
+        ? `${r.icon} ${t.delta>0?'+':''}${t.delta} ${r.name}/round`
+        : `${r.icon} one-time ${t.delta>0?'+':''}${t.delta} ${r.name}`;
+      const targetOptions = CITIES.filter(x => x.id !== c.id).map(x => `<option value="${x.id}">${x.icon} ${x.name}</option>`).join('');
+      return `<div style="padding:8px 10px;border-radius:8px;border:1px solid ${c.color}25;background:${c.color}06;margin-bottom:6px;">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+          <span style="font-size:1rem;">${t.icon}</span>
+          <span style="font-size:0.68rem;font-weight:700;color:var(--text);flex:1;">${t.name}</span>
+        </div>
+        <div style="font-size:0.58rem;color:var(--text-muted);">${effectLabel}</div>
+        ${leaseTag}
+        <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:6px;align-items:center;">
+          <select id="mitTarget_${it.id}" style="padding:3px 5px;border-radius:5px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:0.58rem;">${targetOptions}</select>
+          <button onclick="mapItemSell('${it.id}')" style="padding:3px 8px;border-radius:5px;border:1px solid rgba(34,197,94,0.35);background:rgba(34,197,94,0.08);color:#22c55e;font-size:0.58rem;cursor:pointer;">Sell</button>
+          ${t.saleMode==='continuous' ? `<button onclick="mapItemLease('${it.id}')" style="padding:3px 8px;border-radius:5px;border:1px solid rgba(245,158,11,0.35);background:rgba(245,158,11,0.08);color:#f59e0b;font-size:0.58rem;cursor:pointer;">Lease</button>` : ''}
+          <button onclick="mapItemMove('${it.id}')" style="padding:3px 8px;border-radius:5px;border:1px solid rgba(6,182,212,0.35);background:rgba(6,182,212,0.08);color:var(--cyan);font-size:0.58rem;cursor:pointer;">Move</button>
+          <button onclick="mapItemDestroy('${it.id}')" style="padding:3px 8px;border-radius:5px;border:1px solid rgba(239,68,68,0.35);background:rgba(239,68,68,0.08);color:#ef4444;font-size:0.58rem;cursor:pointer;">Destroy</button>
+        </div>
+      </div>`;
+    }).join('') : '<div style="font-size:0.58rem;color:var(--text-muted);font-style:italic;padding:2px 0 8px;">No map items yet.</div>';
+
+    const typeOptions = mapItemTypes.map(t => `<option value="${t.id}">${t.icon} ${t.name}</option>`).join('');
+
+    return `<div style="border:1px solid rgba(255,255,255,0.08);border-radius:9px;padding:10px;margin-bottom:10px;">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
+        <span style="font-size:1.1rem;">${c.icon}</span>
+        <span style="font-family:Orbitron,sans-serif;font-size:0.62rem;font-weight:800;color:${c.color};">${c.name}</span>
+      </div>
+      ${itemsHtml}
+      ${mapItemTypes.length ? `<div style="display:flex;gap:5px;margin-top:6px;">
+          <select id="mitAddType_${c.id}" style="flex:1;padding:4px 6px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:0.62rem;">${typeOptions}</select>
+          <button onclick="addMapItemToCity('${c.id}')" style="padding:4px 10px;border-radius:6px;border:1px solid rgba(6,182,212,0.4);background:var(--cyan-dim);color:var(--cyan);font-size:0.6rem;font-weight:700;cursor:pointer;">+ Add</button>
+        </div>` : `<div style="font-size:0.56rem;color:var(--text-muted);font-style:italic;">Define an item type above first.</div>`}
+    </div>`;
+  }).join('');
 }
 
 // ── Process alliance rules (called from applyRound after base effects) ──
@@ -24125,6 +24407,9 @@ function switchPage(page) {
       initPeopleTradeForm();
       renderAllianceBoard();
       initAllianceFormDropdowns();
+      _populateMapItemResourceSelect();
+      renderMapItemTypes();
+      renderMapItemsNations();
     }
   }
 
