@@ -23714,611 +23714,181 @@ function init() {
 // ════════════════════════════════════════════════════════
 
 function showExportModal() {
-  const now   = new Date().toLocaleString('en-US', { timeZone:'America/New_York', weekday:'long', year:'numeric', month:'long', day:'numeric', hour:'2-digit', minute:'2-digit' });
-  const SEP   = '═'.repeat(72);
-  const SEP2  = '─'.repeat(72);
-  const SEP3  = '·'.repeat(72);
-  const L     = [];
-  const ln    = (...s) => s.forEach(x => L.push(x));
-  const blank = () => L.push('');
-  const hdr   = (title) => { blank(); ln(SEP, `  ${title}`, SEP); blank(); };
-  const sub   = (title) => { blank(); ln(`  ${SEP2.slice(0,60)}`, `  ${title}`, `  ${SEP2.slice(0,60)}`); blank(); };
+  try {
+    const now = new Date().toLocaleString('en-US', { timeZone:'America/New_York', weekday:'long', year:'numeric', month:'long', day:'numeric', hour:'2-digit', minute:'2-digit' });
+    const dateSlug = new Date().toISOString().slice(0,10);
 
-  // ══ COVER ══════════════════════════════════════════════
-  ln(SEP,
-    '         STONEWALL CITY SIMULATION',
-    '               COMPLETE GAME SUMMARY',
-    '',
-    `  Generated : ${now}`,
-    `  Rounds Played : ${maxAppliedRound} of 5   |   Current Round : ${currentRound}`,
-    SEP); blank();
+    // ── Build text content ────────────────────────────────────────────────────
+    const L   = [];
+    const ln  = (...s) => s.forEach(x => L.push(String(x)));
+    const blk = () => L.push('');
+    const hr  = () => L.push('═'.repeat(72));
+    const hr2 = () => L.push('─'.repeat(60));
 
-  // ══ 1. SIMULATION OVERVIEW ═════════════════════════════
-  hdr('1.  SIMULATION OVERVIEW');
-  ln(`  Round Schedule:`);
-  for (let r = 1; r <= 5; r++) {
-    const d = roundDescs[r] || '(no description)';
-    ln(`    R${r}:  ${d}`);
-  }
-  blank();
-  ln('  Resource Rules in Effect:');
-  const seenRules = new Set();
-  cityRules.forEach(rule => {
-    const k = `${rule.resource_id}|${rule.delta}|${rule.condition}`;
-    if (seenRules.has(k)) return; seenRules.add(k);
-    const res = RESOURCES.find(r => r.id === rule.resource_id);
-    ln(`    • ${rule.label || `${res?.name} ${rule.delta>0?'+':''}${rule.delta}${rule.condition?' (when '+rule.condition+')':' every round'}`}`);
-  });
-  blank();
-  ln('  Azure Trade Tax Rates:');
-  CITIES.filter(c => c.id !== 'azure-bay').forEach(c => {
-    const rate = cityTaxRates[c.id] ?? 30;
-    ln(`    • ${c.icon} ${c.name}: ${rate}% tax on resources received when Azure is not in the trade`);
-  });
+    const sec = (title) => { blk(); hr(); ln('  ' + title); hr(); blk(); };
+    const sub = (title) => { blk(); hr2(); ln('  ' + title); hr2(); blk(); };
 
-  // ══ 2. TEAM ROSTERS ════════════════════════════════════
-  hdr('2.  TEAM ROSTERS & ROLES');
-  CITIES.forEach((c, idx) => {
-    const members  = draftRosters?.[c.id] || [];
-    const roles    = roleAssignments?.[c.id] || {};
-    const teacher  = teacherNames?.[idx] || '';
-    ln(`  ${c.icon}  ${c.name.toUpperCase()}  (${c.theme})`);
-    if (teacher) ln(`       Teacher :  ${teacher}`);
-    if (members.length) {
-      ln(`       Team (${members.length} students):`);
-      members.forEach(name => {
-        const role = ROLES.find(r => r.id === roles[name]);
-        ln(`         ${role ? role.icon : '·'}  ${name.padEnd(18)}${role ? role.name : '(no role assigned)'}`);
-      });
-    } else {
-      ln('       (No students assigned)');
+    // Cover
+    hr();
+    ln('  SIMCIVIC — NATION SIMULATOR');
+    ln('  COMPLETE GAME SUMMARY');
+    ln('');
+    ln('  Generated  : ' + now);
+    ln('  Rounds Played : ' + (maxAppliedRound||0) + ' of 5   |   Current Round : ' + (currentRound||1));
+    hr(); blk();
+
+    // 1. Round Schedule
+    sec('1.  ROUND SCHEDULE');
+    for (let r = 1; r <= 5; r++) {
+      ln('  R' + r + ':  ' + (roundDescs[r] || '(no description)'));
     }
-    blank();
-  });
 
-  // ══ 3. CITY CARDS SUMMARY (ALL ROUNDS) ═════════════════
-  hdr('3.  CITY CARDS — ALL ROUNDS');
-  CITIES.forEach(c => {
-    ln(`  ${c.icon}  ${c.name}`);
-    let anyCards = false;
-    for (let rnd = 1; rnd <= 5; rnd++) {
-      const st = cityCardPicks?.[rnd]?.[c.id];
-      const sel  = [...(st?.selected   || [])].map(id => CITY_CARDS[c.id]?.options.find(o=>o.id===id)?.name).filter(Boolean);
-      const elim = [...(st?.eliminated || [])].map(id => CITY_CARDS[c.id]?.options.find(o=>o.id===id)?.name).filter(Boolean);
-      if (sel.length || elim.length) {
-        anyCards = true;
-        ln(`       R${rnd}:`);
-        if (sel.length)  ln(`         ✓ Chosen:      ${sel.join(', ')}`);
-        if (elim.length) ln(`         ✕ Eliminated:  ${elim.join(', ')}`);
+    // 2. Team Rosters
+    sec('2.  TEAM ROSTERS & ROLES');
+    (CITIES || []).forEach(c => {
+      const members = (draftRosters||{})[c.id] || [];
+      const roles   = (roleAssignments||{})[c.id] || {};
+      const teacher = (teacherAssign||{})[c.id] || '';
+      ln('  ' + c.icon + '  ' + c.name.toUpperCase());
+      if (teacher) ln('       Teacher  :  ' + teacher);
+      if (members.length) {
+        members.forEach(name => {
+          const role = (ROLES||[]).find(r => r.id === roles[name]);
+          ln('       ' + (role ? role.icon : '·') + '  ' + name + (role ? '  (' + role.label + ')' : ''));
+        });
+      } else {
+        ln('       (No students assigned)');
       }
-    }
-    if (!anyCards) ln('       (No cards selected)');
-    blank();
-  });
+      blk();
+    });
 
-  // ══ 4. STARTING STATS ══════════════════════════════════
-  hdr('4.  STARTING RESOURCE VALUES');
-  const col = (s, w) => fmt(s).padStart(w);
-  ln(`  ${'City'.padEnd(16)} ${'Capital'.padStart(8)} ${'Food'.padStart(6)} ${'Water'.padStart(6)} ${'Happiness'.padStart(10)} ${'Pollution'.padStart(10)} ${'Population'.padStart(11)} ${'Raw Mats'.padStart(9)}`);
-  ln(`  ${SEP3.slice(0,90)}`);
-  CITIES.forEach(c => {
-    const v = id => DEFAULT_STATS[c.id]?.[id] ?? 0;
-    ln(`  ${c.name.padEnd(16)} ${col(v('capital'),8)} ${col(v('food'),6)} ${col(v('water'),6)} ${col(v('happiness'),10)} ${col(v('pollution'),10)} ${col(v('population'),11)} ${col(v('raw-materials'),9)}`);
-  });
+    // 3. Policy Cards
+    sec('3.  POLICY CARDS');
+    (CITIES || []).forEach(c => {
+      const cid  = (policyPicks||{})[c.id];
+      const card = cid ? ((POLICY_CARDS||{})[c.id]||[]).find(x => x.id === cid) : null;
+      const used = (usedPolicyCards||new Set()).has(cid);
+      ln('  ' + c.icon + '  ' + c.name + ':  ' + (card ? card.name + (used ? '  ✓ ACTIVATED' : '  (not activated)') : '(none selected)'));
+    });
 
-  // ══ 5. PER-ROUND BREAKDOWN ══════════════════════════════
-  hdr('5.  ROUND-BY-ROUND BREAKDOWN');
-
-  // Bucket round history properly — trades/events aren't tagged by round number
-  // We use the order they appear: newest first, so we need to reverse for chronological
-  const chronoHistory = [...roundHistory].reverse();
-
-  for (let rnd = 1; rnd <= Math.max(maxAppliedRound, currentRound); rnd++) {
-    const desc = roundDescs[rnd] || '';
-    const note = roundNotes[rnd] || '';
-    sub(`ROUND ${rnd}${desc ? '  —  ' + desc : ''}`);
-
-    // Teacher notes
-    if (note) {
-      ln('  📝 Teacher Notes:');
-      ln(`     ${note}`); blank();
-    } else {
-      ln('  📝 Teacher Notes:  (none recorded)'); blank();
-    }
-
-    // --- Trades that happened (tagged round -1 but shown under current round context)
-    // We approximate: show all trades if this is any round; trades don't carry round #
-    // Only show on first round section, or use description to pair
-    const roundTrades = chronoHistory.filter(h => h.icon === '🤝');
-    if (rnd === 1 && roundTrades.length) {
-      ln('  🤝 TRADES EXECUTED (all rounds combined):');
-      roundTrades.forEach(t => {
-        ln(`     ${t.label}`);
-        if (t.customItems) ln(`       📦 Physical items: ${t.customItems}`);
-        const byCityTrade = {};
-        (t.changes || []).forEach(ch => {
-          const c = CITIES.find(x=>x.id===ch.cityId);
-          const r = RESOURCES.find(x=>x.id===ch.resourceId);
-          if (!c || !r || ch.delta===0) return;
-          if (!byCityTrade[c.name]) byCityTrade[c.name] = [];
-          byCityTrade[c.name].push(`${r.name} ${ch.valueBefore}→${ch.valueAfter} (${ch.delta>0?'+':''}${ch.delta})`);
-        });
-        Object.entries(byCityTrade).forEach(([city, changes]) => {
-          ln(`       ${city}: ${changes.join('  |  ')}`);
-        });
-      });
-      blank();
-    }
-
-    // Events triggered this round
-    const roundEvts = chronoHistory.filter(h => h.round === rnd || h.round === -2);
-    if (roundEvts.length) {
-      ln('  🎲 EVENTS TRIGGERED:');
-      roundEvts.forEach(ev => {
-        ln(`     ${ev.icon || '•'} ${ev.label}`);
-
-        // Extract choice selections from explanation field
-        const choiceMap = {};
-        (ev.changes || []).forEach(ch => {
-          if (!ch.explanation) return;
-          const parts = ch.explanation.split(':');
-          if (parts.length < 2) return;
-          const cityObj = CITIES.find(c => c.id === ch.cityId);
-          if (!cityObj) return;
-          const choiceLabel = parts.slice(1).join(':').trim();
-          if (choiceLabel && !choiceMap[cityObj.name]) choiceMap[cityObj.name] = choiceLabel;
-        });
-        if (Object.keys(choiceMap).length) {
-          ln('       Choice Selected:');
-          Object.entries(choiceMap).forEach(([city, choice]) => ln(`         → ${city}: "${choice}"`));
-        }
-
-        // Resource changes grouped by city
-        const byCityEvt = {};
-        (ev.changes || []).forEach(ch => {
-          const c = CITIES.find(x=>x.id===ch.cityId);
-          const r = RESOURCES.find(x=>x.id===ch.resourceId);
-          if (!c || !r || ch.delta===0) return;
-          if (!byCityEvt[c.name]) byCityEvt[c.name] = [];
-          byCityEvt[c.name].push(`${r.name} ${ch.valueBefore}→${ch.valueAfter} (${ch.delta>0?'+':''}${ch.delta})`);
-        });
-        Object.entries(byCityEvt).forEach(([city, changes]) => {
-          ln(`       ${city}: ${changes.join('  |  ')}`);
-        });
-      });
-      blank();
-    } else {
-      ln('  🎲 Events:  (none triggered this round)'); blank();
-    }
-
-    // City cards this round
-    const picks = cityCardPicks?.[rnd];
-    const hasCards = picks && CITIES.some(c => picks[c.id]?.selected?.size || picks[c.id]?.eliminated?.size);
-    if (hasCards) {
-      ln('  🃏 CITY CARDS THIS ROUND:');
-      CITIES.forEach(c => {
-        const st   = picks[c.id];
-        if (!st) return;
-        const sel  = [...(st.selected   || [])].map(id => CITY_CARDS[c.id]?.options.find(o=>o.id===id)?.name).filter(Boolean);
-        const elim = [...(st.eliminated || [])].map(id => CITY_CARDS[c.id]?.options.find(o=>o.id===id)?.name).filter(Boolean);
-        if (!sel.length && !elim.length) return;
-        ln(`     ${c.icon} ${c.name}:`);
-        if (sel.length)  ln(`       ✓ Chosen:      ${sel.join(', ')}`);
-        if (elim.length) ln(`       ✕ Eliminated:  ${elim.join(', ')}`);
-      });
-      blank();
-    }
-
-    // Round effects (resource changes from Apply Round)
-    const roundEffect = chronoHistory.find(h => h.round === rnd && h.icon === '⚡');
-    if (roundEffect) {
-      ln('  ⚡ ROUND EFFECTS APPLIED:');
-      const byCity = {};
-      (roundEffect.changes || []).forEach(ch => {
-        const c = CITIES.find(x=>x.id===ch.cityId);
-        const r = RESOURCES.find(x=>x.id===ch.resourceId);
-        if (!c || !r || ch.delta===0) return;
-        if (!byCity[c.name]) byCity[c.name] = [];
-        byCity[c.name].push(`${r.name} ${ch.valueBefore}→${ch.valueAfter} (${ch.delta>0?'+':''}${ch.delta})`);
-      });
-      Object.entries(byCity).forEach(([city, changes]) => {
-        if (changes.length) ln(`     ${city}: ${changes.join('  |  ')}`);
-      });
-      blank();
-    }
-
-    // Scoreboard snapshot
-    const snap = snapshots[rnd];
-    const snapSource = snap || (rnd === currentRound ? data : null);
-    if (snapSource) {
-      ln(`  📊 SCOREBOARD ${snap ? 'AFTER ROUND ' + rnd : '(CURRENT — LIVE)'}:`);
-      const meds = ['🥇','🥈','🥉','4th','5th'];
-      ln(`  ${'Rank'.padEnd(5)} ${'City'.padEnd(16)} ${'Score'.padStart(6)}  ${'Capital'.padStart(8)}  ${'Food'.padStart(6)}  ${'Water'.padStart(6)}  ${'Happiness'.padStart(10)}  ${'Pollution'.padStart(10)}  ${'Population'.padStart(11)}  ${'Raw Mats'.padStart(9)}`);
-      ln(`  ${SEP3.slice(0,100)}`);
-
-      const snapRanked = [...CITIES].map(c => {
-        const s = snapSource;
-        const v = id => s[c.id]?.[id]?.value ?? 0;
-        const score = v('capital') + v('food') + v('water') + v('happiness') + v('population') + v('raw-materials') - v('pollution');
-        return { c, score, v };
-      }).sort((a,b) => b.score - a.score);
-
-      snapRanked.forEach(({ c, score, v }, i) => {
-        const members = draftRosters?.[c.id] || [];
-        const roles   = roleAssignments?.[c.id] || {};
-        const memberStr = members.map(n => {
-          const role = ROLES.find(r => r.id === roles[n]);
-          return role ? `${n} (${role.icon})` : n;
-        }).join(', ');
-        ln(`  ${meds[i].padEnd(5)} ${c.name.padEnd(16)} ${col(score,6)}  ${col(v('capital'),8)}  ${col(v('food'),6)}  ${col(v('water'),6)}  ${col(v('happiness'),10)}  ${col(v('pollution'),10)}  ${col(v('population'),11)}  ${col(v('raw-materials'),9)}`);
-        if (memberStr) ln(`         Team: ${memberStr}`);
-      });
-      blank();
-    }
-  }
-
-  // ══ 6. GAME STATISTICS ══════════════════════════════════
-  hdr('6.  GAME STATISTICS  —  TOTALS & PER-NATION BREAKDOWN');
-
-  // ── Build stats from roundHistory ──
-  const allH = [...roundHistory]; // newest first
-
-  // Per-nation stat buckets
-  const nationStats = {};
-  CITIES.forEach(c => {
-    nationStats[c.id] = {
-      name: c.name, icon: c.icon,
-      tradesInitiated:   0,  // trades where this nation was Nation A
-      tradesReceived:    0,  // trades where this nation was Nation B
-      totalTradesInvolved: 0,
-      resourcesGiven:    {},
-      resourcesReceived: {},
-      alliancesFormed:   0,
-      alliancesBroken:   0,
-      aidGiven:          0,
-      aidReceived:       0,
-      warsDeclared:      0,
-      warsWon:           0,
-      warsLost:          0,
-      summitsCalledCount: 0,
-      taxPaid:           {}, // Azure tax paid by this nation
-      taxCollected:      {}, // Azure tax collected from others
-      policyCardUsed:    null,
+    // 4. Final Standings
+    sec('4.  FINAL STANDINGS');
+    const getCityScoreSafe = (id) => {
+      try { return getCityScore(id); } catch(e) {
+        const d = (data||{})[id] || {};
+        return ((d.capital?.value||0) + (d.food?.value||0) + (d.water?.value||0) +
+                (d.happiness?.value||0) + (d.population?.value||0) + (d['raw-materials']?.value||0)) - (d.pollution?.value||0);
+      }
     };
-  });
-
-  // ── Count trades ──
-  const trades = allH.filter(h => h.icon === '🤝');
-  let totalTrades = trades.length;
-  trades.forEach(t => {
-    // Parse nation names from label e.g. "🌊 Azure ⇄ ⚡ Synapse: ..."
-    const involved = new Set();
-    (t.changes || []).forEach(ch => { if (ch.cityId) involved.add(ch.cityId); });
-    involved.forEach(id => {
-      if (nationStats[id]) nationStats[id].totalTradesInvolved++;
-    });
-    // Resource flows
-    (t.changes || []).forEach(ch => {
-      const r = RESOURCES.find(x=>x.id===ch.resourceId);
-      if (!r || !ch.delta || !nationStats[ch.cityId]) return;
-      if (ch.delta > 0) {
-        nationStats[ch.cityId].resourcesReceived[r.name] = (nationStats[ch.cityId].resourcesReceived[r.name]||0) + ch.delta;
-      } else {
-        nationStats[ch.cityId].resourcesGiven[r.name] = (nationStats[ch.cityId].resourcesGiven[r.name]||0) + Math.abs(ch.delta);
-      }
-      // Azure tax detection
-      if (ch.explanation && ch.explanation.toLowerCase().includes('tax')) {
-        if (ch.delta > 0 && ch.cityId === 'azure-bay') {
-          nationStats['azure-bay'].taxCollected[r.name] = (nationStats['azure-bay'].taxCollected[r.name]||0) + ch.delta;
-        } else if (ch.delta < 0) {
-          nationStats[ch.cityId].taxPaid[r.name] = (nationStats[ch.cityId].taxPaid[r.name]||0) + Math.abs(ch.delta);
-        }
-      }
-    });
-  });
-
-  // ── Count alliances from history ──
-  const alliancesMade = allH.filter(h => h.label && (h.label.includes('Alliance') || h.label.includes('alliance')) && !h.label.includes('broke') && !h.label.includes('ended'));
-  const alliancesBroken = allH.filter(h => h.label && (h.label.includes('broke') || h.label.includes('ended') || h.label.includes('broken')) && (h.label.includes('lliance')));
-  alliancesMade.forEach(h => {
-    (h.changes||[]).forEach(ch => { if (nationStats[ch.cityId]) nationStats[ch.cityId].alliancesFormed++; });
-    // Also parse from label
-    CITIES.forEach(c => { if (h.label && h.label.includes(c.name)) nationStats[c.id].alliancesFormed++; });
-  });
-  alliancesBroken.forEach(h => {
-    CITIES.forEach(c => { if (h.label && h.label.includes(c.name)) nationStats[c.id].alliancesBroken++; });
-  });
-
-  // ── Count aid ──
-  const aidEvents = allH.filter(h => h.label && h.label.toLowerCase().includes('aid'));
-  let totalAid = aidEvents.length;
-  aidEvents.forEach(h => {
-    CITIES.forEach(c => {
-      if (!h.label.includes(c.name)) return;
-      if (h.label.toLowerCase().includes('received') || h.label.toLowerCase().includes('requested')) {
-        nationStats[c.id].aidReceived++;
-      } else {
-        nationStats[c.id].aidGiven++;
-      }
-    });
-  });
-
-  // ── Count wars from history ──
-  const warEvents = allH.filter(h => h.label && (h.label.includes('⚔️') || h.label.toLowerCase().includes('war')));
-  let totalWars = 0;
-  const warsSeen = new Set();
-  warEvents.forEach(h => {
-    if (h.label && (h.label.includes('declared') || h.label.includes('began'))) {
-      const key = h.label.slice(0,60);
-      if (!warsSeen.has(key)) { warsSeen.add(key); totalWars++; }
-      CITIES.forEach(c => {
-        if (h.label.includes(c.name)) nationStats[c.id].warsDeclared++;
+    const ranked = [...(CITIES||[])].map(c => ({ c, score: getCityScoreSafe(c.id) })).sort((a,b) => b.score - a.score);
+    const medals = ['🥇 1st','🥈 2nd','🥉 3rd','    4th','    5th'];
+    ranked.forEach(({ c, score }, i) => {
+      ln('  ' + medals[i] + '  ' + c.icon + ' ' + c.name + '  —  ' + score + ' pts');
+      const d = (data||{})[c.id] || {};
+      (RESOURCES||[]).forEach(r => {
+        ln('           ' + r.icon + ' ' + r.name.padEnd(16) + ': ' + (d[r.id]?.value ?? 0) + ' ' + (r.unit||''));
       });
-    }
-    if (h.label && h.label.includes('won')) {
-      CITIES.forEach(c => { if (h.label.includes(c.name) && h.label.indexOf(c.name) < h.label.indexOf('won')) nationStats[c.id].warsWon++; });
-    }
-    if (h.label && h.label.includes('lost')) {
-      CITIES.forEach(c => { if (h.label.includes(c.name) && h.label.indexOf(c.name) < h.label.indexOf('lost')) nationStats[c.id].warsLost++; });
-    }
-  });
-
-  // ── Count summits ──
-  const summitEvents = allH.filter(h => h.icon === '🌐' || (h.label && h.label.includes('Summit')));
-  let totalSummits = summitEvents.filter(h => h.label && h.label.includes('called')).length;
-
-  // ── Azure Trade Tax — detailed per-payer breakdown ──
-  const azureTaxByPayer = {}; // { payerId: { resName: total } }
-  const azureTaxByRes   = {}; // { resName: total }
-  allH.forEach(h => {
-    (h.changes||[]).forEach(ch => {
-      if (ch.cityId === 'azure-bay' && ch.explanation && ch.explanation.includes('tax') && ch.delta > 0) {
-        const payerId  = ch.payerId || null;
-        const resObj   = RESOURCES.find(r=>r.id===ch.resourceId);
-        const resLabel = resObj ? resObj.icon+' '+resObj.name : ch.resourceId;
-        // By resource total
-        azureTaxByRes[resLabel] = (azureTaxByRes[resLabel]||0) + ch.delta;
-        // By payer
-        if (payerId) {
-          if (!azureTaxByPayer[payerId]) azureTaxByPayer[payerId] = {};
-          azureTaxByPayer[payerId][resLabel] = (azureTaxByPayer[payerId][resLabel]||0) + ch.delta;
-        }
-      }
+      ln('           Political : ' + ((politicalRanks||{})[c.id] ?? 50) + '%');
+      blk();
     });
-  });
 
-  // ── Synapse Tech Tax — scan roundHistory for techTax entries ──
-  const synapseTechTaxByPayer = {};
-  let synapseTechTaxTotal = 0;
-  allH.forEach(h => {
-    if (h.techTax && h.payerId && h.capital) {
-      // Logged via the Tech Tax button
-      synapseTechTaxByPayer[h.payerId] = (synapseTechTaxByPayer[h.payerId]||0) + h.capital;
-      synapseTechTaxTotal += h.capital;
-    } else {
-      // Fallback: scan changes for manual tech tax entries
-      (h.changes||[]).forEach(ch => {
-        if (ch.cityId === 'synapse-city' && ch.explanation &&
-            ch.explanation.toLowerCase().includes('tech tax') && ch.delta > 0 && ch.payerId) {
-          synapseTechTaxByPayer[ch.payerId] = (synapseTechTaxByPayer[ch.payerId]||0) + ch.delta;
-          synapseTechTaxTotal += ch.delta;
-        }
-      });
-    }
-  });
-
-  // ── Policy cards ──
-  CITIES.forEach(c => {
-    const cid = policyPicks[c.id];
-    const card = cid ? (POLICY_CARDS[c.id]||[]).find(x=>x.id===cid) : null;
-    nationStats[c.id].policyCardUsed = card ? card.name : null;
-  });
-
-  // ── GAME-WIDE TOTALS ──
-  sub('OVERALL GAME TOTALS');
-  ln(`  ${'Metric'.padEnd(38)} Value`);
-  ln(`  ${SEP3.slice(0,50)}`);
-  ln(`  ${'Total Rounds Played'.padEnd(38)} ${maxAppliedRound}`);
-  ln(`  ${'Total Trades Executed'.padEnd(38)} ${totalTrades}`);
-  ln(`  ${'Total Wars Declared'.padEnd(38)} ${totalWars}`);
-  ln(`  ${'Total Alliances Formed'.padEnd(38)} ${Math.floor(alliancesMade.length/2)||alliancesMade.length}`);
-  ln(`  ${'Total Alliances Broken'.padEnd(38)} ${Math.floor(alliancesBroken.length/2)||alliancesBroken.length}`);
-  ln(`  ${'Active Alliances (end of game)'.padEnd(38)} ${activeAlliances.length}`);
-  ln(`  ${'Total Aid Events'.padEnd(38)} ${totalAid}`);
-  ln(`  ${'Global Summits Called'.padEnd(38)} ${totalSummits}`);
-  blank();
-
-  // Active alliances detail
-  if (activeAlliances.length) {
-    ln('  Active Alliances at Game End:');
-    activeAlliances.forEach(r => {
-      const donor = CITIES.find(c=>c.id===r.donor_city_id);
-      const recip = CITIES.find(c=>c.id===r.recipient_city_id);
-      const res   = RESOURCES.find(x=>x.id===r.resource_id);
-      ln(`    • ${donor?.icon} ${donor?.name} → ${recip?.icon} ${recip?.name}:  ${r.delta>0?'+':''}${r.delta} ${res?.name||r.resource_id}/round${r._greenCert?' 🌿 Green Cert':''}`);
-    });
-    blank();
-  }
-
-  // ── AZURE BAY — TRADE TAX REPORT ──────────────────────────────
-  sub('🌊 AZURE BAY — TRADE TAX REPORT  (30% on trades not involving Azure)');
-  const azTaxResKeys = Object.keys(azureTaxByRes);
-  if (!azTaxResKeys.length) {
-    ln('  No trade tax was collected this game.');
-  } else {
-    ln(`  ${'Resource'.padEnd(30)} Total Collected`);
-    ln(`  ${SEP3.slice(0,46)}`);
-    azTaxResKeys.forEach(res => {
-      ln(`  ${res.padEnd(30)} ${azureTaxByRes[res].toFixed(2)}`);
-    });
-    blank();
-    const payerIds = Object.keys(azureTaxByPayer);
-    if (payerIds.length) {
-      ln('  Per-Nation Tax Paid to Azure:');
-      ln(`  ${SEP3.slice(0,46)}`);
-      payerIds.forEach(pid => {
-        const payerNat   = CITIES.find(c=>c.id===pid);
-        const payerLabel = payerNat ? `${payerNat.icon} ${payerNat.name}` : pid;
-        const breakdown  = Object.entries(azureTaxByPayer[pid])
-          .map(([r,v]) => `${r}: ${v.toFixed(2)}`).join('  |  ');
-        ln(`    ${payerLabel.padEnd(22)}  ${breakdown}`);
+    // 5. Complete Event Log
+    sec('5.  COMPLETE EVENT & TRADE LOG');
+    const chrono = [...(roundHistory||[])].reverse();
+    if (chrono.length) {
+      chrono.forEach((h, i) => {
+        const rndTag = h.round > 0 ? 'R' + h.round : h.round === -2 ? 'EVT' : '   ';
+        ln('  ' + String(i+1).padStart(3) + '.  ' + rndTag + '  ' + (h.icon||'·') + ' ' + (h.label||''));
+        if (h.customItems) ln('               📦 ' + h.customItems);
+        (h.changes||[]).forEach(ch => {
+          if (!ch.delta) return;
+          const c = (CITIES||[]).find(x => x.id === ch.cityId);
+          const r = (RESOURCES||[]).find(x => x.id === ch.resourceId);
+          if (c && r) ln('               ' + c.name.padEnd(16) + ' ' + r.name.padEnd(14) + ' ' + String(ch.valueBefore).padStart(4) + ' → ' + String(ch.valueAfter).padStart(4) + '  (' + (ch.delta>0?'+':'') + ch.delta + ')');
+        });
       });
     } else {
-      ln('  (Play more trades to see per-nation breakdown)');
+      ln('  (No events recorded)');
     }
-  }
-  blank();
 
-  // ── SYNAPSE CITY — TECH TAX REPORT ────────────────────────────
-  sub('⚡ SYNAPSE CITY — TECH TAX REPORT  (1 Capital/min for online research)');
-  if (synapseTechTaxTotal === 0) {
-    ln('  No tech tax was recorded in the event log.');
-    ln('  Tech tax is a manual mechanic — apply it via trades during play to track it here.');
-  } else {
-    ln(`  Total Capital collected from Tech Tax: ${synapseTechTaxTotal}`);
-    const techPayerIds = Object.keys(synapseTechTaxByPayer);
-    if (techPayerIds.length) {
-      blank();
-      ln('  Per-Nation Tech Tax Paid to Synapse:');
-      ln(`  ${SEP3.slice(0,46)}`);
-      techPayerIds.forEach(pid => {
-        const nat   = CITIES.find(c=>c.id===pid);
-        const label = nat ? `${nat.icon} ${nat.name}` : pid;
-        ln(`    ${label.padEnd(22)}  ${synapseTechTaxByPayer[pid]} Capital`);
-      });
+    // Restore block
+    blk(); hr();
+    ln('  MACHINE-READABLE RESTORE BLOCK');
+    ln('  (Used by SimCivic "Import Summary to Restore" — do not edit)');
+    hr();
+    ln('SIMCIVIC_RESTORE_JSON_BEGIN');
+    try {
+      const restoreSnap = {
+        _simcivic_restore: true, _version: '1.0', exportedAt: Date.now(),
+        data: data||{}, snapshots: snapshots||{}, roundDescs: roundDescs||{},
+        roundNotes: roundNotes||{}, cityRules: cityRules||[], currentRound, maxAppliedRound,
+        roundHistory: roundHistory||[], cityRelations: cityRelations||{},
+        politicalRanks: politicalRanks||{}, policyPicks: policyPicks||{},
+        usedPolicyCards: [...(usedPolicyCards||new Set())],
+        cityCardPicks: (() => {
+          try {
+            const out = {};
+            Object.entries(cityCardPicks||{}).forEach(([rnd,cities]) => {
+              out[rnd] = {};
+              Object.entries(cities||{}).forEach(([cid,st]) => {
+                out[rnd][cid] = { selected: [...(st.selected||[])], eliminated: [...(st.eliminated||[])] };
+              });
+            });
+            return out;
+          } catch(e) { return {}; }
+        })(),
+        activeAlliances: activeAlliances||[], activeWars: activeWars||[],
+        draftPool: draftPool||[], draftRosters: draftRosters||{},
+        teacherNames: teacherNames||[], teacherAssign: teacherAssign||{},
+        roleAssignments: roleAssignments||{},
+        globalEvents: globalEvents||[], cityEvents: cityEvents||{},
+        globalEnabled: [...(globalEnabled||new Set())],
+        cityEnabledMap: (() => {
+          try { return Object.fromEntries(Object.entries(cityEnabledMap||{}).map(([k,v])=>[k,[...v]])); }
+          catch(e) { return {}; }
+        })(),
+      };
+      ln(JSON.stringify(restoreSnap));
+    } catch(e) {
+      ln('{}');
+      console.warn('Restore block error:', e);
     }
-  }
-  blank();
+    ln('SIMCIVIC_RESTORE_JSON_END');
+    hr();
 
-  // ── PER-NATION BREAKDOWN ──
-  sub('PER-NATION STATISTICS');
-  CITIES.forEach(c => {
-    const s = nationStats[c.id];
-    ln(`  ${c.icon}  ${c.name.toUpperCase()}`);
-    ln(`  ${SEP3.slice(0,60)}`);
+    // ── Generate PDF via print window ────────────────────────────────────────
+    const textContent = L.join('\n');
+    const htmlContent = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>SimCivic Game Summary — ${dateSlug}</title>
+<style>
+  @page { margin: 1.2cm 1.5cm; }
+  body { font-family: 'Courier New', monospace; font-size: 9pt; line-height: 1.5; color: #111; background: white; white-space: pre-wrap; word-break: break-word; }
+  @media print { body { margin: 0; } }
+</style></head><body>${textContent.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</body></html>`;
 
-    // Trades
-    ln(`     Trades Involved In   : ${s.totalTradesInvolved}`);
-    const resGiven = Object.entries(s.resourcesGiven);
-    const resRecvd = Object.entries(s.resourcesReceived);
-    if (resGiven.length) ln(`     Resources Given     : ${resGiven.map(([r,v])=>`${r} (${v})`).join(', ')}`);
-    if (resRecvd.length) ln(`     Resources Received  : ${resRecvd.map(([r,v])=>`${r} (${v})`).join(', ')}`);
-
-    // Tax
-    const taxPaidList = Object.entries(s.taxPaid);
-    const taxCollList = Object.entries(s.taxCollected);
-    if (taxPaidList.length)  ln(`     Azure Tax Paid      : ${taxPaidList.map(([r,v])=>`${r} (${v})`).join(', ')}`);
-    if (taxCollList.length)  ln(`     Trade Tax Collected : ${taxCollList.map(([r,v])=>`${r} (${v})`).join(', ')}`);
-
-    // Diplomacy
-    ln(`     Alliances Formed     : ${s.alliancesFormed}`);
-    ln(`     Alliances Broken     : ${s.alliancesBroken}`);
-    ln(`     Aid Given            : ${s.aidGiven}`);
-    ln(`     Aid Received         : ${s.aidReceived}`);
-
-    // War
-    ln(`     Wars Involved In     : ${s.warsDeclared}`);
-    ln(`     Wars Won             : ${s.warsWon}`);
-    ln(`     Wars Lost            : ${s.warsLost}`);
-
-    // Policy card
-    ln(`     Policy Card Used     : ${s.policyCardUsed || '(none selected)'}`);
-    const cardUsed = usedPolicyCards.has(policyPicks[c.id]);
-    if (s.policyCardUsed) ln(`     Policy Card Status   : ${cardUsed?'USED':'Not used'}`);
-
-    // Final political rating
-    const pol = politicalRanks[c.id] ?? 50;
-    ln(`     Final Political %    : ${pol}%`);
-
-    // Final score
-    ln(`     Final Score          : ${getCityScore(c.id)} pts`);
-    blank();
-  });
-
-  // ══ 7. FINAL STANDINGS ═════════════════════════════════
-  hdr('7.  FINAL STANDINGS');
-  const finalRanked = [...CITIES].map(c => ({ c, score: getCityScore(c.id) })).sort((a,b)=>b.score-a.score);
-  const finMeds = ['🥇 1st','🥈 2nd','🥉 3rd','    4th','    5th'];
-  finalRanked.forEach(({ c, score }, i) => {
-    const members = draftRosters?.[c.id] || [];
-    const roles   = roleAssignments?.[c.id] || {};
-    ln(`  ${finMeds[i]}  ${c.icon} ${c.name}  —  ${score} pts`);
-    RESOURCES.forEach(r => {
-      ln(`           ${r.icon} ${r.name.padEnd(14)}: ${data[c.id][r.id]?.value ?? 0} ${r.unit}`);
-    });
-    if (members.length) {
-      ln(`           Team: ${members.map(n => {
-        const role = ROLES.find(r => r.id === roles[n]);
-        return `${n}${role?' ('+role.icon+')':''}`;
-      }).join(', ')}`);
+    // Open print dialog (saves as PDF)
+    const pw = window.open('', '_blank', 'width=800,height=900');
+    if (pw) {
+      pw.document.write(htmlContent);
+      pw.document.close();
+      pw.focus();
+      setTimeout(() => { pw.print(); }, 600);
+    } else {
+      // Fallback: download as .txt if popup blocked
+      const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href = url; a.download = 'simcivic-game-summary-' + dateSlug + '.txt';
+      document.body.appendChild(a); a.click();
+      document.body.removeChild(a); URL.revokeObjectURL(url);
+      showToastMsg && showToastMsg('📄 Downloaded as .txt — allow popups for PDF export');
     }
-    blank();
-  });
-
-  // ══ 8. COMPLETE EVENT LOG ═══════════════════════════════
-  hdr('8.  COMPLETE EVENT & TRADE LOG');
-  const allChronological = [...roundHistory].reverse();
-  if (allChronological.length) {
-    allChronological.forEach((h, i) => {
-      const tag = h.icon === '🤝' ? '[TRADE]' : h.icon === '⚡' ? '[ROUND APPLIED]' : '[EVENT]';
-      const rndTag = h.round > 0 ? `R${h.round}` : '   ';
-      ln(`  ${String(i+1).padStart(3)}.  ${rndTag}  ${tag.padEnd(18)} ${h.icon||'·'} ${h.label}`);
-      if (h.customItems) ln(`               📦 Physical items: ${h.customItems}`);
-      (h.changes||[]).forEach(ch => {
-        if (!ch.delta) return;
-        const c = CITIES.find(x=>x.id===ch.cityId);
-        const r = RESOURCES.find(x=>x.id===ch.resourceId);
-        if (c && r) ln(`               ${c.name.padEnd(14)} ${r.name.padEnd(14)} ${String(ch.valueBefore).padStart(4)} → ${String(ch.valueAfter).padStart(4)}  (${ch.delta>0?'+':''}${ch.delta})  ${ch.explanation||''}`);
-      });
-    });
-  } else {
-    ln('  (No events or trades recorded)');
+    playSuccess();
+  } catch(err) {
+    console.error('Export error:', err);
+    showToastMsg && showToastMsg('⚠️ Export error: ' + err.message);
   }
-
-  // ══ FOOTER ══════════════════════════════════════════════
-  blank();
-  ln(SEP,
-    '  END OF GAME SUMMARY',
-    '  Stonewall City Simulation  —  Nation Simulator Dashboard',
-    `  Exported: ${now}`,
-    SEP);
-
-  // Download
-  const text = L.join('\n');
-  // Embed machine-readable restore block
-  const restoreSnap = {
-    _simcivic_restore: true, _version: '1.0', exportedAt: Date.now(),
-    data, snapshots, roundDescs, roundNotes, cityRules, currentRound, maxAppliedRound,
-    roundHistory, cityRelations, politicalRanks, policyPicks,
-    usedPolicyCards: [...(usedPolicyCards || [])],
-    cityCardPicks: JSON.parse(JSON.stringify(Object.fromEntries(Object.entries(cityCardPicks||{}).map(([r,cities])=>[r,Object.fromEntries(Object.entries(cities).map(([cid,st])=>[cid,{selected:[...(st.selected||[])],eliminated:[...(st.eliminated||[])]}]))])))),
-    activeAlliances, activeWars,
-    draftPool, draftRosters, teacherNames, teacherAssign, roleAssignments,
-    globalEvents, cityEvents,
-    globalEnabled: [...(globalEnabled||[])],
-    cityEnabledMap: Object.fromEntries(Object.entries(cityEnabledMap||{}).map(([k,v])=>[k,[...v]])),
-  };
-  blank();
-  ln('━'.repeat(72));
-  ln('  MACHINE-READABLE RESTORE BLOCK');
-  ln('  (Used by SimCivic "Import Summary to Restore" — do not edit)');
-  ln('━'.repeat(72));
-  ln('SIMCIVIC_RESTORE_JSON_BEGIN');
-  ln(JSON.stringify(restoreSnap));
-  ln('SIMCIVIC_RESTORE_JSON_END');
-  ln('━'.repeat(72));
-
-  const blob = new Blob([L.join('\n')], { type: 'text/plain;charset=utf-8' });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href = url;
-  a.download = `simcivic-game-summary-${new Date().toISOString().slice(0,10)}.txt`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-  playSuccess();
 }
+
 
 // ════════════════════════════════════════════════════════
 // IMPORT GAME SUMMARY
