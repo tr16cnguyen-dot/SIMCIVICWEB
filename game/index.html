@@ -4007,19 +4007,33 @@ window._showViewerVillainCorpPopup = function(ev, role) {
       }
     }
 
-    // Reflect ally choices on host waiting overlay
+    // Reflect ally choices on host waiting overlay AND sync into local _ws
     if (ws.allyChoices) {
+      if (!_ws) _ws = {};
+      if (!_ws.allyChoices) _ws.allyChoices = {};
       Object.entries(ws.allyChoices).forEach(([allyId, data]) => {
         if (!data) return;
+        // Normalize: viewer writes {choice:'A'|'B'|'neutral', ts:N}
+        // _wsStartAllyTimer checks _ws.allyChoices[id] === 'A'|'B'|null
+        const choiceVal = data.choice === 'A' ? 'A' : data.choice === 'B' ? 'B' : null;
+        _ws.allyChoices[allyId] = choiceVal;
+
         const natA2 = CITIES.find(c=>c.id===ws.cityA);
         const natB2 = CITIES.find(c=>c.id===ws.cityB);
         const chip  = document.getElementById(`wsAllyStatus_${allyId}`);
         const ally  = CITIES.find(c=>c.id===allyId);
-        if (!chip || !ally) return;
-        const chosen = data.choice==='A'?natA2?.name:data.choice==='B'?natB2?.name:'Neutral';
-        chip.innerHTML = `${ally.icon} ${ally.name} — ✓ ${chosen}`;
-        chip.style.color='#10b981'; chip.style.borderColor='rgba(16,185,129,0.4)';
+        if (chip && ally) {
+          const chosen = choiceVal==='A'?natA2?.name:choiceVal==='B'?natB2?.name:'Neutral';
+          chip.innerHTML = `${ally.icon} ${ally.name} — ✓ ${chosen}`;
+          chip.style.color='#10b981'; chip.style.borderColor='rgba(16,185,129,0.4)';
+        }
       });
+    }
+
+    // Also sync allyBreakResponses so _wsWatchAllyBreakResponses has latest
+    if (ws.allyBreakResponses) {
+      if (!_ws) _ws = {};
+      _ws.allyBreakResponses = ws.allyBreakResponses;
     }
   });
 
@@ -6531,6 +6545,7 @@ window._wsSubmitAllyChoice = function(choice, cityA, cityB, code) {
     var b=document.getElementById(id);if(b){b.disabled=true;b.style.opacity='0.4';b.style.cursor='not-allowed';}
   });
   var myNation2 = window._fb.nation;
+  // Write ally choice — host listener normalizes choice field to 'A'|'B'|null
   _fbDB.ref('games/'+code+'/events/warSession/allyChoices/'+myNation2).set({
     choice: choice, ts: Date.now(), source: 'viewer',
   }).then(function() {
@@ -7988,7 +8003,7 @@ window._fbViewerAllyBreakResponse = function(breakAlliance, loserId, winnerId, c
     }
 
     // No prior response — write viewer's choice
-    _fbDB.ref('games/'+code+'/events/allyBreakResponses/'+myNation).set({
+    _fbDB.ref('games/'+code+'/events/warSession/allyBreakResponses/'+myNation).set({
       breakAlliance: breakAlliance, loserId: loserId, winnerId: winnerId,
       ts: Date.now(), source: 'viewer'
     }).then(function() {
@@ -15869,6 +15884,7 @@ function _wsPush(patch) {
 
 function _wsClear() {
   _ws = null;
+  window._warResolvePending = false;
   if (!_fbDB || !window._fb || !window._fb.code) return;
   _fbDB.ref('games/'+window._fb.code+'/events/warSession').remove().catch(function(){});
 }
@@ -15995,6 +16011,7 @@ function _wsApplyHostDecisionUI(side, wantsWar) {
 // ── Resolve the declaration phase ──────────────────────────────────────
 function _wsResolveDeclaration() {
   if (!_ws) return;
+  if (_ws._resolved) return; // guard against double-fire
 
   // Normalize decisions — viewer writes {decision: bool, ts: N}, host writes flat bool
   const rawA = _ws.decisions?.A, rawB = _ws.decisions?.B;
@@ -16017,6 +16034,7 @@ function _wsResolveDeclaration() {
 
   if (!eitherWantsWar) {
     // Both stood down
+    _ws._resolved = true;
     setWarState(cityA, cityB, 'enemy');
     const newRel = 29;
     cityRelations[relationKey(cityA, cityB)] = newRel;
@@ -16028,6 +16046,9 @@ function _wsResolveDeclaration() {
     setTimeout(() => _wsClear(), 8000);
     return;
   }
+
+  // Mark resolved to prevent double-fire
+  _ws._resolved = true;
 
   // War declared
   if (decA) safeSetVal(cityA,'capital',safeGetVal(cityA,'capital')-10);
@@ -16248,6 +16269,10 @@ function _wsApplyWarOutcome(winnerId, loserId, winnerAllies, loserAllies, natA, 
 
   // If loser has exclusive allies — show ally break phase after 2s
   if (loserAllies.length > 0) {
+    // Clear any stale ally break responses before starting new phase
+    if (_fbDB && window._fb && window._fb.code) {
+      _fbDB.ref('games/'+window._fb.code+'/events/warSession/allyBreakResponses').remove().catch(()=>{});
+    }
     setTimeout(()=>{
       _wsPush({ phase:'ally_break', allyBreak:{
         winnerId, loserId, popLoss,
@@ -16439,7 +16464,7 @@ function breakLoserAlliance(allyId, loserId, winnerId) {
       return;
     }
     // No prior response — host sets it
-    _fbDB.ref(`games/${code}/events/allyBreakResponses/${allyId}`).set({
+    _fbDB.ref(`games/${code}/events/warSession/allyBreakResponses/${allyId}`).set({
       breakAlliance: true, loserId, winnerId,
       ts: Date.now(), source: 'host'
     }).catch(function(){});
@@ -16458,7 +16483,7 @@ function keepLoserAlliance(allyId, loserId, winnerId) {
       showToastMsg(`ℹ️ ${CITIES.find(c=>c.id===allyId)?.name} already responded from their device`);
       return;
     }
-    _fbDB.ref(`games/${code}/events/allyBreakResponses/${allyId}`).set({
+    _fbDB.ref(`games/${code}/events/warSession/allyBreakResponses/${allyId}`).set({
       breakAlliance: false, loserId, winnerId,
       ts: Date.now(), source: 'host'
     }).catch(function(){});
