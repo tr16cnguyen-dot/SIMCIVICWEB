@@ -12502,7 +12502,7 @@ function showRoleAssignment() {
       <div class="recap-header">
         <div class="recap-step-badge">STEP 2 OF 2</div>
         <div class="recap-title">⚙️ Assign Roles</div>
-        <div class="recap-subtitle">Each team gets one of each role. Researcher is optional.</div>
+        <div class="recap-subtitle">Multiple students can share the same role. Researcher is optional.</div>
       </div>
       <div class="role-legend">
         ${ROLES.map(r => `<span class="role-legend-chip">${r.icon} ${r.label}${r.optional?' <em>(opt.)</em>':''}</span>`).join('')}
@@ -12558,10 +12558,8 @@ function rerenderRoleAssignment() {
 
       // Update selected value without rebuilding options
       sel.value = assignedRole;
-      Array.from(sel.options).forEach(opt => {
-        if (!opt.value) return; // skip the "— pick role —" placeholder
-        opt.disabled = usedByOthers.has(opt.value);
-      });
+      // Never disable options — multiple students can share the same role
+      Array.from(sel.options).forEach(opt => { opt.disabled = false; });
 
       // Update the role badge next to this row
       const row = sel.closest('.role-assign-row');
