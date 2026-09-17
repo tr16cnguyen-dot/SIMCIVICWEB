@@ -5546,38 +5546,36 @@ function renderViewerPage() {
           +'</div></div>';
       }
 
-      // Build member rows
+      // Build member rows — show all roles per student
       var memberRows = members.map(function(name) {
-        var roleId    = cityRoles[name] || '';
-        var roleObj   = ROLES.find(function(r){ return r.id === roleId; });
-        var roleIcon  = roleObj ? roleObj.icon  : '—';
-        var roleLabel = roleObj ? roleObj.label : 'No role';
-        var roleColor = roleId ? city.color : 'rgba(255,255,255,0.2)';
+        var memberRoleIds = getRoles(city.id, name);
+        var roleBadges = memberRoleIds.length
+          ? memberRoleIds.map(function(rid) {
+              var r = ROLES.find(function(x){ return x.id===rid; });
+              return r ? '<span style="display:inline-flex;align-items:center;gap:3px;padding:3px 7px;border-radius:6px;'
+                +'background:'+city.color+'12;border:1px solid '+city.color+'30;margin-left:3px;">'
+                +'<span style="font-size:0.75rem">'+r.icon+'</span>'
+                +'<span style="font-family:Orbitron,sans-serif;font-size:0.44rem;font-weight:700;color:'+city.color+';letter-spacing:0.5px;white-space:nowrap;">'
+                +r.label+'</span></span>' : '';
+            }).join('')
+          : '<span style="font-size:0.55rem;color:rgba(255,255,255,0.2);padding:3px 7px;">No role</span>';
 
         return '<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;'
           +'background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);transition:background 0.2s;">'
-          // Avatar circle
           +'<div style="width:32px;height:32px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;'
           +'background:'+city.color+'18;border:1.5px solid '+city.color+'40;'
           +'font-family:Orbitron,sans-serif;font-size:0.55rem;font-weight:900;color:'+city.color+';">'
           +name.trim().charAt(0).toUpperCase()
           +'</div>'
-          // Name
           +'<div style="flex:1;min-width:0;">'
           +'<div style="font-size:0.68rem;font-weight:700;color:rgba(255,255,255,0.88);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+name+'</div>'
           +'</div>'
-          // Role badge
-          +'<div style="display:flex;align-items:center;gap:5px;flex-shrink:0;padding:4px 10px;border-radius:8px;'
-          +'background:'+roleColor+'12;border:1px solid '+roleColor+'30;">'
-          +'<span style="font-size:0.85rem">'+roleIcon+'</span>'
-          +'<span style="font-family:Orbitron,sans-serif;font-size:0.48rem;font-weight:700;color:'+roleColor+';letter-spacing:0.5px;white-space:nowrap;">'
-          +roleLabel+'</span>'
-          +'</div>'
+          +'<div style="display:flex;flex-wrap:wrap;justify-content:flex-end;gap:2px;max-width:60%;">'+roleBadges+'</div>'
           +'</div>';
       }).join('');
 
-      // Role coverage summary — which required roles are filled/missing
-      var filledRoleIds = members.map(function(n){ return cityRoles[n] || ''; }).filter(Boolean);
+      // Role coverage summary — which required roles are filled/missing (use all assigned roles)
+      var filledRoleIds = members.reduce(function(acc,n){ return acc.concat(getRoles(city.id,n)); },[]);
       var requiredRoles = ROLES.filter(function(r){ return !r.optional; });
       var roleSummary = requiredRoles.map(function(r) {
         var filled = filledRoleIds.indexOf(r.id) !== -1;
@@ -12447,6 +12445,45 @@ function showDraftRecap() {
   playPositiveEvent();
 }
 
+// ── Multi-role helpers ───────────────────────────────────────────────────────
+// roleAssignments[cityId][name] stores roles as a comma-joined string
+// e.g. 'engineer,city-planner,financial-planner'
+// These helpers normalise reads/writes so the rest of the codebase
+// can keep working with the existing single-string format.
+
+function getRoles(cityId, name) {
+  const raw = (roleAssignments[cityId] || {})[name] || '';
+  return raw ? raw.split(',').map(r=>r.trim()).filter(Boolean) : [];
+}
+
+function getPrimaryRole(cityId, name) {
+  return getRoles(cityId, name)[0] || '';
+}
+
+function setRoles(cityId, name, rolesArray) {
+  if (!roleAssignments[cityId]) roleAssignments[cityId] = {};
+  const clean = (rolesArray || []).filter(Boolean);
+  if (clean.length) {
+    roleAssignments[cityId][name] = clean.join(',');
+  } else {
+    delete roleAssignments[cityId][name];
+  }
+}
+
+function toggleRole(cityId, encodedName, roleId, checked) {
+  const name = decodeURIComponent(encodedName);
+  const current = getRoles(cityId, name);
+  let updated;
+  if (checked) {
+    updated = current.includes(roleId) ? current : [...current, roleId];
+  } else {
+    updated = current.filter(r => r !== roleId);
+  }
+  setRoles(cityId, name, updated);
+  saveDraft();
+  renderScoreboard();
+}
+
 // ─── Step 2: Role Assignment screen ─────────────────────────────────────────
 
 function showRoleAssignment() {
@@ -12470,29 +12507,30 @@ function showRoleAssignment() {
     if (!members.length) return '';
 
     const memberRows = members.map(name => {
-      const assignedRole = roleAssignments[city.id]?.[name] || '';
-      // Count how many others share each role (display only — roles are shareable)
-      const usedRoleCounts = {};
-      members.filter(m => m !== name).forEach(m => {
-        const r = roleAssignments[city.id]?.[m] || '';
-        if (r) usedRoleCounts[r] = (usedRoleCounts[r] || 0) + 1;
-      });
-      const options = ROLES.map(role => {
-        const sharedCount = usedRoleCounts[role.id] || 0;
-        const sharedNote = sharedCount > 0 ? ` (${sharedCount} other${sharedCount > 1 ? 's' : ''})` : '';
-        return `<option value="${role.id}" ${assignedRole === role.id ? 'selected' : ''}>
-          ${role.icon} ${role.label}${role.optional ? ' (opt.)' : ''}${sharedNote}
-        </option>`;
+      const assignedRoles = getRoles(city.id, name);
+      const roleChecks = ROLES.map(role => {
+        const checked = assignedRoles.includes(role.id);
+        return `<label style="display:inline-flex;align-items:center;gap:3px;padding:2px 6px;border-radius:4px;cursor:pointer;font-size:0.58rem;
+          background:${checked ? city.color+'22' : 'rgba(255,255,255,0.03)'};
+          border:1px solid ${checked ? city.color+'60' : 'rgba(255,255,255,0.07)'};
+          color:${checked ? city.color : 'rgba(255,255,255,0.5)'};
+          transition:all 0.12s;">
+          <input type="checkbox" style="accent-color:${city.color};width:11px;height:11px;flex-shrink:0;cursor:pointer;"
+            ${checked ? 'checked' : ''}
+            onchange="toggleRole('${city.id}','${encodeURIComponent(name)}','${role.id}',this.checked);rerenderRoleAssignment();">
+          ${role.icon} ${role.label}${role.optional ? ' <em style=\'font-size:0.48rem;opacity:0.6;\'>(opt.)</em>' : ''}
+        </label>`;
       }).join('');
 
+      const badgeIcons = assignedRoles.map(rid => ROLES.find(r=>r.id===rid)?.icon||'').filter(Boolean).join(' ');
+
       return `
-        <div class="role-assign-row">
-          <span class="role-assign-name">👤 ${name}</span>
-          <select class="role-select" data-city="${city.id}" data-name="${encodeURIComponent(name)}" onchange="assignRoleFromSelect(this)">
-            <option value="">— pick role —</option>
-            ${options}
-          </select>
-          ${assignedRole ? `<span class="role-badge" style="color:${city.color};">${ROLES.find(r=>r.id===assignedRole)?.icon || ''}</span>` : ''}
+        <div class="role-assign-row" style="flex-direction:column;align-items:flex-start;gap:5px;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,0.05);">
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span class="role-assign-name" style="min-width:0;">👤 ${name}</span>
+            <span class="role-badge" data-city="${city.id}" data-name="${encodeURIComponent(name)}" style="color:${city.color};font-size:0.75rem;letter-spacing:2px;">${badgeIcons}</span>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:4px;">${roleChecks}</div>
         </div>`;
     }).join('');
 
@@ -12547,47 +12585,34 @@ function assignRole(cityId, playerName, roleId) {
 }
 
 function rerenderRoleAssignment() {
-  // Update dropdowns in-place — no overlay tear-down so there's no flash
+  // Update checkbox states and role badge in-place — no overlay tear-down
   CITIES.forEach(city => {
     const members = draftRosters[city.id] || [];
-    const cityRoles = roleAssignments[city.id] || {};
-    const usedRoleSet = new Set(Object.values(cityRoles).filter(Boolean));
-
     members.forEach(name => {
-      const assignedRole = cityRoles[name] || '';
-      const usedByOthers = new Set(
-        members.filter(m => m !== name).map(m => cityRoles[m]).filter(Boolean)
-      );
+      const assignedRoles = getRoles(city.id, name);
+      const encoded = encodeURIComponent(name);
 
-      // Update each option's disabled state and selected value
-      const sel = document.querySelector(
-        `.role-select[data-city="${city.id}"][data-name="${encodeURIComponent(name)}"]`
-      );
-      if (!sel) return;
-
-      // Update selected value without rebuilding options
-      sel.value = assignedRole;
-      // Never disable options — multiple students can share the same role
-      Array.from(sel.options).forEach(opt => { opt.disabled = false; });
-
-      // Update the role badge next to this row
-      const row = sel.closest('.role-assign-row');
-      if (row) {
-        let badge = row.querySelector('.role-badge');
-        if (assignedRole) {
-          const roleObj = ROLES.find(r => r.id === assignedRole);
-          if (badge) {
-            badge.textContent = roleObj?.icon || '';
-          } else {
-            badge = document.createElement('span');
-            badge.className = 'role-badge';
-            badge.style.color = city.color;
-            badge.textContent = roleObj?.icon || '';
-            row.appendChild(badge);
-          }
-        } else if (badge) {
-          badge.remove();
+      // Update each checkbox
+      ROLES.forEach(role => {
+        const cb = document.querySelector(
+          `input[type="checkbox"][onchange*="toggleRole('${city.id}','${encoded}','${role.id}'"]`
+        );
+        if (!cb) return;
+        cb.checked = assignedRoles.includes(role.id);
+        // Update label styling
+        const lbl = cb.closest('label');
+        if (lbl) {
+          const checked = cb.checked;
+          lbl.style.background = checked ? city.color+'22' : 'rgba(255,255,255,0.03)';
+          lbl.style.border = `1px solid ${checked ? city.color+'60' : 'rgba(255,255,255,0.07)'}`;
+          lbl.style.color = checked ? city.color : 'rgba(255,255,255,0.5)';
         }
+      });
+
+      // Update badge icons
+      const badge = document.querySelector(`.role-badge[data-city="${city.id}"][data-name="${encoded}"]`);
+      if (badge) {
+        badge.textContent = assignedRoles.map(rid => ROLES.find(r=>r.id===rid)?.icon||'').filter(Boolean).join(' ');
       }
     });
   });
@@ -12608,15 +12633,20 @@ function showFinalRecap() {
     const cityRoles = roleAssignments[city.id] || {};
 
     const playerRows = members.map((name, i) => {
-      const roleId   = cityRoles[name];
-      const role     = ROLES.find(r => r.id === roleId);
+      const memberRoles = getRoles(city.id, name);
+      const roleChips = memberRoles.map(rid => {
+        const r = ROLES.find(x=>x.id===rid);
+        return r ? `<span class="final-role-chip" style="border-color:${city.color}60;color:${city.color};margin-left:3px;">${r.icon} ${r.label}</span>` : '';
+      }).join('');
       return `
         <div class="recap-player final-player" style="animation-delay:${i * 0.05}s;">
           <div class="final-player-left">
             <span class="recap-player-num" style="color:${city.color};">${i+1}</span>
             <span>👤 ${name}</span>
           </div>
-          ${role ? `<span class="final-role-chip" style="border-color:${city.color}60;color:${city.color};">${role.icon} ${role.label}</span>` : '<span class="final-role-empty">—</span>'}
+          <div style="display:flex;flex-wrap:wrap;gap:2px;justify-content:flex-end;">
+            ${roleChips || '<span class="final-role-empty">—</span>'}
+          </div>
         </div>`;
     }).join('');
 
@@ -18436,8 +18466,9 @@ function renderScoreboard() {
                      : '50px';
           const chips = members.map((name, i) => {
             const firstName = firstNames[i];
-            const role = ROLES.find(r => r.id === cityRoles[name]);
-            return `<span class="city-member-chip" style="font-size:${chipSize};max-width:${maxW};">${firstName}${role?`<span class="city-member-role" style="font-size:${chipSize};">${role.icon}</span>`:''}</span>`;
+            const memberRoles = getRoles(c.id, name);
+            const roleIcons = memberRoles.map(rid => ROLES.find(r=>r.id===rid)?.icon||'').filter(Boolean).join('');
+            return `<span class="city-member-chip" style="font-size:${chipSize};max-width:${maxW};">${firstName}${roleIcons?`<span class="city-member-role" style="font-size:${chipSize};">${roleIcons}</span>`:''}</span>`;
           }).join('');
           return `<div class="city-team-members">${chips}</div>`;
         })()
