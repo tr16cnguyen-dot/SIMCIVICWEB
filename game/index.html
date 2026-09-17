@@ -24000,65 +24000,143 @@ function handleImportFile(input) {
 function executeImportSummary() {
   const ta = document.getElementById('importSummaryText');
   const fb = document.getElementById('importFeedback');
-  const raw = (ta?.value || '').trim();
-  if (!raw) { if (fb) { fb.style.color='#ef4444'; fb.textContent='⚠️ Nothing to import.'; } return; }
+  // Normalise line endings (Windows CRLF → LF) before parsing
+  const raw = (ta?.value || '').replace(/\r\n/g,'\n').replace(/\r/g,'\n').trim();
+  if (!raw) { if (fb) { fb.style.color='#ef4444'; fb.textContent='⚠️ Nothing to import — paste or upload a .txt file first.'; } return; }
 
-  const startIdx = raw.indexOf('SIMCIVIC_RESTORE_JSON_BEGIN');
-  const endIdx   = raw.indexOf('SIMCIVIC_RESTORE_JSON_END');
-  if (startIdx === -1 || endIdx === -1) {
-    if (fb) { fb.style.color='#ef4444'; fb.textContent='⚠️ No restore block found. Only files exported from SimCivic can be imported.'; }
+  // Find the JSON restore block
+  const START = 'SIMCIVIC_RESTORE_JSON_BEGIN';
+  const END   = 'SIMCIVIC_RESTORE_JSON_END';
+  const startIdx = raw.indexOf(START);
+  const endIdx   = raw.indexOf(END);
+
+  if (startIdx === -1 || endIdx === -1 || endIdx <= startIdx) {
+    if (fb) { fb.style.color='#ef4444'; fb.textContent='⚠️ No restore block found. Make sure you uploaded the full .txt file (not the PDF).'; }
     return;
   }
-  const lines = raw.slice(startIdx + 'SIMCIVIC_RESTORE_JSON_BEGIN'.length, endIdx).trim().split('\n').map(l=>l.trim()).filter(l=>l.startsWith('{'));
-  if (!lines.length) { if (fb) { fb.style.color='#ef4444'; fb.textContent='⚠️ Could not parse restore block.'; } return; }
+
+  // Extract everything between the markers, strip whitespace and CRLF artefacts
+  const between = raw.slice(startIdx + START.length, endIdx).replace(/\r/g,'').trim();
+
+  // Find the JSON object — it's the line that starts with {
+  let jsonStr = null;
+  for (const line of between.split('\n')) {
+    const t = line.trim();
+    if (t.startsWith('{') && t.endsWith('}')) { jsonStr = t; break; }
+    if (t.startsWith('{')) { jsonStr = t; break; } // may be truncated — try anyway
+  }
+
+  if (!jsonStr) {
+    if (fb) { fb.style.color='#ef4444'; fb.textContent='⚠️ Could not find JSON in restore block. The file may be corrupted or truncated.'; }
+    return;
+  }
 
   let s;
-  try { s = JSON.parse(lines[0]); } catch(e) { if (fb) { fb.style.color='#ef4444'; fb.textContent='⚠️ JSON error: '+e.message; } return; }
-  if (!s._simcivic_restore) { if (fb) { fb.style.color='#ef4444'; fb.textContent='⚠️ Not a valid SimCivic restore file.'; } return; }
+  try {
+    s = JSON.parse(jsonStr);
+  } catch(e) {
+    if (fb) { fb.style.color='#ef4444'; fb.textContent='⚠️ JSON parse error: ' + e.message + '. The restore block may be corrupted.'; }
+    console.error('Import JSON error:', e, '\nJSON string (first 200):', jsonStr.slice(0,200));
+    return;
+  }
 
-  showConfirm('Restore game from this summary? Current game state will be replaced.', () => {
-    try {
-      if (s.data)               data            = s.data;
-      if (s.snapshots)          snapshots       = s.snapshots;
-      if (s.roundDescs)         roundDescs      = s.roundDescs;
-      if (s.roundNotes)         roundNotes      = s.roundNotes;
-      if (s.cityRules)          cityRules       = s.cityRules;
-      if (s.currentRound!=null)     currentRound    = s.currentRound;
-      if (s.maxAppliedRound!=null)  maxAppliedRound = s.maxAppliedRound;
-      if (s.roundHistory)       { roundHistory.length=0; s.roundHistory.forEach(h=>roundHistory.push(h)); }
-      if (s.cityRelations)      Object.assign(cityRelations, s.cityRelations);
-      if (s.politicalRanks)     Object.assign(politicalRanks, s.politicalRanks);
-      if (s.policyPicks)        Object.assign(policyPicks, s.policyPicks);
-      if (s.usedPolicyCards)    { usedPolicyCards.clear(); s.usedPolicyCards.forEach(id=>usedPolicyCards.add(id)); }
-      if (s.cityCardPicks) {
-        Object.keys(cityCardPicks).forEach(k=>delete cityCardPicks[k]);
-        Object.entries(s.cityCardPicks).forEach(([rnd,cities])=>{
-          cityCardPicks[rnd]={};
-          Object.entries(cities).forEach(([cid,st])=>{ cityCardPicks[rnd][cid]={selected:new Set(st.selected||[]),eliminated:new Set(st.eliminated||[])}; });
-        });
+  if (!s || !s._simcivic_restore) {
+    if (fb) { fb.style.color='#ef4444'; fb.textContent='⚠️ Not a valid SimCivic restore file.'; }
+    return;
+  }
+
+  // Show a preview of what will be restored
+  const previewRound = s.currentRound ?? '?';
+  const previewMax   = s.maxAppliedRound ?? '?';
+  const previewDate  = s.exportedAt ? new Date(s.exportedAt).toLocaleString() : 'unknown date';
+
+  if (fb) {
+    fb.style.color='#10b981';
+    fb.textContent = `✅ Valid restore file found — Round ${previewRound}, ${previewMax} rounds applied (exported ${previewDate}). Click Restore to apply.`;
+  }
+
+  showConfirm(
+    `Restore to Round ${previewRound} (exported ${previewDate})? Current game state will be replaced.`,
+    () => {
+      try {
+        // ── Apply all state ──────────────────────────────────────────────
+        if (s.data)               data            = s.data;
+        if (s.snapshots)          snapshots       = s.snapshots;
+        if (s.roundDescs)         roundDescs      = s.roundDescs;
+        if (s.roundNotes)         roundNotes      = s.roundNotes;
+        if (s.cityRules)          cityRules       = s.cityRules;
+        if (s.currentRound   != null) currentRound    = s.currentRound;
+        if (s.maxAppliedRound!= null) maxAppliedRound = s.maxAppliedRound;
+
+        if (s.roundHistory)    { roundHistory.length=0; s.roundHistory.forEach(h=>roundHistory.push(h)); }
+        if (s.activeAlliances) { activeAlliances.length=0; s.activeAlliances.forEach(r=>activeAlliances.push(r)); }
+        if (s.activeWars)      { activeWars.length=0; s.activeWars.forEach(w=>activeWars.push(w)); }
+
+        // Replace (not merge) relation/rank maps so old keys don't bleed in
+        if (s.cityRelations)   { Object.keys(cityRelations).forEach(k=>delete cityRelations[k]); Object.assign(cityRelations, s.cityRelations); }
+        if (s.politicalRanks)  { Object.keys(politicalRanks).forEach(k=>delete politicalRanks[k]); Object.assign(politicalRanks, s.politicalRanks); }
+        if (s.policyPicks)     { Object.keys(policyPicks).forEach(k=>delete policyPicks[k]); Object.assign(policyPicks, s.policyPicks); }
+
+        if (s.usedPolicyCards) { usedPolicyCards.clear(); s.usedPolicyCards.forEach(id=>usedPolicyCards.add(id)); }
+
+        if (s.cityCardPicks) {
+          Object.keys(cityCardPicks).forEach(k=>delete cityCardPicks[k]);
+          Object.entries(s.cityCardPicks).forEach(([rnd,cities])=>{
+            cityCardPicks[rnd]={};
+            Object.entries(cities||{}).forEach(([cid,st])=>{
+              cityCardPicks[rnd][cid]={ selected:new Set(st.selected||[]), eliminated:new Set(st.eliminated||[]) };
+            });
+          });
+        }
+
+        if (s.draftPool)       draftPool       = s.draftPool;
+        if (s.draftRosters)    draftRosters    = s.draftRosters;
+        if (s.teacherNames)    teacherNames    = s.teacherNames;
+        if (s.teacherAssign)   teacherAssign   = s.teacherAssign;
+        if (s.roleAssignments) roleAssignments = s.roleAssignments;
+        if (s.globalEvents)    globalEvents    = s.globalEvents;
+        if (s.cityEvents)      cityEvents      = s.cityEvents;
+
+        if (s.globalEnabled)   { globalEnabled.clear(); s.globalEnabled.forEach(id=>globalEnabled.add(id)); }
+        if (s.cityEnabledMap)  {
+          cityEnabledMap = {};
+          Object.entries(s.cityEnabledMap).forEach(([k,v])=>{ cityEnabledMap[k]=new Set(v); });
+        }
+
+        // Also restore war state if present
+        if (s.warState)         warState         = s.warState;
+        if (s.warImmuneRounds)  warImmuneRounds  = s.warImmuneRounds;
+
+        // ── Re-render everything ─────────────────────────────────────────
+        try { Object.keys(sbRowMap||{}).forEach(k=>delete sbRowMap[k]); } catch(e){}
+        renderScoreboard?.();
+        renderRelationsMatrix?.();
+        renderEventsPool?.();
+        updateRoundUI?.();
+        renderHistory?.();
+        updateSidebar?.();
+        renderRules?.();
+        renderPolicySummary?.();
+        loadCityCardPicks?.();
+        reapplyCityCardEffects?.();
+        saveWarState?.();
+        saveRelations?.();
+
+        // Persist to cloud/localStorage
+        save();
+        showSaveIndicator?.();
+
+        document.getElementById('importSummaryModal').style.display='none';
+        showToastMsg('✅ Game restored — Round '+currentRound+', '+maxAppliedRound+' rounds applied.');
+        playSuccess();
+
+      } catch(e) {
+        console.error('Import restore error:', e);
+        if (fb) { fb.style.color='#ef4444'; fb.textContent='⚠️ Restore error: '+e.message; }
       }
-      if (s.activeAlliances)    { activeAlliances.length=0; s.activeAlliances.forEach(r=>activeAlliances.push(r)); }
-      if (s.activeWars)         { activeWars.length=0; s.activeWars.forEach(w=>activeWars.push(w)); }
-      if (s.draftPool)          draftPool       = s.draftPool;
-      if (s.draftRosters)       draftRosters    = s.draftRosters;
-      if (s.teacherNames)       teacherNames    = s.teacherNames;
-      if (s.teacherAssign)      teacherAssign   = s.teacherAssign;
-      if (s.roleAssignments)    roleAssignments = s.roleAssignments;
-      if (s.globalEvents)       globalEvents    = s.globalEvents;
-      if (s.cityEvents)         cityEvents      = s.cityEvents;
-      if (s.globalEnabled)      { globalEnabled.clear(); s.globalEnabled.forEach(id=>globalEnabled.add(id)); }
-      if (s.cityEnabledMap)     { cityEnabledMap={}; Object.entries(s.cityEnabledMap).forEach(([k,v])=>{cityEnabledMap[k]=new Set(v);}); }
-
-      renderScoreboard(); renderEventsPool?.(); updateRoundUI?.(); renderHistory?.();
-      updateSidebar?.(); renderRules?.(); renderPolicySummary?.();
-      save(); showSaveIndicator?.();
-      document.getElementById('importSummaryModal').style.display='none';
-      showToastMsg('✅ Game restored from summary — Round '+currentRound+', '+maxAppliedRound+' rounds applied.');
-      playSuccess();
-    } catch(e) {
-      if (fb) { fb.style.color='#ef4444'; fb.textContent='⚠️ Restore error: '+e.message; }
-    }
-  }, '📥');
+    },
+    '📥'
+  );
 }
 
 // ════════════════════════════════════════════════════════
