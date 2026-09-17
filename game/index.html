@@ -23856,32 +23856,39 @@ function showExportModal() {
     ln('SIMCIVIC_RESTORE_JSON_END');
     hr();
 
-    // ── Generate PDF via print window ────────────────────────────────────────
+    // ── Download .txt restore file ───────────────────────────────────────────
     const textContent = L.join('\n');
+    const txtBlob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
+    const txtUrl  = URL.createObjectURL(txtBlob);
+    const txtA    = document.createElement('a');
+    txtA.href = txtUrl;
+    txtA.download = 'simcivic-game-summary-' + dateSlug + '.txt';
+    document.body.appendChild(txtA); txtA.click();
+    document.body.removeChild(txtA); URL.revokeObjectURL(txtUrl);
+
+    // ── Generate PDF via print window (human-readable copy) ──────────────────
+    // Strip the restore block from the PDF — it's for machines not humans
+    const pdfText = textContent.slice(0, textContent.indexOf('SIMCIVIC_RESTORE_JSON_BEGIN')).trimEnd();
     const htmlContent = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>SimCivic Game Summary — ${dateSlug}</title>
 <style>
   @page { margin: 1.2cm 1.5cm; }
   body { font-family: 'Courier New', monospace; font-size: 9pt; line-height: 1.5; color: #111; background: white; white-space: pre-wrap; word-break: break-word; }
   @media print { body { margin: 0; } }
-</style></head><body>${textContent.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</body></html>`;
+</style></head><body>${pdfText.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</body></html>`;
 
-    // Open print dialog (saves as PDF)
-    const pw = window.open('', '_blank', 'width=800,height=900');
-    if (pw) {
-      pw.document.write(htmlContent);
-      pw.document.close();
-      pw.focus();
-      setTimeout(() => { pw.print(); }, 600);
-    } else {
-      // Fallback: download as .txt if popup blocked
-      const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
-      const url  = URL.createObjectURL(blob);
-      const a    = document.createElement('a');
-      a.href = url; a.download = 'simcivic-game-summary-' + dateSlug + '.txt';
-      document.body.appendChild(a); a.click();
-      document.body.removeChild(a); URL.revokeObjectURL(url);
-      showToastMsg && showToastMsg('📄 Downloaded as .txt — allow popups for PDF export');
-    }
+    setTimeout(() => {
+      const pw = window.open('', '_blank', 'width=800,height=900');
+      if (pw) {
+        pw.document.write(htmlContent);
+        pw.document.close();
+        pw.focus();
+        setTimeout(() => { pw.print(); }, 600);
+        showToastMsg && showToastMsg('📄 .txt downloaded + PDF print dialog opened');
+      } else {
+        showToastMsg && showToastMsg('📄 .txt downloaded — allow popups to also get PDF');
+      }
+    }, 400);
+
     playSuccess();
   } catch(err) {
     console.error('Export error:', err);
