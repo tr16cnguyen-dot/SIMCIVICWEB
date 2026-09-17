@@ -862,18 +862,20 @@ table.scoreboard tbody tr:hover td:nth-child(2) { background: #111827; }
 /* Team member footnotes on scoreboard */
 .city-team-members {
   display: flex; flex-wrap: wrap; gap: 2px; margin-top: 3px;
-  width: 100%; overflow: hidden;
+  width: 100%; overflow: hidden; max-height: 36px;
+  align-content: flex-start;
 }
 .city-member-chip {
   display: inline-flex; align-items: center; gap: 2px;
-  font-size: 0.42rem; color: rgba(255,255,255,0.5);
-  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.07);
-  border-radius: 3px; padding: 1px 3px; white-space: nowrap;
-  overflow: hidden; text-overflow: ellipsis; max-width: 100%;
+  font-size: 0.42rem; color: rgba(255,255,255,0.55);
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 3px; padding: 1px 4px; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis;
   font-family: 'Sora', sans-serif; letter-spacing: 0;
+  flex-shrink: 1; min-width: 0;
 }
 .city-member-role {
-  font-size: 0.48rem; opacity: 0.9; flex-shrink: 0;
+  font-size: 0.46rem; opacity: 0.9; flex-shrink: 0;
 }
 
 /* score cell */
@@ -18351,7 +18353,9 @@ function renderScoreboard() {
   ranked.forEach(({ c }, i) => { newRanks[c.id] = i; });
 
   // Measure row height for positioning
-  const ROW_H = 76; // px — fits city + wrapped smaller chips
+  // Row height grows slightly when many students are on a team
+  const maxMembers = Math.max(...CITIES.map(c => (draftRosters?.[c.id]||[]).length), 0);
+  const ROW_H = maxMembers <= 5 ? 76 : maxMembers <= 9 ? 86 : 96;
   const ROW_GAP = 3;
   body.style.height = `${ranked.length * (ROW_H + ROW_GAP)}px`;
 
@@ -18377,10 +18381,18 @@ function renderScoreboard() {
     const members    = draftRosters?.[c.id] || [];
     const cityRoles  = roleAssignments?.[c.id] || {};
     const membersHtml = members.length
-      ? `<div class="city-team-members">${members.map(name => {
-          const role = ROLES.find(r => r.id === cityRoles[name]);
-          return `<span class="city-member-chip">${name}${role?`<span class="city-member-role">${role.icon}</span>`:''}</span>`;
-        }).join('')}</div>` : '';
+      ? (() => {
+          const count = members.length;
+          // Scale font down when there are many members
+          const chipSize = count <= 4 ? '0.48rem' : count <= 7 ? '0.42rem' : count <= 10 ? '0.36rem' : '0.30rem';
+          const chips = members.map(name => {
+            const firstName = name.trim().split(/\s+/)[0]; // first name only
+            const role = ROLES.find(r => r.id === cityRoles[name]);
+            return `<span class="city-member-chip" style="font-size:${chipSize};">${firstName}${role?`<span class="city-member-role" style="font-size:${chipSize};">${role.icon}</span>`:''}</span>`;
+          }).join('');
+          return `<div class="city-team-members">${chips}</div>`;
+        })()
+      : '';
 
     const ccSt = (cityCardPicks?.['game'])?.[c.id];
     const pickedOpt = ccSt?.selected?.size
