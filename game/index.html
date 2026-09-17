@@ -10519,26 +10519,33 @@ window.fbToggleViewers = function() {
             </div>
           </div>
 
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
-            <div>
-              <label style="font-size:0.55rem;font-family:'Orbitron',sans-serif;letter-spacing:1px;color:var(--text-muted);display:block;margin-bottom:4px;">PLAYER TO TRANSFER</label>
-              <select id="ptPlayer" style="width:100%;padding:5px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:0.72rem;"></select>
-            </div>
-            <div>
-              <label style="font-size:0.55rem;font-family:'Orbitron',sans-serif;letter-spacing:1px;color:var(--text-muted);display:block;margin-bottom:4px;">ASSIGN ROLE IN NEW CITY</label>
-              <select id="ptNewRole" style="width:100%;padding:5px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:0.72rem;"></select>
-            </div>
+          <!-- Players to transfer — grouped by role, multi-select -->
+          <div style="margin-bottom:10px;">
+            <label style="font-size:0.55rem;font-family:'Orbitron',sans-serif;letter-spacing:1px;color:var(--text-muted);display:block;margin-bottom:6px;">PLAYERS TO TRANSFER <span style="font-size:0.48rem;color:#64748b;font-family:'Sora',sans-serif;letter-spacing:0;">(check all you want to move)</span></label>
+            <div id="ptPlayerChecks" style="display:flex;flex-direction:column;gap:4px;max-height:160px;overflow-y:auto;padding:8px;border-radius:7px;border:1px solid var(--border);background:rgba(255,255,255,0.02);"></div>
+          </div>
+
+          <!-- Role in new city -->
+          <div style="margin-bottom:10px;">
+            <label style="font-size:0.55rem;font-family:'Orbitron',sans-serif;letter-spacing:1px;color:var(--text-muted);display:block;margin-bottom:4px;">ASSIGN ROLE IN NEW CITY</label>
+            <select id="ptNewRole" style="width:100%;padding:5px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:0.72rem;"></select>
           </div>
 
           <!-- Role swap option -->
           <div id="ptRoleSwapSection" style="display:none;padding:8px 10px;border-radius:7px;border:1px solid rgba(168,85,247,0.2);background:rgba(168,85,247,0.05);margin-bottom:10px;">
-            <div style="font-size:0.6rem;font-family:'Orbitron',sans-serif;color:#c084fc;font-weight:700;margin-bottom:6px;">↕️ ROLE SWAP (Policy Card)</div>
-            <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:6px;align-items:center;">
-              <select id="ptSwapPlayerFrom" style="width:100%;padding:4px 6px;border-radius:5px;border:1px solid rgba(168,85,247,0.3);background:var(--surface);color:var(--text);font-size:0.65rem;"></select>
-              <span style="color:#c084fc;font-size:0.8rem;">⇄</span>
-              <select id="ptSwapPlayerTo" style="width:100%;padding:4px 6px;border-radius:5px;border:1px solid rgba(168,85,247,0.3);background:var(--surface);color:var(--text);font-size:0.65rem;"></select>
+            <div style="font-size:0.6rem;font-family:'Orbitron',sans-serif;color:#c084fc;font-weight:700;margin-bottom:6px;">↕️ ROLE SWAP — Select players to swap</div>
+            <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:6px;align-items:start;">
+              <div>
+                <div style="font-size:0.5rem;color:var(--text-muted);margin-bottom:3px;">FROM city players</div>
+                <div id="ptSwapFromChecks" style="display:flex;flex-direction:column;gap:3px;max-height:120px;overflow-y:auto;padding:5px;border-radius:6px;border:1px solid rgba(168,85,247,0.2);background:rgba(168,85,247,0.03);"></div>
+              </div>
+              <span style="color:#c084fc;font-size:0.8rem;padding-top:20px;">⇄</span>
+              <div>
+                <div style="font-size:0.5rem;color:var(--text-muted);margin-bottom:3px;">TO city players</div>
+                <div id="ptSwapToChecks" style="display:flex;flex-direction:column;gap:3px;max-height:120px;overflow-y:auto;padding:5px;border-radius:6px;border:1px solid rgba(168,85,247,0.2);background:rgba(168,85,247,0.03);"></div>
+              </div>
             </div>
-            <div style="font-size:0.55rem;color:var(--text-muted);margin-top:4px;">Swap roles between two players in different cities (same role type)</div>
+            <div style="font-size:0.55rem;color:var(--text-muted);margin-top:4px;">Check players on each side to swap. Multiple students with the same role can all be swapped at once.</div>
           </div>
 
           <div id="ptFeedback" style="font-size:0.65rem;color:#ef4444;margin-bottom:8px;display:none;"></div>
@@ -14769,40 +14776,59 @@ function refreshPeopleTradeForm() {
   }
 
   const members = draftRosters[fromId] || [];
-  const playerSel = document.getElementById('ptPlayer');
-  if (playerSel) {
-    const isSameCity       = policyInfo?.sameCity;
-    const isFullTransfer   = policyInfo?.type === 'full-transfer';
-    const isInternalChange = policyInfo?.type === 'internal-role-change';
 
-    if (!selectedCardId) {
-      playerSel.innerHTML = '<option value="">— Select a policy card first —</option>';
-    } else if (isInternalChange) {
-      // Show all members who DON'T already hold the target role (they're candidates for promotion)
-      const eligible = members.filter(n => !allowedRoles?.includes(roleAssignments[fromId]?.[n]||''));
-      if (!eligible.length) {
-        playerSel.innerHTML = `<option value="">— No eligible members for this role —</option>`;
-      } else {
-        playerSel.innerHTML = eligible.map(name => {
-          const role = roleAssignments[fromId]?.[name] || '';
-          const roleLabel = ROLES.find(r=>r.id===role)?.label || 'No role';
-          const targetRole = allowedRoles ? ROLES.find(r=>allowedRoles.includes(r.id))?.label : '';
-          return `<option value="${encodeURIComponent(name)}">${name} (${roleLabel}) → ${targetRole}</option>`;
-        }).join('');
+  // ── Helper: render a grouped checkbox list into a container ───────────
+  function _renderCheckboxGroup(containerId, list, cityId, opts) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    opts = opts || {};
+    if (!list || !list.length) {
+      container.innerHTML = '<div style="font-size:0.62rem;color:#475569;padding:4px;">No eligible students</div>';
+      return;
+    }
+    // Group by role
+    const byRole = {};
+    list.forEach(name => {
+      const roleId = roleAssignments[cityId]?.[name] || '__none__';
+      if (!byRole[roleId]) byRole[roleId] = [];
+      byRole[roleId].push(name);
+    });
+    let html = '';
+    Object.entries(byRole).forEach(([roleId, names]) => {
+      const role = ROLES.find(r=>r.id===roleId);
+      const roleLabel = role ? role.icon + ' ' + role.label : '(No role)';
+      if (names.length > 1 || opts.showRoleHeaders) {
+        html += '<div style="font-size:0.48rem;color:#64748b;font-family:Orbitron,sans-serif;letter-spacing:1px;padding:2px 0 1px;text-transform:uppercase;">' + roleLabel + ' (' + names.length + ')</div>';
       }
+      names.forEach(name => {
+        const firstName = name.trim().split(/\s+/)[0];
+        const fullRoleLabel = role ? role.icon + ' ' + role.label : '';
+        html += '<label style="display:flex;align-items:center;gap:6px;padding:3px 6px;border-radius:5px;cursor:pointer;font-size:0.65rem;color:var(--text);background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);">'+
+          '<input type="checkbox" class="'+opts.checkboxClass+'" value="'+encodeURIComponent(name)+'" style="accent-color:var(--cyan);flex-shrink:0;">'+
+          '<span style="font-weight:600;">'+firstName+'</span>'+
+          (name !== firstName ? '<span style="font-size:0.55rem;color:#64748b;">'+name.split(/\s+/).slice(1).join(' ')+'</span>' : '')+
+          (fullRoleLabel ? '<span style="margin-left:auto;font-size:0.55rem;color:#94a3b8;">'+fullRoleLabel+'</span>' : '')+
+          '</label>';
+      });
+    });
+    container.innerHTML = html;
+  }
+
+  const isFullTransfer   = policyInfo?.type === 'full-transfer';
+  const isInternalChange = policyInfo?.type === 'internal-role-change';
+
+  const checksContainer = document.getElementById('ptPlayerChecks');
+  if (checksContainer) {
+    if (!selectedCardId) {
+      checksContainer.innerHTML = '<div style="font-size:0.62rem;color:#475569;padding:4px;">Select a policy card above first</div>';
+    } else if (isInternalChange) {
+      const eligible = members.filter(n => !allowedRoles?.includes(roleAssignments[fromId]?.[n]||''));
+      _renderCheckboxGroup('ptPlayerChecks', eligible, fromId, { checkboxClass:'pt-player-cb', showRoleHeaders:true });
     } else {
-      const filteredMembers = (allowedRoles && !isFullTransfer)
+      const filtered = (allowedRoles && !isFullTransfer)
         ? members.filter(name => allowedRoles.includes(roleAssignments[fromId]?.[name]||''))
         : members;
-      if (!filteredMembers.length) {
-        playerSel.innerHTML = `<option value="">— No eligible members in this city —</option>`;
-      } else {
-        playerSel.innerHTML = filteredMembers.map(name => {
-          const role = roleAssignments[fromId]?.[name] || '';
-          const roleLabel = ROLES.find(r=>r.id===role)?.label || 'No role';
-          return `<option value="${encodeURIComponent(name)}">${name} (${roleLabel})</option>`;
-        }).join('');
-      }
+      _renderCheckboxGroup('ptPlayerChecks', filtered, fromId, { checkboxClass:'pt-player-cb', showRoleHeaders:true });
     }
   }
 
@@ -14841,37 +14867,34 @@ function refreshPeopleTradeForm() {
   }
 
   const toMembers = draftRosters[toId] || [];
-  const swapFrom = document.getElementById('ptSwapPlayerFrom');
-  const swapTo   = document.getElementById('ptSwapPlayerTo');
-  const makeOpts = (list, cityId) => {
-    const filtered = allowedRoles
-      ? list.filter(name => allowedRoles.includes(roleAssignments[cityId]?.[name]||''))
-      : list;
-    return filtered.map(name => {
-      const role = roleAssignments[cityId]?.[name] || '';
-      const lbl  = ROLES.find(r=>r.id===role)?.label || 'No role';
-      return `<option value="${encodeURIComponent(name)}">${name} — ${lbl}</option>`;
-    }).join('') || '<option>No eligible members</option>';
-  };
-  if (swapFrom) swapFrom.innerHTML = makeOpts(members, fromId);
-  if (swapTo)   swapTo.innerHTML   = makeOpts(toMembers, toId);
-
   const isSwapType = policyInfo?.type === 'role-swap';
   const swapSec = document.getElementById('ptRoleSwapSection');
   if (swapSec) swapSec.style.display = (selectedCardId && isSwapType) ? '' : 'none';
+
+  if (selectedCardId && isSwapType) {
+    const swapFilterFrom = allowedRoles ? members.filter(n=>allowedRoles.includes(roleAssignments[fromId]?.[n]||'')) : members;
+    const swapFilterTo   = allowedRoles ? toMembers.filter(n=>allowedRoles.includes(roleAssignments[toId]?.[n]||'')) : toMembers;
+    _renderCheckboxGroup('ptSwapFromChecks', swapFilterFrom, fromId, { checkboxClass:'pt-swap-from-cb', showRoleHeaders:true });
+    _renderCheckboxGroup('ptSwapToChecks',   swapFilterTo,   toId,   { checkboxClass:'pt-swap-to-cb',   showRoleHeaders:true });
+  }
 }
 
 function executePeopleTrade() {
   const fromId     = document.getElementById('ptFromCity')?.value;
   const toId       = document.getElementById('ptToCity')?.value;
-  const playerRaw  = document.getElementById('ptPlayer')?.value;
   const newRole    = document.getElementById('ptNewRole')?.value;
   const fb         = document.getElementById('ptFeedback');
 
-  fb.style.display = 'none';
-  if (!playerRaw) { fb.style.display=''; fb.textContent='⚠️ No player selected.'; return; }
+  // Collect all checked players
+  const checkedBoxes = document.querySelectorAll('.pt-player-cb:checked');
+  const selectedPlayers = Array.from(checkedBoxes).map(cb => decodeURIComponent(cb.value));
 
-  const playerName = decodeURIComponent(playerRaw);
+  fb.style.display = 'none';
+  if (!selectedPlayers.length) { fb.style.display=''; fb.textContent='⚠️ Check at least one student to transfer.'; return; }
+
+  // For backward-compat with single-player flow below, use first player as primary
+  const playerName = selectedPlayers[0];
+  const playerRaw  = encodeURIComponent(playerName);
   const fromCity   = CITIES.find(c=>c.id===fromId);
   const toCity     = CITIES.find(c=>c.id===toId);
   const activePolicySel = document.getElementById('ptActivePolicyCard');
@@ -14959,21 +14982,23 @@ function executePeopleTrade() {
   savePeopleTradeSnapshot();
 
   const isSwap = activePolicyInfo?.type === 'role-swap';
-  const nameBRaw = decodeURIComponent(document.getElementById('ptSwapPlayerTo')?.value || '');
-  const nameB = (isSwap && nameBRaw && nameBRaw !== playerName) ? nameBRaw : null;
 
   // Capture roles BEFORE any mutations
   const roleA_before = roleAssignments[fromId][playerName] || '';
-  const roleB_before = nameB ? (roleAssignments[toId][nameB] || '') : '';
+  // nameB captured after move loop below — declared there
 
-  // ── Move playerName: fromId → toId ──
-  draftRosters[fromId] = draftRosters[fromId].filter(n => n !== playerName);
-  if (!draftRosters[toId].includes(playerName)) draftRosters[toId].push(playerName);
-  delete roleAssignments[fromId][playerName];
-  // playerA gets nameB's role in new city (swap keeps same role type)
-  roleAssignments[toId][playerName] = newRole || roleB_before || roleA_before;
+  // ── Move ALL selected players: fromId → toId ──
+  selectedPlayers.forEach(pName => {
+    const pRoleBeforeMove = roleAssignments[fromId][pName] || '';
+    draftRosters[fromId] = draftRosters[fromId].filter(n => n !== pName);
+    if (!draftRosters[toId].includes(pName)) draftRosters[toId].push(pName);
+    delete roleAssignments[fromId][pName];
+    roleAssignments[toId][pName] = newRole || pRoleBeforeMove;
+  });
 
-  // ── If swap: also move nameB: toId → fromId ──
+  // ── If swap: also move checked players from toId → fromId ──
+  const swapChecked = Array.from(document.querySelectorAll('.pt-swap-to-cb:checked')).map(cb=>decodeURIComponent(cb.value));
+  const nameB = (isSwap && swapChecked.length) ? swapChecked[0] : null; // keep first for legacy label
   if (nameB) {
     draftRosters[toId]   = draftRosters[toId].filter(n => n !== nameB);
     if (!draftRosters[fromId].includes(nameB)) draftRosters[fromId].push(nameB);
@@ -14982,11 +15007,22 @@ function executePeopleTrade() {
     roleAssignments[fromId][nameB] = roleA_before;
   }
 
-  // Build history label with full swap details
-  const roleLabelA = ROLES.find(r=>r.id===(newRole||roleB_before||roleA_before))?.label || '';
-  const roleLabelB = nameB ? (ROLES.find(r=>r.id===roleA_before)?.label || '') : '';
-  let histLabel = `👥 People Trade: ${playerName} (${fromCity?.name} → ${toCity?.name}${roleLabelA?' as '+roleLabelA:''})`;
-  if (nameB) histLabel += ` ⇄ ${nameB} (${toCity?.name} → ${fromCity?.name}${roleLabelB?' as '+roleLabelB:''})`;
+  // Build history label — show ALL transferred students
+  const newRoleLabel = newRole ? (ROLES.find(r=>r.id===newRole)?.label || newRole) : '';
+  const movedNames = selectedPlayers.map(n => n.trim().split(/\s+/)[0]).join(', ');
+  let histLabel = `👥 People Trade: ${movedNames} (${fromCity?.name} → ${toCity?.name}${newRoleLabel?' as '+newRoleLabel:''})`;
+  if (swapChecked.length) {
+    const swappedNames = swapChecked.map(n => n.trim().split(/\s+/)[0]).join(', ');
+    histLabel += ` ⇄ ${swappedNames} (${toCity?.name} → ${fromCity?.name})`;
+    // Move all additional swap-checked players too
+    swapChecked.slice(1).forEach(sName => {
+      const sRoleBefore = roleAssignments[toId][sName] || '';
+      draftRosters[toId]   = draftRosters[toId].filter(n => n !== sName);
+      if (!draftRosters[fromId].includes(sName)) draftRosters[fromId].push(sName);
+      delete roleAssignments[toId][sName];
+      roleAssignments[fromId][sName] = sRoleBefore;
+    });
+  }
   roundHistory.unshift({ round:-1, changes:[], label: histLabel, icon:'👥' });
 
   saveDraft();
