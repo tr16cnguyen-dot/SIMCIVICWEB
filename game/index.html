@@ -3297,10 +3297,9 @@ window.fbGoLive = async function() {
   window._fbSetupHostSummitListener(code);
 
   // ── Post-war ally break responses listener ──
-  var _processedAllyBreaks = new Set();
   // ── Post-war ally break responses — ONE response per nation, first write wins ──
   var _processedAllyBreaks = new Set(); // keyed by nationId only
-  _fbDB.ref(`games/${code}/events/allyBreakResponses`).on('value', snap => {
+  _fbDB.ref(`games/${code}/events/warSession/allyBreakResponses`).on('value', snap => {
     const responses = snap.val() || {};
     Object.keys(responses).forEach(nationId => {
       if (_processedAllyBreaks.has(nationId)) return; // already handled this nation
@@ -3476,6 +3475,23 @@ window.fbGoLive = async function() {
 
   // ── Power Trip confirmed by Azure — show host alert and sync state ──
   var _lastPowerTripActiveTs = 0;
+  // ── powerTripDecision — persistent listener so viewer catches late decisions ──
+  var _lastPtDecisionTs = 0;
+  _fbDB.ref('games/'+code+'/events/powerTripDecision').on('value', function(snap) {
+    var dec = snap.val();
+    if (!dec || !dec.ts || dec.ts <= _lastPtDecisionTs) return;
+    if (Date.now() - dec.ts > 30000) return; // ignore stale
+    _lastPtDecisionTs = dec.ts;
+    // Only act if we're the viewer and the popup isn't already handling this
+    if (window._fb.mode === 'host') return;
+    var popup = document.getElementById('powerTripInterceptPopup');
+    if (popup) return; // popup is open and handling it already
+    // Show a toast so viewers know the outcome
+    showToastMsg && showToastMsg(dec.allowed
+      ? '✓ Power Trip: Trade ALLOWED by Azure Bay.'
+      : '🚫 Power Trip: Trade DENIED by Azure Bay.');
+  });
+
   _fbDB.ref('games/'+code+'/events/powerTripActive').on('value', function(snap) {
     var ev = snap.val();
     if (!ev || ev.ts <= _lastPowerTripActiveTs) return;
@@ -4114,7 +4130,7 @@ window._showViewerVillainCorpPopup = function(ev, role) {
 
   // ── SINGLE consolidated ally choices listener ──
   var _processedAllyKeys = new Set();
-  _fbDB.ref(`games/${code}/events/allyChoices`).on('value', snap => {
+  _fbDB.ref(`games/${code}/events/warSession/allyChoices`).on('value', snap => {
     const choices = snap.val() || {};
     let anyNew = false;
     Object.keys(choices).forEach(nationId => {
@@ -4185,6 +4201,8 @@ window.fbPushState = async function() {
       roleAssignments,
       warState,
       warImmuneRounds,
+      activeAlliances: activeAlliances ? activeAlliances.map(r => JSON.parse(JSON.stringify(r))) : [],
+      activeWars: activeWars ? [...activeWars] : [],
       roundDescs,
       roundNotes,
       roundHistory: roundHistory ? roundHistory.slice(0, 50) : [],
@@ -4471,6 +4489,8 @@ window.applyRemoteState = function(s) {
     if (s.roleAssignments)    Object.assign(roleAssignments, s.roleAssignments);
     if (s.warState)           Object.assign(warState, s.warState);
     if (s.warImmuneRounds)    Object.assign(warImmuneRounds, s.warImmuneRounds);
+    if (s.activeAlliances)    { activeAlliances.length=0; s.activeAlliances.forEach(function(r){ activeAlliances.push(r); }); }
+    if (s.activeWars)         { activeWars.length=0; s.activeWars.forEach(function(w){ activeWars.push(w); }); }
     if (s.roundDescs)         Object.assign(roundDescs, s.roundDescs);
     if (s.roundHistory)       { roundHistory.length = 0; s.roundHistory.forEach(function(h){ roundHistory.push(h); }); }
     if (s.politicalHistory)   { politicalHistory.length = 0; s.politicalHistory.forEach(function(e){ politicalHistory.push(e); }); }
