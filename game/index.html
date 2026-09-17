@@ -4225,26 +4225,27 @@ window.fbJoinVerifyCode = async function() {
   document.getElementById('fbJoinStep1').style.display = 'none';
   document.getElementById('fbJoinStep2').style.display = 'block';
   document.getElementById('fbJoinOverlay').style.display = 'flex';
-  // Render nation picker — check which are taken
+  // Render nation picker — multiple students can join same nation
   const viewersSnap = await _fbDB.ref(`games/${code}/viewers`).once('value');
   const viewers = viewersSnap.val() || {};
-  const takenNations = {};
-  Object.values(viewers).forEach(v => { if (v.nation) takenNations[v.nation] = true; });
+  const nationCounts = {};
+  Object.values(viewers).forEach(v => { if (v.nation) nationCounts[v.nation] = (nationCounts[v.nation] || 0) + 1; });
   const picker = document.getElementById('fbNationPicker');
   picker.innerHTML = CITIES.map(city => {
-    const taken = takenNations[city.id];
+    const count = nationCounts[city.id] || 0;
+    const countLabel = count > 0 ? `<span style="font-size:0.48rem;color:${city.color};opacity:0.8;">${count} joined</span>` : '';
     return `<button onclick="fbJoinAsNation('${city.id}')" style="
       padding:14px 10px;border-radius:10px;cursor:pointer;
-      border:2px solid ${taken ? 'rgba(255,255,255,0.1)' : city.color+'60'};
-      background:${taken ? 'rgba(255,255,255,0.03)' : city.color+'12'};
-      color:${taken ? '#475569' : city.color};
+      border:2px solid ${city.color+'60'};
+      background:${city.color+'12'};
+      color:${city.color};
       font-family:'Orbitron',sans-serif;font-size:0.62rem;font-weight:800;
       display:flex;flex-direction:column;align-items:center;gap:6px;
       transition:all 0.15s;
     ">
       <span style="font-size:1.8rem">${city.icon}</span>
       <span>${city.name}</span>
-      ${taken ? '<span style="font-size:0.48rem;color:#475569;">JOINED</span>' : ''}
+      ${countLabel}
     </button>`;
   }).join('');
 };
@@ -9100,6 +9101,59 @@ window.fbToggleViewers = function() {
 </style>
 <!-- ════════════════════════════════════ LOADING OVERLAY ════════════════════════════════════ -->
 <!-- ════════════ SAVE SLOTS MODAL ════════════ -->
+<!-- ════════════ IMPORT SUMMARY MODAL ════════════ -->
+<div id="importSummaryModal" style="
+  display:none; position:fixed; inset:0; z-index:9997;
+  background:rgba(0,0,0,0.85); backdrop-filter:blur(8px);
+  align-items:center; justify-content:center;
+">
+  <div style="
+    background:#0f1623; border:1px solid rgba(168,85,247,0.3);
+    border-radius:16px; padding:28px 32px; max-width:560px; width:92%;
+    box-shadow:0 20px 60px rgba(0,0,0,0.8);
+  ">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+      <div>
+        <div style="font-family:'Orbitron',sans-serif;font-size:0.8rem;font-weight:800;letter-spacing:2px;color:#c084fc;">📥 IMPORT GAME SUMMARY</div>
+        <div style="font-size:0.6rem;color:#64748b;margin-top:2px;">Restore a game from an exported summary file</div>
+      </div>
+      <button onclick="document.getElementById('importSummaryModal').style.display='none';playClick();"
+        style="background:none;border:none;color:#64748b;cursor:pointer;font-size:1.2rem;line-height:1;">✕</button>
+    </div>
+    <div style="margin-bottom:16px;padding:10px 12px;border-radius:8px;background:rgba(168,85,247,0.06);border:1px solid rgba(168,85,247,0.15);font-size:0.62rem;color:#94a3b8;line-height:1.6;">
+      Paste the contents of a <strong style="color:#c084fc;">simcivic-game-summary-*.txt</strong> file below, or upload it directly.
+    </div>
+    <div style="margin-bottom:10px;">
+      <label style="display:flex;align-items:center;justify-content:center;gap:8px;padding:9px;border-radius:8px;border:1px dashed rgba(168,85,247,0.35);background:rgba(168,85,247,0.05);cursor:pointer;font-size:0.65rem;color:#94a3b8;">
+        📂 Click to upload a .txt file
+        <input type="file" accept=".txt,text/plain" style="display:none;" onchange="handleImportFile(this)">
+      </label>
+    </div>
+    <div style="text-align:center;font-size:0.58rem;color:#475569;margin-bottom:8px;">— or paste below —</div>
+    <textarea id="importSummaryText" placeholder="Paste the full contents of your exported game summary here..." style="
+      width:100%;box-sizing:border-box;min-height:140px;max-height:240px;
+      padding:10px 12px;border-radius:8px;resize:vertical;
+      border:1px solid rgba(168,85,247,0.25);background:rgba(168,85,247,0.04);
+      color:#e2e8f0;font-family:'JetBrains Mono',monospace;font-size:0.68rem;
+      line-height:1.5;outline:none;
+    "></textarea>
+    <div id="importFeedback" style="margin-top:8px;font-size:0.65rem;min-height:1.2em;"></div>
+    <div style="display:flex;gap:8px;margin-top:14px;">
+      <button onclick="executeImportSummary()" style="
+        flex:1;padding:10px;border-radius:8px;cursor:pointer;
+        border:2px solid rgba(168,85,247,0.5);background:rgba(168,85,247,0.15);
+        color:#c084fc;font-family:'Orbitron',sans-serif;font-size:0.65rem;
+        font-weight:800;letter-spacing:1px;
+      ">✓ RESTORE GAME STATE</button>
+      <button onclick="document.getElementById('importSummaryModal').style.display='none';playClick();" style="
+        padding:10px 18px;border-radius:8px;cursor:pointer;
+        border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);
+        color:#64748b;font-size:0.7rem;
+      ">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <div id="saveSlotsModal" style="
   display:none; position:fixed; inset:0; z-index:9994;
   background:rgba(0,0,0,0.75); backdrop-filter:blur(6px);
@@ -9854,10 +9908,15 @@ window.fbToggleViewers = function() {
         <div class="sidebar-guide-body" id="resourceGuideContent"></div>
       </div>
 
-      <!-- Export -->
-      <button class="sidebar-export-btn" onclick="showExportModal()" style="flex-shrink:0;">
-        📄 Export Game Summary
-      </button>
+      <!-- Export / Import -->
+      <div style="display:flex;flex-direction:column;gap:5px;flex-shrink:0;">
+        <button class="sidebar-export-btn" onclick="showExportModal()">
+          📄 Export Game Summary
+        </button>
+        <button class="sidebar-export-btn" onclick="showImportModal()" style="background:rgba(168,85,247,0.08);border-color:rgba(168,85,247,0.35);color:#c084fc;">
+          📥 Import Summary to Restore
+        </button>
+      </div>
 
     </aside>
   </div><!-- end main-layout -->
@@ -12388,15 +12447,17 @@ function showRoleAssignment() {
 
     const memberRows = members.map(name => {
       const assignedRole = roleAssignments[city.id]?.[name] || '';
-      // Only count roles used by OTHER members actually on this team (not ghost assignments)
-      const usedRoles = members
-        .filter(m => m !== name)
-        .map(m => roleAssignments[city.id]?.[m] || '')
-        .filter(Boolean);
+      // Count how many others share each role (display only — roles are shareable)
+      const usedRoleCounts = {};
+      members.filter(m => m !== name).forEach(m => {
+        const r = roleAssignments[city.id]?.[m] || '';
+        if (r) usedRoleCounts[r] = (usedRoleCounts[r] || 0) + 1;
+      });
       const options = ROLES.map(role => {
-        const takenByOther = usedRoles.includes(role.id);
-        return `<option value="${role.id}" ${assignedRole === role.id ? 'selected' : ''} ${takenByOther ? 'disabled' : ''}>
-          ${role.icon} ${role.label}${role.optional ? ' (opt.)' : ''}${takenByOther ? ' ✓ taken' : ''}
+        const sharedCount = usedRoleCounts[role.id] || 0;
+        const sharedNote = sharedCount > 0 ? ` (${sharedCount} other${sharedCount > 1 ? 's' : ''})` : '';
+        return `<option value="${role.id}" ${assignedRole === role.id ? 'selected' : ''}>
+          ${role.icon} ${role.label}${role.optional ? ' (opt.)' : ''}${sharedNote}
         </option>`;
       }).join('');
 
@@ -24224,16 +24285,132 @@ function showExportModal() {
 
   // Download
   const text = L.join('\n');
-  const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+  // Embed machine-readable restore block
+  const restoreSnap = {
+    _simcivic_restore: true, _version: '1.0', exportedAt: Date.now(),
+    data, snapshots, roundDescs, roundNotes, cityRules, currentRound, maxAppliedRound,
+    roundHistory, cityRelations, politicalRanks, policyPicks,
+    usedPolicyCards: [...(usedPolicyCards || [])],
+    cityCardPicks: JSON.parse(JSON.stringify(Object.fromEntries(Object.entries(cityCardPicks||{}).map(([r,cities])=>[r,Object.fromEntries(Object.entries(cities).map(([cid,st])=>[cid,{selected:[...(st.selected||[])],eliminated:[...(st.eliminated||[])]}]))])))),
+    activeAlliances, activeWars,
+    draftPool, draftRosters, teacherNames, teacherAssign, roleAssignments,
+    globalEvents, cityEvents,
+    globalEnabled: [...(globalEnabled||[])],
+    cityEnabledMap: Object.fromEntries(Object.entries(cityEnabledMap||{}).map(([k,v])=>[k,[...v]])),
+  };
+  blank();
+  ln('━'.repeat(72));
+  ln('  MACHINE-READABLE RESTORE BLOCK');
+  ln('  (Used by SimCivic "Import Summary to Restore" — do not edit)');
+  ln('━'.repeat(72));
+  ln('SIMCIVIC_RESTORE_JSON_BEGIN');
+  ln(JSON.stringify(restoreSnap));
+  ln('SIMCIVIC_RESTORE_JSON_END');
+  ln('━'.repeat(72));
+
+  const blob = new Blob([L.join('\n')], { type: 'text/plain;charset=utf-8' });
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
   a.href = url;
-  a.download = `stonewall-game-summary-${new Date().toISOString().slice(0,10)}.txt`;
+  a.download = `simcivic-game-summary-${new Date().toISOString().slice(0,10)}.txt`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
   playSuccess();
+}
+
+// ════════════════════════════════════════════════════════
+// IMPORT GAME SUMMARY
+// ════════════════════════════════════════════════════════
+
+function showImportModal() {
+  const modal = document.getElementById('importSummaryModal');
+  if (!modal) return;
+  const ta = document.getElementById('importSummaryText');
+  if (ta) ta.value = '';
+  const fb = document.getElementById('importFeedback');
+  if (fb) fb.textContent = '';
+  modal.style.display = 'flex';
+  playClick();
+}
+
+function handleImportFile(input) {
+  const file = input.files?.[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const ta = document.getElementById('importSummaryText');
+    if (ta) ta.value = e.target.result;
+    const fb = document.getElementById('importFeedback');
+    if (fb) { fb.style.color='#06b6d4'; fb.textContent=`✓ Loaded "${file.name}" — click Restore to apply.`; }
+  };
+  reader.readAsText(file);
+  input.value = '';
+}
+
+function executeImportSummary() {
+  const ta = document.getElementById('importSummaryText');
+  const fb = document.getElementById('importFeedback');
+  const raw = (ta?.value || '').trim();
+  if (!raw) { if (fb) { fb.style.color='#ef4444'; fb.textContent='⚠️ Nothing to import.'; } return; }
+
+  const startIdx = raw.indexOf('SIMCIVIC_RESTORE_JSON_BEGIN');
+  const endIdx   = raw.indexOf('SIMCIVIC_RESTORE_JSON_END');
+  if (startIdx === -1 || endIdx === -1) {
+    if (fb) { fb.style.color='#ef4444'; fb.textContent='⚠️ No restore block found. Only files exported from SimCivic can be imported.'; }
+    return;
+  }
+  const lines = raw.slice(startIdx + 'SIMCIVIC_RESTORE_JSON_BEGIN'.length, endIdx).trim().split('\n').map(l=>l.trim()).filter(l=>l.startsWith('{'));
+  if (!lines.length) { if (fb) { fb.style.color='#ef4444'; fb.textContent='⚠️ Could not parse restore block.'; } return; }
+
+  let s;
+  try { s = JSON.parse(lines[0]); } catch(e) { if (fb) { fb.style.color='#ef4444'; fb.textContent='⚠️ JSON error: '+e.message; } return; }
+  if (!s._simcivic_restore) { if (fb) { fb.style.color='#ef4444'; fb.textContent='⚠️ Not a valid SimCivic restore file.'; } return; }
+
+  showConfirm('Restore game from this summary? Current game state will be replaced.', () => {
+    try {
+      if (s.data)               data            = s.data;
+      if (s.snapshots)          snapshots       = s.snapshots;
+      if (s.roundDescs)         roundDescs      = s.roundDescs;
+      if (s.roundNotes)         roundNotes      = s.roundNotes;
+      if (s.cityRules)          cityRules       = s.cityRules;
+      if (s.currentRound!=null)     currentRound    = s.currentRound;
+      if (s.maxAppliedRound!=null)  maxAppliedRound = s.maxAppliedRound;
+      if (s.roundHistory)       { roundHistory.length=0; s.roundHistory.forEach(h=>roundHistory.push(h)); }
+      if (s.cityRelations)      Object.assign(cityRelations, s.cityRelations);
+      if (s.politicalRanks)     Object.assign(politicalRanks, s.politicalRanks);
+      if (s.policyPicks)        Object.assign(policyPicks, s.policyPicks);
+      if (s.usedPolicyCards)    { usedPolicyCards.clear(); s.usedPolicyCards.forEach(id=>usedPolicyCards.add(id)); }
+      if (s.cityCardPicks) {
+        Object.keys(cityCardPicks).forEach(k=>delete cityCardPicks[k]);
+        Object.entries(s.cityCardPicks).forEach(([rnd,cities])=>{
+          cityCardPicks[rnd]={};
+          Object.entries(cities).forEach(([cid,st])=>{ cityCardPicks[rnd][cid]={selected:new Set(st.selected||[]),eliminated:new Set(st.eliminated||[])}; });
+        });
+      }
+      if (s.activeAlliances)    { activeAlliances.length=0; s.activeAlliances.forEach(r=>activeAlliances.push(r)); }
+      if (s.activeWars)         { activeWars.length=0; s.activeWars.forEach(w=>activeWars.push(w)); }
+      if (s.draftPool)          draftPool       = s.draftPool;
+      if (s.draftRosters)       draftRosters    = s.draftRosters;
+      if (s.teacherNames)       teacherNames    = s.teacherNames;
+      if (s.teacherAssign)      teacherAssign   = s.teacherAssign;
+      if (s.roleAssignments)    roleAssignments = s.roleAssignments;
+      if (s.globalEvents)       globalEvents    = s.globalEvents;
+      if (s.cityEvents)         cityEvents      = s.cityEvents;
+      if (s.globalEnabled)      { globalEnabled.clear(); s.globalEnabled.forEach(id=>globalEnabled.add(id)); }
+      if (s.cityEnabledMap)     { cityEnabledMap={}; Object.entries(s.cityEnabledMap).forEach(([k,v])=>{cityEnabledMap[k]=new Set(v);}); }
+
+      renderScoreboard(); renderEventsPool?.(); updateRoundUI?.(); renderHistory?.();
+      updateSidebar?.(); renderRules?.(); renderPolicySummary?.();
+      save(); showSaveIndicator?.();
+      document.getElementById('importSummaryModal').style.display='none';
+      showToastMsg('✅ Game restored from summary — Round '+currentRound+', '+maxAppliedRound+' rounds applied.');
+      playSuccess();
+    } catch(e) {
+      if (fb) { fb.style.color='#ef4444'; fb.textContent='⚠️ Restore error: '+e.message; }
+    }
+  }, '📥');
 }
 
 // ════════════════════════════════════════════════════════
@@ -24896,6 +25073,22 @@ function renderDraftPage() {
         <div class="draft-subtabs">
           <button class="draft-subtab active" id="subtabPlayers" onclick="switchRightTab('players')">👥 Players</button>
           <button class="draft-subtab" id="subtabTeachers" onclick="switchRightTab('teachers')">🧑‍🏫 Teachers</button>
+          <button class="draft-subtab" id="subtabBulk" onclick="switchRightTab('bulk')">⚡ Bulk Import</button>
+        </div>
+
+        <!-- Bulk Import panel -->
+        <div id="rightPanelBulk" style="display:none;">
+          <div class="draft-pool-header">
+            <div class="draft-pool-title">⚡ Bulk Import</div>
+            <p class="draft-teacher-hint">Add multiple students at once with nation and role pre-assigned. Skip the live draft entirely.</p>
+            <div id="bulkImportRows" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;"></div>
+            <div style="display:flex;gap:6px;margin-bottom:10px;">
+              <button class="draft-btn-add" onclick="addBulkRow()" style="flex:1;">+ Add Row</button>
+              <button class="draft-btn-secondary" onclick="addBulkRows(5)">+5 Rows</button>
+            </div>
+            <button onclick="commitBulkImport()" style="width:100%;padding:10px;border-radius:8px;border:2px solid rgba(16,185,129,0.5);background:rgba(16,185,129,0.12);color:#10b981;font-family:'Orbitron',sans-serif;font-size:0.65rem;font-weight:800;letter-spacing:1px;cursor:pointer;transition:all 0.15s;">✓ IMPORT ALL STUDENTS</button>
+            <div id="bulkFeedback" style="margin-top:8px;font-size:0.65rem;min-height:1em;"></div>
+          </div>
         </div>
 
         <!-- Players panel -->
@@ -24964,20 +25157,94 @@ function renderDraftPage() {
 
 function switchRightTab(tab, silent) {
   rightTab = tab;
-  const pp = document.getElementById('rightPanelPlayers');
-  const tp = document.getElementById('rightPanelTeachers');
+  const pp  = document.getElementById('rightPanelPlayers');
+  const tp  = document.getElementById('rightPanelTeachers');
+  const bp  = document.getElementById('rightPanelBulk');
   const st1 = document.getElementById('subtabPlayers');
   const st2 = document.getElementById('subtabTeachers');
+  const st3 = document.getElementById('subtabBulk');
   if (!pp || !tp) return;
-  if (tab === 'players') {
-    pp.style.display = ''; tp.style.display = 'none';
-    if (st1) { st1.className = 'draft-subtab active'; st2.className = 'draft-subtab'; }
-  } else {
-    pp.style.display = 'none'; tp.style.display = '';
-    if (st1) { st1.className = 'draft-subtab'; st2.className = 'draft-subtab active'; }
+  pp.style.display  = tab === 'players'  ? '' : 'none';
+  tp.style.display  = tab === 'teachers' ? '' : 'none';
+  if (bp) bp.style.display = tab === 'bulk' ? '' : 'none';
+  [st1, st2, st3].forEach(b => { if (b) b.className = 'draft-subtab'; });
+  if (tab === 'players'  && st1) st1.className = 'draft-subtab active';
+  if (tab === 'teachers' && st2) { st2.className = 'draft-subtab active';
     renderTeacherPanel();
   }
+  if (tab === 'bulk' && st3) { st3.className = 'draft-subtab active'; renderBulkPanel(); }
   if (!silent) playClick();
+}
+
+// ─── Bulk Import ─────────────────────────────────────────────────────────────
+let bulkRows = [];
+
+function renderBulkPanel() {
+  const container = document.getElementById('bulkImportRows');
+  if (!container) return;
+  if (!bulkRows.length) { for (let i = 0; i < 5; i++) bulkRows.push({ name: '', nation: '', role: '' }); }
+  container.innerHTML = '';
+
+  const header = document.createElement('div');
+  header.style.cssText = 'display:grid;grid-template-columns:1fr 1fr 1fr 24px;gap:5px;padding:0 2px 4px;';
+  header.innerHTML = ['Student Name','Nation','Role',''].map((t,i) => i < 3
+    ? `<span style="font-family:'Orbitron',sans-serif;font-size:0.5rem;font-weight:700;letter-spacing:1px;color:var(--text-muted);text-transform:uppercase;">${t}</span>`
+    : '<span></span>').join('');
+  container.appendChild(header);
+
+  bulkRows.forEach((row, idx) => {
+    const nationOptions = '<option value="">— Nation —</option>'
+      + CITIES.map(c => `<option value="${c.id}"${row.nation === c.id ? ' selected' : ''}>${c.icon} ${c.name}</option>`).join('');
+    const roleOptions = '<option value="">— Role —</option>'
+      + ROLES.map(r => `<option value="${r.id}"${row.role === r.id ? ' selected' : ''}>${r.icon} ${r.label}${r.optional ? ' (opt.)' : ''}</option>`).join('');
+
+    const rowEl = document.createElement('div');
+    rowEl.style.cssText = 'display:grid;grid-template-columns:1fr 1fr 1fr 24px;gap:5px;align-items:center;';
+    rowEl.innerHTML =
+      `<input type="text" class="draft-name-input" placeholder="Student name..." value="${(row.name||'').replace(/"/g,'&quot;')}" oninput="bulkRows[${idx}].name=this.value;">`
+      + `<select class="role-select" style="font-size:0.68rem;padding:4px 6px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);" onchange="bulkRows[${idx}].nation=this.value;">${nationOptions}</select>`
+      + `<select class="role-select" style="font-size:0.68rem;padding:4px 6px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);" onchange="bulkRows[${idx}].role=this.value;">${roleOptions}</select>`
+      + `<button onclick="removeBulkRow(${idx})" style="width:22px;height:22px;border-radius:5px;border:1px solid rgba(239,68,68,0.3);background:rgba(239,68,68,0.08);color:#f87171;font-size:0.7rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>`;
+    container.appendChild(rowEl);
+  });
+}
+
+function addBulkRow() { bulkRows.push({ name:'', nation:'', role:'' }); renderBulkPanel(); }
+function addBulkRows(n) { for (let i=0;i<n;i++) bulkRows.push({name:'',nation:'',role:''}); renderBulkPanel(); }
+function removeBulkRow(idx) { bulkRows.splice(idx,1); renderBulkPanel(); }
+
+function commitBulkImport() {
+  const feedback = document.getElementById('bulkFeedback');
+  const container = document.getElementById('bulkImportRows');
+  if (container) {
+    container.querySelectorAll('input[type="text"]').forEach((inp, i) => { if (bulkRows[i]) bulkRows[i].name = inp.value.trim(); });
+  }
+  const filled = bulkRows.filter(r => r.name && r.name.trim() && r.nation);
+  if (!filled.length) {
+    if (feedback) { feedback.style.color='#ef4444'; feedback.textContent='⚠️ Fill in at least one name and nation before importing.'; }
+    return;
+  }
+  let added = 0;
+  filled.forEach(row => {
+    const name = row.name.trim();
+    const allNames = [...draftPool, ...Object.values(draftRosters).flat()];
+    let finalName = name; let n = 2;
+    while (allNames.includes(finalName)) { finalName = name + ' (' + n++ + ')'; }
+    row._fn = finalName;
+    if (!draftRosters[row.nation]) draftRosters[row.nation] = [];
+    draftRosters[row.nation].push(finalName);
+    if (row.role) {
+      if (!roleAssignments[row.nation]) roleAssignments[row.nation] = {};
+      roleAssignments[row.nation][finalName] = row.role;
+    }
+    added++;
+  });
+  filled.forEach(r => delete r._fn);
+  saveDraft(); renderCityColumns(); renderPool(); renderScoreboard();
+  bulkRows = [{ name:'', nation:'', role:'' }];
+  renderBulkPanel();
+  if (feedback) { feedback.style.color='#10b981'; feedback.textContent=`✅ Imported ${added} student${added!==1?'s':''} — check the nation columns.`; }
+  playSuccess();
 }
 
 function renderTeacherPanel() {
