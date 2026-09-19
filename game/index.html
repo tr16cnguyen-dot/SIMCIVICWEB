@@ -2744,6 +2744,18 @@ window.googleSignOut = async function() {
 
 async function hostEnterClicked() {
   try { playSuccess(); } catch (e) {}
+  // Always hide the landing screen immediately — the scoreboard works locally
+  // without Firebase. Auth is only needed for Go Live and cloud saves.
+  var ls = document.getElementById('fbLandingScreen');
+  if (ls) ls.style.display = 'none';
+  document.body.classList.remove('viewer-mode');
+  try { localStorage.removeItem('_studentModeActive'); } catch(e) {}
+  ['btnGoLive','btnReset','btnEndGame','btnManualSave','btnLoadSave',
+   'btnFullscreenApp','btnHostPage','tabDraft','tabEvents','tabTrade'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.style.display = '';
+  });
+  // Then check license in background (for Go Live functionality)
   await _requireTeacherAccess();
 }
 
