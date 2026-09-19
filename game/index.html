@@ -2745,7 +2745,25 @@ async function hostEnterClicked() {
 
 function _enterHostView() {
   hideLicenseGate();
-  document.getElementById('fbLandingScreen').style.display = 'none';
+  // Hide the landing screen — teacher is authenticated and entering host view
+  var ls = document.getElementById('fbLandingScreen');
+  if (ls) ls.style.display = 'none';
+  // Clear student mode flag so this device is treated as host going forward
+  try { localStorage.removeItem('_studentModeActive'); } catch(e) {}
+  // Make sure viewer-mode class is NOT on body (in case device was previously used as student)
+  document.body.classList.remove('viewer-mode');
+  // Restore host-only buttons if they were hidden
+  ['btnGoLive','btnReset','btnEndGame','btnManualSave','btnLoadSave',
+   'btnFullscreenApp','btnHostPage','tabDraft','tabEvents','tabTrade'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.style.display = '';
+  });
+  var exitBtn = document.getElementById('btnExitStudent');
+  if (exitBtn) exitBtn.style.display = 'none';
+  // Show a brief welcome toast
+  setTimeout(function() {
+    showToastMsg && showToastMsg('✅ Signed in as host — click 🔴 Go Live to start a session');
+  }, 300);
 }
 
 async function _requireTeacherAccess() {
@@ -17604,24 +17622,28 @@ window.fbToggleViewers = function() {
       if (el) { try { playTick(); } catch(err) {} }
     }, { passive: true });
 
-    setTimeout(function() {
-      if (joinCode) {
-        var overlay = document.getElementById('fbJoinOverlay');
-        var input   = document.getElementById('fbJoinInput');
-        if (overlay && input) {
-          overlay.style.display = 'flex';
-          input.value = joinCode.toUpperCase();
-        }
-      } else if (!isHost) {
-        var landing = document.getElementById('fbLandingScreen');
-        if (landing) {
-          if (typeof _applyStudentModeUI === 'function') _applyStudentModeUI();
-          landing.style.display = 'flex';
-          // Play startup chime when landing screen appears
-          setTimeout(function(){ try{playStartup();}catch(e){} }, 400);
-        }
+    // Show landing immediately — don't wait. The loading overlay covers everything
+    // until loadAll() completes, so there's no visual flash. Waiting 600ms caused
+    // a race where the loading overlay hid BEFORE the landing screen showed,
+    // exposing the raw scoreboard with no host session active.
+    if (joinCode) {
+      var overlay = document.getElementById('fbJoinOverlay');
+      var input   = document.getElementById('fbJoinInput');
+      if (overlay && input) {
+        overlay.style.display = 'flex';
+        input.value = joinCode.toUpperCase();
       }
-    }, 600);
+    } else if (!isHost) {
+      var landing = document.getElementById('fbLandingScreen');
+      if (landing) {
+        if (typeof _applyStudentModeUI === 'function') _applyStudentModeUI();
+        landing.style.display = 'flex';
+      }
+    }
+
+    setTimeout(function() {
+      try { playStartup(); } catch(e) {}
+    }, 1000);
   });
 })();
 
