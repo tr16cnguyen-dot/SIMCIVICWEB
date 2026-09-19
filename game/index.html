@@ -7047,11 +7047,16 @@ window._wsEscape = function() {
     } else if (ev.type === 'nation') {
       isForMe = myNation === ev.cityId;
     } else if (ev.type === 'role') {
-      // Only show to nations that actually have a member assigned to this role
+      // Show to any nation that has at least one member assigned to this role
+      // roleAssignments stores multi-roles as comma-joined strings e.g. 'engineer,city-planner'
       var myRoles = roleAssignments[myNation] || {};
-      isForMe = Object.values(myRoles).indexOf(ev.roleId) !== -1;
+      isForMe = Object.values(myRoles).some(function(val) {
+        // val may be a comma-joined string of multiple role IDs
+        return (val || '').split(',').map(function(s){ return s.trim(); }).indexOf(ev.roleId) !== -1;
+      });
     } else if (ev.type === 'person') {
-      isForMe = myNation === ev.personCityId;
+      // Show to the device that is on the correct nation
+      isForMe = !!myNation && myNation === ev.personCityId;
     }
 
     if (isForMe) _showHostPagePopup(ev);
