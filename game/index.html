@@ -7222,15 +7222,40 @@ window._wsEscape = function() {
   });
 
   // Policy card picked by others — toast notification
+  // Also watches for host resetting OUR pick so we can reselect
+  var _myLastPolicyPickCardId = null;
   _fbDB.ref('games/'+code+'/events/policyPickChoices').on('value', function(snap) {
     var choices = snap.val() || {};
     var myNation = window._fb.nation;
+
+    // Check if our own pick was reset by the host
+    var myEntry = choices[myNation];
+    if (_myLastPolicyPickCardId && !myEntry) {
+      // Host cleared our pick — reset locally and reopen picker if session is open
+      _myLastPolicyPickCardId = null;
+      policyPicks[myNation] = null;
+      renderViewerPage && renderViewerPage();
+      // Reopen picker
+      _fbDB.ref('games/'+window._fb.code+'/events/policyPickingOpen').once('value').then(function(s) {
+        var ev = s.val();
+        if (!ev) return;
+        var existing = document.getElementById('viewerPolicyPicker');
+        if (existing) existing.remove(); // remove old one if present
+        showToastMsg && showToastMsg('↺ Your policy card pick was reset — please reselect.');
+        _fbShowViewerPolicyPicker(ev, code, null);
+      }).catch(function(){});
+    }
+    if (myEntry && myEntry.cardId) {
+      _myLastPolicyPickCardId = myEntry.cardId;
+    }
+
+    // Toast for others picking
     Object.keys(choices).forEach(function(nid) {
-      if (nid === myNation) return; // skip own
+      if (nid === myNation) return;
       var nat = CITIES.find(function(c){return c.id===nid;});
       var cards = POLICY_CARDS[nid] || [];
-      var card  = cards.find(function(c){return c.id===choices[nid].cardId;});
-      if (nat && card && choices[nid].ts > (lastPolicyPickTs - 5000)) {
+      var card  = cards.find(function(c){return c.id===(choices[nid]&&choices[nid].cardId);});
+      if (nat && card && choices[nid] && choices[nid].ts > (lastPolicyPickTs - 5000)) {
         showToastMsg('📜 '+nat.icon+' '+nat.name+' picked their policy card');
       }
     });
@@ -13894,6 +13919,7 @@ function renderPolicyPickStatusBar() {
       +'<span style="color:'+(hasPick?city.color:'#475569')+';font-weight:'+(hasPick?'700':'400')+'">'+city.name+'</span>'
       +(hasPick
         ? '<span style="color:#10b981;font-size:0.75rem">✓</span>'
+          +'<button onclick="hostResetPolicyPick(''+city.id+'')" title="Undo pick" style="padding:0 4px;border:none;background:none;color:rgba(239,68,68,0.5);font-size:0.65rem;cursor:pointer;line-height:1;" onmouseover="this.style.color='#f87171'" onmouseout="this.style.color='rgba(239,68,68,0.5)'">↺</button>'
         : '<span style="color:#475569;font-size:0.7rem">·</span>')
       +'</div>';
   }).join('');
@@ -13920,7 +13946,10 @@ function renderPolicyPickIncomingBoard() {
       +'<div style="font-size:0.52rem;color:rgba(255,255,255,0.3)">'+city.theme+'</div>'
       +'</div>'
       +(hasPick
-        ? '<span style="padding:3px 10px;border-radius:8px;background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.3);color:#10b981;font-family:Orbitron,sans-serif;font-size:0.5rem;font-weight:700;letter-spacing:1px;white-space:nowrap;">✓ PICKED</span>'
+        ? '<div style="display:flex;align-items:center;gap:6px;">'
+          +'<span style="padding:3px 10px;border-radius:8px;background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.3);color:#10b981;font-family:Orbitron,sans-serif;font-size:0.5rem;font-weight:700;letter-spacing:1px;white-space:nowrap;">✓ PICKED</span>'
+          +'<button onclick="hostResetPolicyPick(''+city.id+'')" title="Undo this nation's pick so they can reselect" style="padding:2px 8px;border-radius:6px;cursor:pointer;border:1px solid rgba(239,68,68,0.35);background:rgba(239,68,68,0.08);color:#f87171;font-size:0.48rem;font-family:Orbitron,sans-serif;font-weight:700;letter-spacing:0.5px;white-space:nowrap;transition:all 0.15s;" onmouseover="this.style.background='rgba(239,68,68,0.18)'" onmouseout="this.style.background='rgba(239,68,68,0.08)'">↺ UNDO</button>'
+          +'</div>'
         : '<span style="display:flex;align-items:center;gap:5px;padding:3px 10px;border-radius:8px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);color:#475569;font-family:Orbitron,sans-serif;font-size:0.5rem;font-weight:700;letter-spacing:1px;white-space:nowrap;">'
           +'<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#f59e0b;animation:waitingPulse 1.2s infinite;"></span>WAITING</span>')
       +'</div>'
@@ -13936,6 +13965,52 @@ function renderPolicyPickIncomingBoard() {
         : '<div style="font-size:0.57rem;color:#475569;font-style:italic;margin-top:6px">Waiting for device selection…</div>')
       +'</div>';
   }).join('');
+}
+
+function hostResetPolicyPick(cityId) {
+  const city = CITIES.find(c => c.id === cityId);
+  if (!city) return;
+  const cardId = policyPicks[cityId];
+  if (!cardId) return;
+  const card = (POLICY_CARDS[cityId]||[]).find(c=>c.id===cardId);
+
+  showConfirm(
+    `Reset ${city.icon} ${city.name}'s policy card pick${card?' ("'+card.name+'")':''}? They will be able to reselect.`,
+    () => {
+      // Clear locally
+      policyPicks[cityId] = null;
+      savePolicyPicks();
+      applyPolicyCardRules();
+
+      // Clear in Firebase so viewer picker re-opens cleanly
+      if (_fbDB && window._fb && window._fb.code) {
+        _fbDB.ref('games/'+window._fb.code+'/events/policyPickChoices/'+cityId).remove().catch(()=>{});
+
+        // If picking session is still open, push updated currentPicks so viewer
+        // can immediately reselect without re-opening the session
+        const pickOpenRef = _fbDB.ref('games/'+window._fb.code+'/events/policyPickingOpen');
+        pickOpenRef.once('value').then(snap => {
+          const ev = snap.val();
+          if (!ev) return; // session not open — host will reopen manually if needed
+          const updated = Object.assign({}, ev.currentPicks || {});
+          delete updated[cityId];
+          pickOpenRef.update({ currentPicks: updated }).catch(()=>{});
+        }).catch(()=>{});
+      }
+
+      // Sync state to viewers
+      window.fbPushState && window.fbPushState();
+
+      // Re-render boards
+      renderPolicyPickStatusChips();
+      renderPolicyPickIncomingBoard();
+      renderPolicyPickerGrid();
+
+      showToastMsg(`↺ ${city.icon} ${city.name}'s policy card pick has been reset — they can now reselect.`);
+      playClick();
+    },
+    '↺'
+  );
 }
 
 function renderPolicyPickerGrid() {
