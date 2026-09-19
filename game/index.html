@@ -2671,8 +2671,10 @@ window.switchActiveLicenseKey = function(key) {
   const badgeText = document.getElementById('activeLicenseBadgeText');
   if (badgeText) badgeText.textContent = key;
   showToastMsg && showToastMsg('Switched to license: ' + key + ' — reloading saves...');
-  // Reload so the new license key's cloud saves are fetched on boot
-  sessionStorage.removeItem('_cloudSyncBooted');
+  // Reload cloud saves for the new key WITHOUT clearing _cloudSyncBooted.
+  // Clearing it triggers a second Firebase auth reload which skips the
+  // landing screen. Instead we reload directly — _makeCloudStorage reads
+  // _activeLicenseKey dynamically so the correct key's data loads on boot.
   setTimeout(() => location.reload(), 800);
 };
 
