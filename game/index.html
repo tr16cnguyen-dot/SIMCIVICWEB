@@ -8762,7 +8762,7 @@ window.fbToggleViewers = function() {
   0% { opacity:0; transform:translateY(6px); }
   100% { opacity:1; transform:translateY(0); }
 }
-#fbLandingScreen { display:none; position:fixed; inset:0; z-index:9500; font-family:'Sora',sans-serif; overflow:hidden; }
+#fbLandingScreen { display:flex; position:fixed; inset:0; z-index:9500; font-family:'Sora',sans-serif; overflow:hidden; }
 .landing-bg {
   position:absolute; inset:0;
   background: radial-gradient(ellipse at 30% 20%, rgba(6,182,212,0.08) 0%, transparent 50%),
@@ -8981,7 +8981,7 @@ window.fbToggleViewers = function() {
 </div>
 
 <!-- ═══ FIREBASE JOIN OVERLAY ═══ -->
-<div id="fbJoinOverlay" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(5,8,16,0.98);backdrop-filter:blur(20px);align-items:center;justify-content:center;font-family:'Sora',sans-serif;">
+<div id="fbJoinOverlay" style="display:none;position:fixed;inset:0;z-index:9600;background:rgba(5,8,16,0.98);backdrop-filter:blur(20px);align-items:center;justify-content:center;font-family:'Sora',sans-serif;">
 
   <!-- Step 1: Enter code -->
   <div id="fbJoinStep1" style="text-align:center;max-width:420px;padding:40px 32px;width:100%;">
@@ -9365,7 +9365,7 @@ window.fbToggleViewers = function() {
   </div>
 </div>
 
-<div id="loadingOverlay" style="display:none;position:fixed;inset:0;z-index:200;background:#05080f;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;transition:opacity 0.8s ease, visibility 0.8s ease;">
+<div id="loadingOverlay" style="display:none;position:fixed;inset:0;z-index:9600;background:#05080f;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;transition:opacity 0.8s ease, visibility 0.8s ease;">
 
   <!-- Particle canvas -->
   <canvas id="loader-canvas" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;"></canvas>
@@ -17622,23 +17622,25 @@ window.fbToggleViewers = function() {
       if (el) { try { playTick(); } catch(err) {} }
     }, { passive: true });
 
-    // Show landing immediately — don't wait. The loading overlay covers everything
-    // until loadAll() completes, so there's no visual flash. Waiting 600ms caused
-    // a race where the loading overlay hid BEFORE the landing screen showed,
-    // exposing the raw scoreboard with no host session active.
+    // Landing screen is shown by default via CSS (display:flex).
+    // Here we only need to handle special entry flows.
     if (joinCode) {
-      var overlay = document.getElementById('fbJoinOverlay');
-      var input   = document.getElementById('fbJoinInput');
-      if (overlay && input) {
-        overlay.style.display = 'flex';
-        input.value = joinCode.toUpperCase();
+      // Auto-fill join code and go straight to join overlay
+      var landing2 = document.getElementById('fbLandingScreen');
+      if (landing2) landing2.style.display = 'none';
+      var overlay2 = document.getElementById('fbJoinOverlay');
+      var input2   = document.getElementById('fbJoinInput');
+      if (overlay2 && input2) {
+        overlay2.style.display = 'flex';
+        input2.value = joinCode.toUpperCase();
       }
-    } else if (!isHost) {
-      var landing = document.getElementById('fbLandingScreen');
-      if (landing) {
-        if (typeof _applyStudentModeUI === 'function') _applyStudentModeUI();
-        landing.style.display = 'flex';
-      }
+    } else if (isHost) {
+      // ?host=1 param — skip landing (direct host entry link)
+      var landing3 = document.getElementById('fbLandingScreen');
+      if (landing3) landing3.style.display = 'none';
+    } else {
+      // Normal visit — landing is already visible, just apply UI state
+      if (typeof _applyStudentModeUI === 'function') _applyStudentModeUI();
     }
 
     setTimeout(function() {
