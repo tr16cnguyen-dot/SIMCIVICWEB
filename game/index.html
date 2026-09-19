@@ -19772,8 +19772,8 @@ function startTimer() {
   // Fresh start — show confirm: resume current round or advance to next?
   const nextRound = currentRound + 1;
   const hasNext   = nextRound <= 5;
-  const curDesc   = roundDescs[currentRound]  ? ` — "${roundDescs[currentRound]}"`  : '';
-  const nextDesc  = roundDescs[nextRound]     ? ` — "${roundDescs[nextRound]}"`     : '';
+  const curDesc  = '';
+  const nextDesc = '';
 
   // Build modal
   var modal = document.getElementById('timerRoundConfirmModal');
