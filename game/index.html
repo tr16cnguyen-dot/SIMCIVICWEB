@@ -2576,18 +2576,30 @@ function _sanitizeKey(k) {
 }
 
 function _makeCloudStorage(uid) {
-  const base = _fbDB.ref('users/' + uid + '/kv');
+  // Saves are keyed by LICENSE KEY, not by user UID.
+  // This means any email that redeems the same license key
+  // shares the same save slots and game state.
+  // Falls back to uid-based path if no license key is active.
+  function _getLicenseBase() {
+    let lk = null;
+    try { lk = localStorage.getItem('_activeLicenseKey'); } catch(e) {}
+    if (lk) {
+      return _fbDB.ref('licenseKeys/' + _sanitizeKey(lk) + '/kv');
+    }
+    // Fallback: per-user storage (no license key redeemed)
+    return _fbDB.ref('users/' + uid + '/kv');
+  }
   return {
     get: async function(key) {
-      const snap = await base.child(_sanitizeKey(key)).get();
+      const snap = await _getLicenseBase().child(_sanitizeKey(key)).get();
       const val = snap.exists() ? snap.val() : null;
       return val ? { value: val } : null;
     },
     set: async function(key, value) {
-      await base.child(_sanitizeKey(key)).set(value);
+      await _getLicenseBase().child(_sanitizeKey(key)).set(value);
     },
     delete: async function(key) {
-      await base.child(_sanitizeKey(key)).remove();
+      await _getLicenseBase().child(_sanitizeKey(key)).remove();
     },
   };
 }
@@ -2658,7 +2670,10 @@ window.switchActiveLicenseKey = function(key) {
   try { localStorage.setItem('_activeLicenseKey', key); } catch (e) {}
   const badgeText = document.getElementById('activeLicenseBadgeText');
   if (badgeText) badgeText.textContent = key;
-  showToastMsg && showToastMsg('Switched to license: ' + key);
+  showToastMsg && showToastMsg('Switched to license: ' + key + ' — reloading saves...');
+  // Reload so the new license key's cloud saves are fetched on boot
+  sessionStorage.removeItem('_cloudSyncBooted');
+  setTimeout(() => location.reload(), 800);
 };
 
 function _initFirebaseAuth() {
