@@ -24426,7 +24426,7 @@ function showExportModal() {
     ln('SIMCIVIC_RESTORE_JSON_END');
     hr();
 
-    // ── Download .txt restore file ───────────────────────────────────────────
+    // ── 1. Download .txt restore file ───────────────────────────────────────
     const textContent = L.join('\n');
     const txtBlob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
     const txtUrl  = URL.createObjectURL(txtBlob);
@@ -24436,28 +24436,39 @@ function showExportModal() {
     document.body.appendChild(txtA); txtA.click();
     document.body.removeChild(txtA); URL.revokeObjectURL(txtUrl);
 
-    // ── Generate PDF via print window (human-readable copy) ──────────────────
-    // Strip the restore block from the PDF — it's for machines not humans
+    // ── 2. Download PDF — build as HTML blob and trigger download directly ──
+    // Strip the machine-readable restore block so the PDF is human-readable only
     const pdfText = textContent.slice(0, textContent.indexOf('SIMCIVIC_RESTORE_JSON_BEGIN')).trimEnd();
-    const htmlContent = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>SimCivic Game Summary — ${dateSlug}</title>
+    const htmlContent = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>SimCivic Game Summary</title>
 <style>
-  @page { margin: 1.2cm 1.5cm; }
-  body { font-family: 'Courier New', monospace; font-size: 9pt; line-height: 1.5; color: #111; background: white; white-space: pre-wrap; word-break: break-word; }
+  @page { margin: 1.2cm 1.5cm; size: letter; }
+  body { font-family: 'Courier New', monospace; font-size: 8.5pt; line-height: 1.55;
+         color: #111; background: white; white-space: pre-wrap; word-break: break-word;
+         margin: 0; padding: 0; }
+  @media screen { body { padding: 20px; } }
   @media print { body { margin: 0; } }
-</style></head><body>${pdfText.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</body></html>`;
+</style></head><body>${pdfText.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+<script>window.onload=function(){window.print();window.onafterprint=function(){window.close();};}<\/script>
+</body></html>`;
 
-    setTimeout(() => {
-      const pw = window.open('', '_blank', 'width=800,height=900');
-      if (pw) {
-        pw.document.write(htmlContent);
-        pw.document.close();
-        pw.focus();
-        setTimeout(() => { pw.print(); }, 600);
-        showToastMsg && showToastMsg('📄 .txt downloaded + PDF print dialog opened');
-      } else {
-        showToastMsg && showToastMsg('📄 .txt downloaded — allow popups to also get PDF');
-      }
-    }, 400);
+    // Try popup first (best PDF experience with auto-print dialog)
+    const pw = window.open('', '_blank', 'width=900,height=1000,menubar=yes,toolbar=yes');
+    if (pw) {
+      pw.document.write(htmlContent);
+      pw.document.close();
+      pw.focus();
+      showToastMsg && showToastMsg('📄 .txt downloaded + PDF print dialog opened in new tab');
+    } else {
+      // Popup blocked — fall back to downloading an HTML file the user can print
+      const htmlBlob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+      const htmlUrl  = URL.createObjectURL(htmlBlob);
+      const htmlA    = document.createElement('a');
+      htmlA.href = htmlUrl;
+      htmlA.download = 'simcivic-game-summary-' + dateSlug + '-PRINT.html';
+      document.body.appendChild(htmlA); htmlA.click();
+      document.body.removeChild(htmlA); URL.revokeObjectURL(htmlUrl);
+      showToastMsg && showToastMsg('📄 .txt + printable HTML downloaded — open the HTML file and print to PDF');
+    }
 
     playSuccess();
   } catch(err) {
