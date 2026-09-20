@@ -14033,9 +14033,11 @@ function hostResetPolicyPick(cityId) {
   showConfirm(
     `Reset ${city.icon} ${city.name}'s policy card pick${card?' ("'+card.name+'")':''}? They will be able to reselect.`,
     () => {
-      // Clear locally
+      // Clear locally — also remove from usedPolicyCards so it can be reactivated
+      if (cardId) usedPolicyCards.delete(cardId);
       policyPicks[cityId] = null;
       savePolicyPicks();
+      try { localStorage.setItem(USED_POLICY_SK, JSON.stringify([...usedPolicyCards])); } catch {}
       applyPolicyCardRules();
 
       // Clear in Firebase so viewer picker re-opens cleanly
