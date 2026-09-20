@@ -10758,58 +10758,114 @@ window.fbToggleViewers = function() {
         <!-- Item type templates -->
         <div style="font-size:0.55rem;font-family:'Orbitron',sans-serif;letter-spacing:1px;color:var(--text-muted);text-transform:uppercase;margin-bottom:6px;">Item Type Templates</div>
         <div id="mapItemTypesList" style="margin-bottom:10px;"></div>
-        <div style="padding:10px 12px;border-radius:8px;border:1px solid rgba(16,185,129,0.2);background:rgba(16,185,129,0.05);margin-bottom:18px;">
-          <div style="display:grid;grid-template-columns:2fr 1fr;gap:8px;margin-bottom:10px;">
-            <div class="add-rule-field">
-              <label>Item name</label>
-              <input type="text" id="mitName" placeholder="e.g. Boat, Tech Hub, Hills" style="width:100%;padding:5px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:0.72rem;box-sizing:border-box;">
+        <!-- Collapsible "Add Item Type" form -->
+        <div style="border:1px solid rgba(16,185,129,0.2);border-radius:10px;margin-bottom:18px;overflow:hidden;">
+
+          <!-- Collapsed header — always visible -->
+          <div id="mitFormHeader" onclick="(function(){
+            var b=document.getElementById('mitFormBody');
+            var c=document.getElementById('mitFormChevron');
+            var open=b.style.display!=='none';
+            b.style.display=open?'none':'block';
+            c.textContent=open?'▶':'▼';
+          })()" style="display:flex;align-items:center;justify-content:space-between;
+            padding:9px 14px;cursor:pointer;background:rgba(16,185,129,0.07);
+            user-select:none;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:0.95rem;">🗺️</span>
+              <span style="font-family:Orbitron,sans-serif;font-size:0.6rem;font-weight:800;
+                letter-spacing:1px;color:#34d399;text-transform:uppercase;">New Item Type</span>
+              <span style="font-size:0.55rem;color:var(--text-muted);">click to expand</span>
             </div>
-            <div class="add-rule-field">
-              <label>Icon (emoji)</label>
-              <input type="text" id="mitIcon" placeholder="🚤" maxlength="4" style="width:100%;padding:5px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:0.72rem;box-sizing:border-box;">
-            </div>
-          </div>
-          <div style="margin-bottom:12px;">
-            <div style="font-size:0.55rem;font-family:'Orbitron',sans-serif;letter-spacing:0.5px;color:var(--cyan);margin-bottom:4px;">🔁 ROUND EFFECT — applies every round to whoever owns/leases it (leave empty if this item has no ongoing effect)</div>
-            <div id="mitRows_effects"></div>
+            <span id="mitFormChevron" style="color:#34d399;font-size:0.7rem;">▶</span>
           </div>
 
-          <div style="font-size:0.55rem;color:var(--text-muted);margin:10px 0 6px;">Each action below can pay out different resources — and Sell / Lease each choose their own Continuous vs. One-time behavior:</div>
+          <!-- Collapsible body — hidden by default -->
+          <div id="mitFormBody" style="display:none;padding:12px 14px;background:rgba(16,185,129,0.03);">
 
-          <div id="mitSellSection" style="margin-bottom:10px;">
-            <div style="font-size:0.55rem;font-family:'Orbitron',sans-serif;letter-spacing:0.5px;color:#22c55e;margin-bottom:4px;">🤝 SELL (to buyer)</div>
-            <div style="display:flex;gap:12px;align-items:center;margin-bottom:5px;">
-              <label style="display:flex;align-items:center;gap:4px;font-size:0.58rem;color:var(--text);cursor:pointer;">
-                <input type="radio" name="mitSellMode" value="continuous" checked onchange="_mitDraft.sellMode='continuous'"> 🔁 Continuous (transfers the item)
-              </label>
-              <label style="display:flex;align-items:center;gap:4px;font-size:0.58rem;color:var(--text);cursor:pointer;">
-                <input type="radio" name="mitSellMode" value="onetime" onchange="_mitDraft.sellMode='onetime'"> ⚡ One-time (item consumed)
-              </label>
+            <!-- Name + Icon -->
+            <div style="display:grid;grid-template-columns:2fr 1fr;gap:8px;margin-bottom:12px;">
+              <div class="add-rule-field">
+                <label>Item name</label>
+                <input type="text" id="mitName" placeholder="e.g. Boat, Tech Hub, Hills" style="width:100%;padding:5px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:0.72rem;box-sizing:border-box;">
+              </div>
+              <div class="add-rule-field">
+                <label>Icon (emoji)</label>
+                <input type="text" id="mitIcon" placeholder="🚤" maxlength="4" style="width:100%;padding:5px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:0.72rem;box-sizing:border-box;">
+              </div>
             </div>
-            <div id="mitRows_sellEffects"></div>
-          </div>
-          <div id="mitLeaseSection" style="margin-bottom:10px;">
-            <div style="font-size:0.55rem;font-family:'Orbitron',sans-serif;letter-spacing:0.5px;color:#f59e0b;margin-bottom:4px;">📜 LEASE (to lessee)</div>
-            <div style="display:flex;gap:12px;align-items:center;margin-bottom:5px;">
-              <label style="display:flex;align-items:center;gap:4px;font-size:0.58rem;color:var(--text);cursor:pointer;">
-                <input type="radio" name="mitLeaseMode" value="continuous" checked onchange="_mitDraft.leaseMode='continuous'"> 🔁 Continuous (redirects income)
-              </label>
-              <label style="display:flex;align-items:center;gap:4px;font-size:0.58rem;color:var(--text);cursor:pointer;">
-                <input type="radio" name="mitLeaseMode" value="onetime" onchange="_mitDraft.leaseMode='onetime'"> ⚡ One-time (item consumed)
-              </label>
-            </div>
-            <div id="mitRows_leaseEffects"></div>
-          </div>
-          <div id="mitMoveSection" style="margin-bottom:10px;">
-            <div style="font-size:0.55rem;font-family:'Orbitron',sans-serif;letter-spacing:0.5px;color:var(--cyan);margin-bottom:4px;">🚚 MOVE PAYOUT (to destination)</div>
-            <div id="mitRows_moveEffects"></div>
-          </div>
-          <div style="margin-bottom:12px;">
-            <div style="font-size:0.55rem;font-family:'Orbitron',sans-serif;letter-spacing:0.5px;color:#ef4444;margin-bottom:4px;">💥 DESTROY PAYOUT (to current owner)</div>
-            <div id="mitRows_destroyEffects"></div>
-          </div>
 
-          <button onclick="addMapItemType()" style="padding:7px 20px;border-radius:8px;border:1px solid rgba(16,185,129,0.4);background:rgba(16,185,129,0.12);color:#34d399;font-family:'Orbitron',sans-serif;font-size:0.62rem;font-weight:700;letter-spacing:1px;cursor:pointer;">🗺️ Add Item Type</button>
+            <!-- Round Effect -->
+            <div style="margin-bottom:10px;padding:8px 10px;border-radius:7px;border:1px solid rgba(6,182,212,0.15);background:rgba(6,182,212,0.04);">
+              <div style="font-size:0.55rem;font-family:Orbitron,sans-serif;letter-spacing:0.5px;color:var(--cyan);margin-bottom:6px;">🔁 ROUND EFFECT <span style="font-family:Sora,sans-serif;font-weight:400;color:var(--text-muted);">(applies every round — optional)</span></div>
+              <div id="mitRows_effects"></div>
+            </div>
+
+            <!-- Action sections — each collapsible -->
+            <div style="font-size:0.55rem;color:var(--text-muted);margin:8px 0 6px;">Action payouts — expand each to configure (all optional):</div>
+
+            <!-- SELL -->
+            <div style="margin-bottom:6px;border:1px solid rgba(34,197,94,0.2);border-radius:7px;overflow:hidden;">
+              <div onclick="(function(){var b=document.getElementById('mitSellBody');b.style.display=b.style.display!=='none'?'none':'block';})()" style="display:flex;align-items:center;justify-content:space-between;padding:7px 10px;cursor:pointer;background:rgba(34,197,94,0.06);">
+                <span style="font-size:0.58rem;font-family:Orbitron,sans-serif;font-weight:700;color:#22c55e;letter-spacing:0.5px;">🤝 SELL</span>
+                <span style="font-size:0.55rem;color:#64748b;">▼</span>
+              </div>
+              <div id="mitSellBody" style="display:none;padding:8px 10px;">
+                <div style="display:flex;gap:12px;align-items:center;margin-bottom:6px;">
+                  <label style="display:flex;align-items:center;gap:4px;font-size:0.58rem;color:var(--text);cursor:pointer;">
+                    <input type="radio" name="mitSellMode" value="continuous" checked onchange="_mitDraft.sellMode='continuous'"> 🔁 Continuous
+                  </label>
+                  <label style="display:flex;align-items:center;gap:4px;font-size:0.58rem;color:var(--text);cursor:pointer;">
+                    <input type="radio" name="mitSellMode" value="onetime" onchange="_mitDraft.sellMode='onetime'"> ⚡ One-time
+                  </label>
+                </div>
+                <div id="mitRows_sellEffects"></div>
+              </div>
+            </div>
+
+            <!-- LEASE -->
+            <div style="margin-bottom:6px;border:1px solid rgba(245,158,11,0.2);border-radius:7px;overflow:hidden;">
+              <div onclick="(function(){var b=document.getElementById('mitLeaseBody');b.style.display=b.style.display!=='none'?'none':'block';})()" style="display:flex;align-items:center;justify-content:space-between;padding:7px 10px;cursor:pointer;background:rgba(245,158,11,0.06);">
+                <span style="font-size:0.58rem;font-family:Orbitron,sans-serif;font-weight:700;color:#f59e0b;letter-spacing:0.5px;">📜 LEASE</span>
+                <span style="font-size:0.55rem;color:#64748b;">▼</span>
+              </div>
+              <div id="mitLeaseBody" style="display:none;padding:8px 10px;">
+                <div style="display:flex;gap:12px;align-items:center;margin-bottom:6px;">
+                  <label style="display:flex;align-items:center;gap:4px;font-size:0.58rem;color:var(--text);cursor:pointer;">
+                    <input type="radio" name="mitLeaseMode" value="continuous" checked onchange="_mitDraft.leaseMode='continuous'"> 🔁 Continuous
+                  </label>
+                  <label style="display:flex;align-items:center;gap:4px;font-size:0.58rem;color:var(--text);cursor:pointer;">
+                    <input type="radio" name="mitLeaseMode" value="onetime" onchange="_mitDraft.leaseMode='onetime'"> ⚡ One-time
+                  </label>
+                </div>
+                <div id="mitRows_leaseEffects"></div>
+              </div>
+            </div>
+
+            <!-- MOVE -->
+            <div style="margin-bottom:6px;border:1px solid rgba(6,182,212,0.2);border-radius:7px;overflow:hidden;">
+              <div onclick="(function(){var b=document.getElementById('mitMoveBody');b.style.display=b.style.display!=='none'?'none':'block';})()" style="display:flex;align-items:center;justify-content:space-between;padding:7px 10px;cursor:pointer;background:rgba(6,182,212,0.06);">
+                <span style="font-size:0.58rem;font-family:Orbitron,sans-serif;font-weight:700;color:var(--cyan);letter-spacing:0.5px;">🚚 MOVE PAYOUT</span>
+                <span style="font-size:0.55rem;color:#64748b;">▼</span>
+              </div>
+              <div id="mitMoveBody" style="display:none;padding:8px 10px;">
+                <div id="mitRows_moveEffects"></div>
+              </div>
+            </div>
+
+            <!-- DESTROY -->
+            <div style="margin-bottom:12px;border:1px solid rgba(239,68,68,0.2);border-radius:7px;overflow:hidden;">
+              <div onclick="(function(){var b=document.getElementById('mitDestroyBody');b.style.display=b.style.display!=='none'?'none':'block';})()" style="display:flex;align-items:center;justify-content:space-between;padding:7px 10px;cursor:pointer;background:rgba(239,68,68,0.06);">
+                <span style="font-size:0.58rem;font-family:Orbitron,sans-serif;font-weight:700;color:#ef4444;letter-spacing:0.5px;">💥 DESTROY PAYOUT</span>
+                <span style="font-size:0.55rem;color:#64748b;">▼</span>
+              </div>
+              <div id="mitDestroyBody" style="display:none;padding:8px 10px;">
+                <div id="mitRows_destroyEffects"></div>
+              </div>
+            </div>
+
+            <button onclick="addMapItemType()" style="padding:7px 20px;border-radius:8px;border:1px solid rgba(16,185,129,0.4);background:rgba(16,185,129,0.12);color:#34d399;font-family:Orbitron,sans-serif;font-size:0.62rem;font-weight:700;letter-spacing:1px;cursor:pointer;">🗺️ Add Item Type</button>
+          </div>
         </div>
 
         <!-- Per-nation map items -->
