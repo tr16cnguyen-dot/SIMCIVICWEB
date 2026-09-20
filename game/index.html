@@ -24370,40 +24370,58 @@ function showExportModal() {
     hr();
     ln('SIMCIVIC_RESTORE_JSON_BEGIN');
     try {
+      // Helper: safely read a variable that may not exist yet
+      function _safe(getter, fallback) { try { const v = getter(); return v !== undefined ? v : fallback; } catch(e) { return fallback; } }
+
       const restoreSnap = {
-        _simcivic_restore: true, _version: '1.0', exportedAt: Date.now(),
-        data: data||{}, snapshots: snapshots||{}, roundDescs: roundDescs||{},
-        roundNotes: roundNotes||{}, cityRules: cityRules||[], currentRound, maxAppliedRound,
-        roundHistory: roundHistory||[], cityRelations: cityRelations||{},
-        politicalRanks: politicalRanks||{}, policyPicks: policyPicks||{},
-        usedPolicyCards: [...(usedPolicyCards||new Set())],
-        cityCardPicks: (() => {
-          try {
-            const out = {};
-            Object.entries(cityCardPicks||{}).forEach(([rnd,cities]) => {
-              out[rnd] = {};
-              Object.entries(cities||{}).forEach(([cid,st]) => {
-                out[rnd][cid] = { selected: [...(st.selected||[])], eliminated: [...(st.eliminated||[])] };
-              });
+        _simcivic_restore: true, _version: '1.1', exportedAt: Date.now(),
+        data:             _safe(()=>data, {}),
+        snapshots:        _safe(()=>snapshots, {}),
+        roundDescs:       _safe(()=>roundDescs, {}),
+        roundNotes:       _safe(()=>roundNotes, {}),
+        cityRules:        _safe(()=>cityRules, []),
+        currentRound:     _safe(()=>currentRound, 1),
+        maxAppliedRound:  _safe(()=>maxAppliedRound, 0),
+        roundHistory:     _safe(()=>roundHistory, []),
+        cityRelations:    _safe(()=>cityRelations, {}),
+        politicalRanks:   _safe(()=>politicalRanks, {}),
+        policyPicks:      _safe(()=>policyPicks, {}),
+        usedPolicyCards:  _safe(()=>[...(usedPolicyCards||new Set())], []),
+        activeAlliances:  _safe(()=>activeAlliances||[], []),
+        activeWars:       _safe(()=>activeWars||[], []),
+        draftPool:        _safe(()=>draftPool, []),
+        draftRosters:     _safe(()=>draftRosters, {}),
+        teacherNames:     _safe(()=>teacherNames, []),
+        teacherAssign:    _safe(()=>teacherAssign, {}),
+        roleAssignments:  _safe(()=>roleAssignments, {}),
+        globalEvents:     _safe(()=>globalEvents, []),
+        cityEvents:       _safe(()=>cityEvents, {}),
+        globalEnabled:    _safe(()=>[...(globalEnabled||new Set())], []),
+        cityCardPicks: _safe(()=>{
+          const out = {};
+          Object.entries(cityCardPicks||{}).forEach(([rnd,cities]) => {
+            out[rnd] = {};
+            Object.entries(cities||{}).forEach(([cid,st]) => {
+              out[rnd][cid] = { selected:[...(st.selected||[])], eliminated:[...(st.eliminated||[])] };
             });
-            return out;
-          } catch(e) { return {}; }
-        })(),
-        activeAlliances: activeAlliances||[], activeWars: activeWars||[],
-        draftPool: draftPool||[], draftRosters: draftRosters||{},
-        teacherNames: teacherNames||[], teacherAssign: teacherAssign||{},
-        roleAssignments: roleAssignments||{},
-        globalEvents: globalEvents||[], cityEvents: cityEvents||{},
-        globalEnabled: [...(globalEnabled||new Set())],
-        cityEnabledMap: (() => {
-          try { return Object.fromEntries(Object.entries(cityEnabledMap||{}).map(([k,v])=>[k,[...v]])); }
-          catch(e) { return {}; }
-        })(),
+          });
+          return out;
+        }, {}),
+        cityEnabledMap: _safe(()=>
+          Object.fromEntries(Object.entries(cityEnabledMap||{}).map(([k,v])=>[k,[...v]]))
+        , {}),
+        warState:        _safe(()=>warState, {}),
+        warImmuneRounds: _safe(()=>warImmuneRounds, {}),
+        mapItems:        _safe(()=>mapItems, []),
+        mapItemTypes:    _safe(()=>mapItemTypes, []),
       };
-      ln(JSON.stringify(restoreSnap));
+
+      const jsonStr = JSON.stringify(restoreSnap);
+      if (!jsonStr || jsonStr === '{}') throw new Error('Serialization produced empty object');
+      ln(jsonStr);
     } catch(e) {
-      ln('{}');
-      console.warn('Restore block error:', e);
+      console.error('Restore block error:', e);
+      ln('{"_error":"' + e.message.replace(/"/g,'\\\"')+'","_simcivic_restore":false}');
     }
     ln('SIMCIVIC_RESTORE_JSON_END');
     hr();
@@ -24540,53 +24558,57 @@ function executeImportSummary() {
     `Restore to Round ${previewRound} (exported ${previewDate})? Current game state will be replaced.`,
     () => {
       try {
-        // ── Apply all state ──────────────────────────────────────────────
-        if (s.data)               data            = s.data;
-        if (s.snapshots)          snapshots       = s.snapshots;
-        if (s.roundDescs)         roundDescs      = s.roundDescs;
-        if (s.roundNotes)         roundNotes      = s.roundNotes;
-        if (s.cityRules)          cityRules       = s.cityRules;
-        if (s.currentRound   != null) currentRound    = s.currentRound;
-        if (s.maxAppliedRound!= null) maxAppliedRound = s.maxAppliedRound;
+        // ── Apply all state (use try/catch per block so one missing var doesn't abort all) ──
+        function _safeSet(fn) { try { fn(); } catch(e) { console.warn('Import restore skip:', e.message); } }
 
-        if (s.roundHistory)    { roundHistory.length=0; s.roundHistory.forEach(h=>roundHistory.push(h)); }
-        if (s.activeAlliances) { activeAlliances.length=0; s.activeAlliances.forEach(r=>activeAlliances.push(r)); }
-        if (s.activeWars)      { activeWars.length=0; s.activeWars.forEach(w=>activeWars.push(w)); }
+        _safeSet(()=>{ if (s.data)               data            = s.data; });
+        _safeSet(()=>{ if (s.snapshots)          snapshots       = s.snapshots; });
+        _safeSet(()=>{ if (s.roundDescs)         roundDescs      = s.roundDescs; });
+        _safeSet(()=>{ if (s.roundNotes)         roundNotes      = s.roundNotes; });
+        _safeSet(()=>{ if (s.cityRules)          cityRules       = s.cityRules; });
+        _safeSet(()=>{ if (s.currentRound    != null) currentRound    = s.currentRound; });
+        _safeSet(()=>{ if (s.maxAppliedRound != null) maxAppliedRound = s.maxAppliedRound; });
 
-        // Replace (not merge) relation/rank maps so old keys don't bleed in
-        if (s.cityRelations)   { Object.keys(cityRelations).forEach(k=>delete cityRelations[k]); Object.assign(cityRelations, s.cityRelations); }
-        if (s.politicalRanks)  { Object.keys(politicalRanks).forEach(k=>delete politicalRanks[k]); Object.assign(politicalRanks, s.politicalRanks); }
-        if (s.policyPicks)     { Object.keys(policyPicks).forEach(k=>delete policyPicks[k]); Object.assign(policyPicks, s.policyPicks); }
+        _safeSet(()=>{ if (s.roundHistory)   { roundHistory.length=0;   s.roundHistory.forEach(h=>roundHistory.push(h)); } });
+        _safeSet(()=>{ if (s.activeAlliances){ activeAlliances.length=0; s.activeAlliances.forEach(r=>activeAlliances.push(r)); } });
+        _safeSet(()=>{ if (s.activeWars)     { activeWars.length=0;      s.activeWars.forEach(w=>activeWars.push(w)); } });
 
-        if (s.usedPolicyCards) { usedPolicyCards.clear(); s.usedPolicyCards.forEach(id=>usedPolicyCards.add(id)); }
+        _safeSet(()=>{ if (s.cityRelations)  { Object.keys(cityRelations).forEach(k=>delete cityRelations[k]);   Object.assign(cityRelations,  s.cityRelations);  } });
+        _safeSet(()=>{ if (s.politicalRanks) { Object.keys(politicalRanks).forEach(k=>delete politicalRanks[k]); Object.assign(politicalRanks, s.politicalRanks); } });
+        _safeSet(()=>{ if (s.policyPicks)    { Object.keys(policyPicks).forEach(k=>delete policyPicks[k]);       Object.assign(policyPicks,    s.policyPicks);    } });
 
-        if (s.cityCardPicks) {
-          Object.keys(cityCardPicks).forEach(k=>delete cityCardPicks[k]);
-          Object.entries(s.cityCardPicks).forEach(([rnd,cities])=>{
-            cityCardPicks[rnd]={};
-            Object.entries(cities||{}).forEach(([cid,st])=>{
-              cityCardPicks[rnd][cid]={ selected:new Set(st.selected||[]), eliminated:new Set(st.eliminated||[]) };
+        _safeSet(()=>{ if (s.usedPolicyCards) { usedPolicyCards.clear(); s.usedPolicyCards.forEach(id=>usedPolicyCards.add(id)); } });
+
+        _safeSet(()=>{
+          if (s.cityCardPicks) {
+            Object.keys(cityCardPicks).forEach(k=>delete cityCardPicks[k]);
+            Object.entries(s.cityCardPicks).forEach(([rnd,cities])=>{
+              cityCardPicks[rnd]={};
+              Object.entries(cities||{}).forEach(([cid,st])=>{
+                cityCardPicks[rnd][cid]={ selected:new Set(st.selected||[]), eliminated:new Set(st.eliminated||[]) };
+              });
             });
-          });
-        }
+          }
+        });
 
-        if (s.draftPool)       draftPool       = s.draftPool;
-        if (s.draftRosters)    draftRosters    = s.draftRosters;
-        if (s.teacherNames)    teacherNames    = s.teacherNames;
-        if (s.teacherAssign)   teacherAssign   = s.teacherAssign;
-        if (s.roleAssignments) roleAssignments = s.roleAssignments;
-        if (s.globalEvents)    globalEvents    = s.globalEvents;
-        if (s.cityEvents)      cityEvents      = s.cityEvents;
-
-        if (s.globalEnabled)   { globalEnabled.clear(); s.globalEnabled.forEach(id=>globalEnabled.add(id)); }
-        if (s.cityEnabledMap)  {
-          cityEnabledMap = {};
-          Object.entries(s.cityEnabledMap).forEach(([k,v])=>{ cityEnabledMap[k]=new Set(v); });
-        }
-
-        // Also restore war state if present
-        if (s.warState)         warState         = s.warState;
-        if (s.warImmuneRounds)  warImmuneRounds  = s.warImmuneRounds;
+        _safeSet(()=>{ if (s.draftPool)       draftPool       = s.draftPool; });
+        _safeSet(()=>{ if (s.draftRosters)    draftRosters    = s.draftRosters; });
+        _safeSet(()=>{ if (s.teacherNames)    teacherNames    = s.teacherNames; });
+        _safeSet(()=>{ if (s.teacherAssign)   teacherAssign   = s.teacherAssign; });
+        _safeSet(()=>{ if (s.roleAssignments) roleAssignments = s.roleAssignments; });
+        _safeSet(()=>{ if (s.globalEvents)    globalEvents    = s.globalEvents; });
+        _safeSet(()=>{ if (s.cityEvents)      cityEvents      = s.cityEvents; });
+        _safeSet(()=>{ if (s.globalEnabled)   { globalEnabled.clear(); s.globalEnabled.forEach(id=>globalEnabled.add(id)); } });
+        _safeSet(()=>{
+          if (s.cityEnabledMap) {
+            cityEnabledMap = {};
+            Object.entries(s.cityEnabledMap).forEach(([k,v])=>{ cityEnabledMap[k]=new Set(v); });
+          }
+        });
+        _safeSet(()=>{ if (s.warState)         warState         = s.warState; });
+        _safeSet(()=>{ if (s.warImmuneRounds)  warImmuneRounds  = s.warImmuneRounds; });
+        _safeSet(()=>{ if (s.mapItems)         mapItems         = s.mapItems; });
+        _safeSet(()=>{ if (s.mapItemTypes)     mapItemTypes     = s.mapItemTypes; });
 
         // ── Re-render everything ─────────────────────────────────────────
         try { Object.keys(sbRowMap||{}).forEach(k=>delete sbRowMap[k]); } catch(e){}
