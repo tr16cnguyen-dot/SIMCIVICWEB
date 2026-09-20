@@ -24485,8 +24485,14 @@ function getAllSlots() {
 }
 
 async function writeSlotsToStorage(slots) {
-  try { localStorage.setItem(SAVE_SLOTS_KEY, JSON.stringify(slots)); } catch {}
-  try { window.storage?.set?.(SAVE_SLOTS_KEY, JSON.stringify(slots)).catch(() => {}); } catch {}
+  const json = JSON.stringify(slots);
+  // Write to localStorage for immediate local read
+  try { localStorage.setItem(SAVE_SLOTS_KEY, json); } catch {}
+  // Write to cloud (license key path) — this is the shared source of truth
+  // so all emails on the same key see the same saves
+  try {
+    if (window.storage) await window.storage.set(SAVE_SLOTS_KEY, json);
+  } catch(e) {}
 }
 
 function buildSnapshot() {
@@ -24500,15 +24506,58 @@ function buildSnapshot() {
   };
 }
 
-function showSaveSlots() {
+async function showSaveSlots() {
   const modal = document.getElementById('saveSlotsModal');
   modal.style.display = 'flex';
-  renderSlotsList();
   playClick();
+
+  // Always fetch save slots from cloud (license key path) first so any
+  // email on the same license key sees all saves, not just local ones.
+  const list = document.getElementById('saveSlotsList');
+  if (list) {
+    list.innerHTML = '<div style="text-align:center;padding:16px;font-size:0.65rem;color:#64748b;">Loading saves...</div>';
+  }
+
+  try {
+    if (window.storage) {
+      // 1. Get slots from license key path (shared across all emails on this key)
+      const result = await window.storage.get(SAVE_SLOTS_KEY);
+      const cloudSlots = (result && result.value) ? JSON.parse(result.value) : {};
+
+      // 2. Also check _fbDB for any slots saved under the OLD per-user UID path
+      //    This surfaces saves made before the license-key scoping was added,
+      //    including saves from other emails on the same license key
+      let uidSlots = {};
+      if (_fbDB && _fbAuth && _fbAuth.currentUser) {
+        const uid = _fbAuth.currentUser.uid;
+        try {
+          const snap = await _fbDB.ref('users/' + uid + '/kv/' + _sanitizeKey(SAVE_SLOTS_KEY)).get();
+          if (snap.exists()) uidSlots = JSON.parse(snap.val());
+        } catch(e) {}
+      }
+
+      // Merge: UID slots → cloud slots → local slots (cloud wins, UID fills gaps)
+      const localRaw   = localStorage.getItem(SAVE_SLOTS_KEY);
+      const localSlots = localRaw ? JSON.parse(localRaw) : {};
+      const merged = Object.assign({}, uidSlots, localSlots, cloudSlots);
+
+      // If we found UID slots that aren't in cloud yet, migrate them up
+      const hasNewFromUID = Object.keys(uidSlots).some(k => !cloudSlots[k]);
+      if (hasNewFromUID && window.storage) {
+        window.storage.set(SAVE_SLOTS_KEY, JSON.stringify(merged)).catch(() => {});
+      }
+
+      try { localStorage.setItem(SAVE_SLOTS_KEY, JSON.stringify(merged)); } catch {}
+    }
+  } catch(e) {}
+
+  renderSlotsList();
 }
 
 function renderSlotsList() {
   const list  = document.getElementById('saveSlotsList');
+  // getAllSlots reads from localStorage which is already merged with cloud
+  // by showSaveSlots() before this is called
   const slots = getAllSlots();
   list.innerHTML = '';
 
