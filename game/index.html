@@ -19896,7 +19896,7 @@ function startTimer() {
       : '')
 
     // Cancel
-    +'<button onclick="var m=document.getElementById(\"timerRoundConfirmModal\");if(m)m.remove();playClick();" '
+    +'<button id="timerConfirmCancel" '
     +'style="width:100%;padding:9px;border-radius:8px;cursor:pointer;'
     +'border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.03);'
     +'color:#475569;font-size:0.65rem;">Cancel</button>'
@@ -19904,6 +19904,12 @@ function startTimer() {
 
   document.body.appendChild(modal);
   playClick();
+
+  // Cancel
+  document.getElementById('timerConfirmCancel').addEventListener('click', function() {
+    modal.remove();
+    playClick();
+  });
 
   // Resume current round
   document.getElementById('timerConfirmCurrent').addEventListener('click', function() {
