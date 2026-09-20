@@ -10868,9 +10868,33 @@ window.fbToggleViewers = function() {
           </div>
         </div>
 
-        <!-- Per-nation map items -->
-        <div style="font-size:0.55rem;font-family:'Orbitron',sans-serif;letter-spacing:1px;color:var(--text-muted);text-transform:uppercase;margin-bottom:6px;">Nation Maps</div>
-        <div id="mapItemsNationGrid"></div>
+        <!-- Per-nation map items — collapsible -->
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+          <div onclick="(function(){
+            var b=document.getElementById('mapNationsBody');
+            var c=document.getElementById('mapNationsChevron');
+            var open=b.style.display!=='none';
+            b.style.display=open?'none':'block';
+            c.textContent=open?'▶':'▼';
+          })()" style="flex:1;display:flex;align-items:center;justify-content:space-between;
+            padding:7px 10px;border-radius:8px;cursor:pointer;
+            background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);
+            user-select:none;">
+            <span style="font-family:Orbitron,sans-serif;font-size:0.55rem;font-weight:700;
+              letter-spacing:1px;color:var(--text-muted);text-transform:uppercase;">🌍 Nation Maps</span>
+            <span id="mapNationsChevron" style="color:var(--text-muted);font-size:0.7rem;">▼</span>
+          </div>
+          <button id="mapItemUndoBtn" onclick="undoLastMapItemAction()" title=""
+            style="display:none;padding:5px 10px;border-radius:7px;cursor:pointer;flex-shrink:0;
+            border:1px solid rgba(239,68,68,0.4);background:rgba(239,68,68,0.08);color:#f87171;
+            font-size:0.58rem;font-family:Orbitron,sans-serif;font-weight:700;letter-spacing:0.5px;
+            white-space:nowrap;">
+            ↺ <span class="undo-label">Undo</span>
+          </button>
+        </div>
+        <div id="mapNationsBody">
+          <div id="mapItemsNationGrid"></div>
+        </div>
       </div>
     </div>
 
@@ -18137,17 +18161,87 @@ function _mapItemTarget(itemId) {
   return sel ? sel.value : null;
 }
 
+// ── Map Item Trade Undo ──────────────────────────────────────────────────────
+// Stores the last map item trade so it can be reversed
+let _lastMapItemAction = null;
+
+function _snapshotForUndo(label) {
+  // Deep-snapshot current resource values and mapItems state
+  const dataSnap = {};
+  CITIES.forEach(c => {
+    dataSnap[c.id] = {};
+    Object.entries(data[c.id] || {}).forEach(([rid, rv]) => {
+      dataSnap[c.id][rid] = { value: rv.value, prevValue: rv.prevValue };
+    });
+  });
+  _lastMapItemAction = {
+    label,
+    dataSnap,
+    mapItemsSnap: JSON.parse(JSON.stringify(mapItems)),
+  };
+  // Show undo button
+  const undoBtn = document.getElementById('mapItemUndoBtn');
+  if (undoBtn) {
+    undoBtn.style.display = '';
+    undoBtn.title = 'Undo: ' + label;
+    undoBtn.querySelector('.undo-label').textContent = 'Undo: ' + label;
+  }
+}
+
+function undoLastMapItemAction() {
+  if (!_lastMapItemAction) return;
+  // Restore data
+  CITIES.forEach(c => {
+    Object.entries(_lastMapItemAction.dataSnap[c.id] || {}).forEach(([rid, rv]) => {
+      if (data[c.id] && data[c.id][rid]) {
+        data[c.id][rid] = { value: rv.value, prevValue: rv.prevValue };
+      }
+    });
+  });
+  // Restore mapItems
+  mapItems.length = 0;
+  _lastMapItemAction.mapItemsSnap.forEach(it => mapItems.push(it));
+  _lastMapItemAction = null;
+
+  const undoBtn = document.getElementById('mapItemUndoBtn');
+  if (undoBtn) undoBtn.style.display = 'none';
+
+  renderMapItemsNations();
+  renderScoreboard();
+  save();
+  showToastMsg && showToastMsg('↺ Map item action undone');
+  playClick();
+}
+
+function _applyEffectsTo(cityId, effects, changes) {
+  for (const eff of effects) {
+    if (!data[cityId] || !data[cityId][eff.resourceId]) continue;
+    const before = data[cityId][eff.resourceId]?.value ?? 0;
+    const after  = round2(Math.max(0, before + eff.delta));
+    data[cityId][eff.resourceId] = { value: after, prevValue: before };
+    if (changes) changes.push({ cityId, resourceId: eff.resourceId, valueBefore: before, valueAfter: after, delta: after - before });
+  }
+}
+
+function _logMapItemTrade(icon, label, changes) {
+  roundHistory.unshift({ round: -1, icon, label, changes: changes || [] });
+  renderHistory && renderHistory();
+}
+
 function mapItemDestroy(itemId) {
   const item = mapItems.find(it => it.id === itemId);
   if (!item) return;
-  const type = mapItemTypes.find(t => t.id === item.typeId);
-  if (!confirm('Destroy this item? It gives a one-time resource payout to its current nation and is removed permanently.')) return;
+  const type   = mapItemTypes.find(t => t.id === item.typeId);
+  const city   = CITIES.find(c => c.id === item.cityId);
+  if (!confirm('Destroy this item? Gives a one-time payout to the current owner and removes it permanently.')) return;
+  _snapshotForUndo(`Destroy ${type?.icon || ''} ${type?.name || 'item'}`);
+  const changes = [];
   if (type) {
-    const cityId = item.cityId;
     const payout = _typeDestroyEffects(type);
-    _applyEffectsTo(cityId, payout);
-    const payoutLabel = payout.length ? ` ${_effectsLabel(payout)}` : ' (no payout)';
-    showToastMsg && showToastMsg(`💥 Destroyed ${type.icon} ${type.name} — ${CITIES.find(c=>c.id===cityId)?.name || ''}${payoutLabel}`);
+    _applyEffectsTo(item.cityId, payout, changes);
+    const payoutLabel = payout.length ? ` — ${city?.name || ''} gets ${_effectsLabel(payout)}` : ' (no payout)';
+    _logMapItemTrade('💥', `Destroyed ${type.icon} ${type.name}${payoutLabel}`, changes);
+    showToastMsg && showToastMsg(`💥 Destroyed ${type.icon} ${type.name}${payoutLabel}`);
   }
   mapItems = mapItems.filter(it => it.id !== itemId);
   renderMapItemsNations();
@@ -18156,30 +18250,30 @@ function mapItemDestroy(itemId) {
   playClick();
 }
 
-function _applyEffectsTo(cityId, effects) {
-  for (const eff of effects) {
-    const before = data[cityId][eff.resourceId]?.value ?? 0;
-    const after = round2(Math.max(0, before + eff.delta));
-    data[cityId][eff.resourceId] = { value: after, prevValue: before };
-  }
-}
-
 function mapItemSell(itemId) {
   const item = mapItems.find(it => it.id === itemId);
   if (!item) return;
   const targetId = _mapItemTarget(itemId);
-  const type = mapItemTypes.find(t => t.id === item.typeId);
+  const type     = mapItemTypes.find(t => t.id === item.typeId);
+  const seller   = CITIES.find(c => c.id === item.cityId);
+  const buyer    = CITIES.find(c => c.id === targetId);
   if (!targetId || !type) return;
-  const payout = _typeSellEffects(type);
-  _applyEffectsTo(targetId, payout);
-  const payoutLabel = payout.length ? ` — ${CITIES.find(c=>c.id===targetId)?.name || ''} ${_effectsLabel(payout)}` : '';
+  _snapshotForUndo(`Sell ${type.icon} ${type.name} → ${buyer?.name || ''}`);
+  const changes  = [];
+  const payout   = _typeSellEffects(type);
+  // Payout goes to BUYER
+  _applyEffectsTo(targetId, payout, changes);
+  // Sell effects with negative delta represent SELLER cost — apply reversed to seller if defined
+  // (Sell effects as defined: positive = buyer gains, negative = buyer loses)
+  const payoutLabel = payout.length ? ` — ${buyer?.name || ''} gets ${_effectsLabel(payout)}` : '';
+  _logMapItemTrade('🤝', `Sold ${type.icon} ${type.name} from ${seller?.name || ''} to ${buyer?.name || ''}${payoutLabel}`, changes);
   if (_effectiveSellMode(type) === 'continuous') {
-    item.cityId = targetId;
-    item.leasedTo = null;
+    item.cityId    = targetId;
+    item.leasedTo  = null;
   } else {
     mapItems = mapItems.filter(it => it.id !== itemId);
   }
-  showToastMsg && showToastMsg(`🤝 Sold ${type.icon} ${type.name} to ${CITIES.find(c=>c.id===targetId)?.name || ''}${payoutLabel}`);
+  showToastMsg && showToastMsg(`🤝 Sold ${type.icon} ${type.name} to ${buyer?.name || ''}${payoutLabel}`);
   renderMapItemsNations();
   renderScoreboard();
   save();
@@ -18187,26 +18281,35 @@ function mapItemSell(itemId) {
 }
 
 function mapItemLease(itemId) {
-  const item = mapItems.find(it => it.id === itemId);
+  const item   = mapItems.find(it => it.id === itemId);
   if (!item) return;
   const targetId = _mapItemTarget(itemId);
-  const type = mapItemTypes.find(t => t.id === item.typeId);
+  const type     = mapItemTypes.find(t => t.id === item.typeId);
+  const owner    = CITIES.find(c => c.id === item.cityId);
+  const lessee   = CITIES.find(c => c.id === targetId);
   if (!targetId || !type) return;
-  const payout = _typeLeaseEffects(type);
+  _snapshotForUndo(`Lease ${type.icon} ${type.name} → ${lessee?.name || ''}`);
+  const changes  = [];
+  const payout   = _typeLeaseEffects(type);
   if (_effectiveLeaseMode(type) === 'continuous') {
     const clearing = targetId === item.cityId;
-    item.leasedTo = clearing ? null : targetId;
+    item.leasedTo  = clearing ? null : targetId;
     if (!clearing) {
-      _applyEffectsTo(targetId, payout);
-      const payoutLabel = payout.length ? ` — ${CITIES.find(c=>c.id===targetId)?.name || ''} ${_effectsLabel(payout)}` : '';
-      showToastMsg && showToastMsg(`📜 Leased ${type.icon} ${type.name} income to ${CITIES.find(c=>c.id===targetId)?.name || ''}${payoutLabel}`);
+      // One-time upfront lease payment goes to lessee on lease start
+      _applyEffectsTo(targetId, payout, changes);
+      const payoutLabel = payout.length ? ` — ${lessee?.name || ''} gets ${_effectsLabel(payout)}` : '';
+      _logMapItemTrade('📜', `Leased ${type.icon} ${type.name} from ${owner?.name || ''} to ${lessee?.name || ''}${payoutLabel}`, changes);
+      showToastMsg && showToastMsg(`📜 Leased ${type.icon} ${type.name} to ${lessee?.name || ''}${payoutLabel}`);
     } else {
+      _logMapItemTrade('📜', `Lease cleared — ${type.icon} ${type.name} income returns to ${owner?.name || ''}`, changes);
       showToastMsg && showToastMsg(`📜 Lease cleared — ${type.icon} ${type.name} income returns to its owner`);
     }
   } else {
-    _applyEffectsTo(targetId, payout);
-    const payoutLabel = payout.length ? ` — ${CITIES.find(c=>c.id===targetId)?.name || ''} ${_effectsLabel(payout)}` : '';
+    // One-time lease: payout to lessee, item consumed
+    _applyEffectsTo(targetId, payout, changes);
+    const payoutLabel = payout.length ? ` — ${lessee?.name || ''} gets ${_effectsLabel(payout)}` : '';
     mapItems = mapItems.filter(it => it.id !== itemId);
+    _logMapItemTrade('📜', `Leased (one-time) ${type.icon} ${type.name} to ${lessee?.name || ''}${payoutLabel}`, changes);
     showToastMsg && showToastMsg(`📜 Leased ${type.icon} ${type.name}${payoutLabel}`);
   }
   renderMapItemsNations();
@@ -18216,29 +18319,35 @@ function mapItemLease(itemId) {
 }
 
 function mapItemMove(itemId) {
-  const item = mapItems.find(it => it.id === itemId);
+  const item     = mapItems.find(it => it.id === itemId);
   if (!item) return;
   const targetId = _mapItemTarget(itemId);
-  const type = mapItemTypes.find(t => t.id === item.typeId);
+  const type     = mapItemTypes.find(t => t.id === item.typeId);
+  const from     = CITIES.find(c => c.id === item.cityId);
+  const to       = CITIES.find(c => c.id === targetId);
   if (!targetId) return;
-  const payout = type ? _typeMoveEffects(type) : [];
-  _applyEffectsTo(targetId, payout);
-  item.cityId = targetId;
+  _snapshotForUndo(`Move ${type?.icon || ''} ${type?.name || 'item'} → ${to?.name || ''}`);
+  const changes  = [];
+  const payout   = type ? _typeMoveEffects(type) : [];
+  // Move payout goes to the DESTINATION nation
+  _applyEffectsTo(targetId, payout, changes);
+  item.cityId   = targetId;
   item.leasedTo = null;
+  const payoutLabel = payout.length ? ` — ${to?.name || ''} gets ${_effectsLabel(payout)}` : '';
+  _logMapItemTrade('🚚', `Moved ${type ? type.icon + ' ' + type.name : 'item'} from ${from?.name || ''} to ${to?.name || ''}${payoutLabel}`, changes);
   renderMapItemsNations();
   renderScoreboard();
   save();
   playClick();
-  const payoutLabel = payout.length ? ` — ${_effectsLabel(payout)}` : '';
-  showToastMsg && showToastMsg(`🚚 Moved ${type ? type.icon + ' ' + type.name : 'item'} to ${CITIES.find(c=>c.id===targetId)?.name || ''}${payoutLabel}`);
+  showToastMsg && showToastMsg(`🚚 Moved ${type ? type.icon + ' ' + type.name : 'item'} to ${to?.name || ''}${payoutLabel}`);
 }
 
-// Plain removal — deletes the instance with no resource effect (for fixing mistakes, unlike Destroy).
 function mapItemRemove(itemId) {
   const item = mapItems.find(it => it.id === itemId);
   if (!item) return;
   const type = mapItemTypes.find(t => t.id === item.typeId);
-  if (!confirm('Remove this item from the map? This does NOT change any resources — use Destroy if you want the resource payout.')) return;
+  if (!confirm('Remove this item? No resource effect — use Destroy for the payout.')) return;
+  _snapshotForUndo(`Remove ${type?.icon || ''} ${type?.name || 'item'}`);
   mapItems = mapItems.filter(it => it.id !== itemId);
   renderMapItemsNations();
   save();
