@@ -13975,7 +13975,7 @@ function renderPolicyPickStatusBar() {
       +'<span style="color:'+(hasPick?city.color:'#475569')+';font-weight:'+(hasPick?'700':'400')+'">'+city.name+'</span>'
       +(hasPick
         ? '<span style="color:#10b981;font-size:0.75rem">✓</span>'
-          +'<button onclick="hostResetPolicyPick(''+city.id+'')" title="Undo pick" style="padding:0 4px;border:none;background:none;color:rgba(239,68,68,0.5);font-size:0.65rem;cursor:pointer;line-height:1;" onmouseover="this.style.color='#f87171'" onmouseout="this.style.color='rgba(239,68,68,0.5)'">↺</button>'
+          +'<button data-rcid="'+city.id+'" onclick="hostResetPolicyPick(this.dataset.rcid)" title="Undo pick" style="padding:0 4px;border:none;background:none;color:rgba(239,68,68,0.5);font-size:0.65rem;cursor:pointer;line-height:1;">↺</button>'
         : '<span style="color:#475569;font-size:0.7rem">·</span>')
       +'</div>';
   }).join('');
@@ -14004,7 +14004,7 @@ function renderPolicyPickIncomingBoard() {
       +(hasPick
         ? '<div style="display:flex;align-items:center;gap:6px;">'
           +'<span style="padding:3px 10px;border-radius:8px;background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.3);color:#10b981;font-family:Orbitron,sans-serif;font-size:0.5rem;font-weight:700;letter-spacing:1px;white-space:nowrap;">✓ PICKED</span>'
-          +'<button onclick="hostResetPolicyPick(''+city.id+'')" title="Undo this nation's pick so they can reselect" style="padding:2px 8px;border-radius:6px;cursor:pointer;border:1px solid rgba(239,68,68,0.35);background:rgba(239,68,68,0.08);color:#f87171;font-size:0.48rem;font-family:Orbitron,sans-serif;font-weight:700;letter-spacing:0.5px;white-space:nowrap;transition:all 0.15s;" onmouseover="this.style.background='rgba(239,68,68,0.18)'" onmouseout="this.style.background='rgba(239,68,68,0.08)'">↺ UNDO</button>'
+          +'<button data-rcid="'+city.id+'" onclick="hostResetPolicyPick(this.dataset.rcid)" title="Undo pick" style="padding:2px 8px;border-radius:6px;cursor:pointer;border:1px solid rgba(239,68,68,0.35);background:rgba(239,68,68,0.08);color:#f87171;font-size:0.48rem;font-family:Orbitron,sans-serif;font-weight:700;letter-spacing:0.5px;white-space:nowrap;transition:all 0.15s;">↺ UNDO</button>'
           +'</div>'
         : '<span style="display:flex;align-items:center;gap:5px;padding:3px 10px;border-radius:8px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);color:#475569;font-family:Orbitron,sans-serif;font-size:0.5rem;font-weight:700;letter-spacing:1px;white-space:nowrap;">'
           +'<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#f59e0b;animation:waitingPulse 1.2s infinite;"></span>WAITING</span>')
@@ -19851,8 +19851,7 @@ function startTimer() {
     +'border-radius:10px;cursor:pointer;text-align:left;'
     +'border:2px solid rgba(34,211,238,0.4);background:rgba(34,211,238,0.07);'
     +'transition:all 0.15s;" '
-    +'onmouseover="this.style.background='rgba(34,211,238,0.14)'" '
-    +'onmouseout="this.style.background='rgba(34,211,238,0.07)'">'
+    +'>'
     +'<div style="font-family:Orbitron,sans-serif;font-size:0.65rem;font-weight:800;'
     +'color:#22d3ee;margin-bottom:3px;">▶ Resume Round '+currentRound+'</div>'
     +'<div style="font-size:0.58rem;color:#94a3b8;">Stay on Round '+currentRound+curDesc+'</div>'
@@ -19864,8 +19863,7 @@ function startTimer() {
         +'border-radius:10px;cursor:pointer;text-align:left;'
         +'border:2px solid rgba(168,85,247,0.4);background:rgba(168,85,247,0.07);'
         +'transition:all 0.15s;" '
-        +'onmouseover="this.style.background='rgba(168,85,247,0.14)'" '
-        +'onmouseout="this.style.background='rgba(168,85,247,0.07)'">'
+        +'>'
         +'<div style="font-family:Orbitron,sans-serif;font-size:0.65rem;font-weight:800;'
         +'color:#c084fc;margin-bottom:3px;">⏩ Start Round '+nextRound+'</div>'
         +'<div style="font-size:0.58rem;color:#94a3b8;">Advance to Round '+nextRound+nextDesc+'</div>'
@@ -19873,7 +19871,7 @@ function startTimer() {
       : '')
 
     // Cancel
-    +'<button onclick="document.getElementById('timerRoundConfirmModal').remove();playClick();" '
+    +'<button onclick="var m=document.getElementById(\"timerRoundConfirmModal\");if(m)m.remove();playClick();" '
     +'style="width:100%;padding:9px;border-radius:8px;cursor:pointer;'
     +'border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.03);'
     +'color:#475569;font-size:0.65rem;">Cancel</button>'
