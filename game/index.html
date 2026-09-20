@@ -2580,30 +2580,53 @@ function _sanitizeKey(k) {
 }
 
 function _makeCloudStorage(uid) {
-  // Saves are keyed by LICENSE KEY, not by user UID.
-  // This means any email that redeems the same license key
-  // shares the same save slots and game state.
-  // Falls back to uid-based path if no license key is active.
-  function _getLicenseBase() {
-    let lk = null;
-    try { lk = localStorage.getItem('_activeLicenseKey'); } catch(e) {}
-    if (lk) {
-      return _fbDB.ref('licenseKeys/' + _sanitizeKey(lk) + '/kv');
-    }
-    // Fallback: per-user storage (no license key redeemed)
-    return _fbDB.ref('users/' + uid + '/kv');
+  // Saves are keyed by LICENSE KEY so any email on the same key shares saves.
+  // On GET: checks license key path first, then falls back to legacy UID path.
+  //         If found only on UID path, auto-migrates it to the license key path.
+  // On SET: always writes to license key path (or UID path if no key active).
+  function _activeLK() {
+    try { return localStorage.getItem('_activeLicenseKey') || null; } catch(e) { return null; }
   }
+  function _lkBase()  { const lk = _activeLK(); return lk ? _fbDB.ref('licenseKeys/' + _sanitizeKey(lk) + '/kv') : null; }
+  function _uidBase() { return _fbDB.ref('users/' + uid + '/kv'); }
+
   return {
     get: async function(key) {
-      const snap = await _getLicenseBase().child(_sanitizeKey(key)).get();
-      const val = snap.exists() ? snap.val() : null;
-      return val ? { value: val } : null;
+      const sk = _sanitizeKey(key);
+      const lkB = _lkBase();
+
+      // 1. Try license key path first
+      if (lkB) {
+        try {
+          const snap = await lkB.child(sk).get();
+          if (snap.exists()) return { value: snap.val() };
+        } catch(e) {}
+      }
+
+      // 2. Fall back to legacy UID path
+      try {
+        const snap2 = await _uidBase().child(sk).get();
+        if (snap2.exists()) {
+          const val = snap2.val();
+          // Auto-migrate to license key path so future reads find it there
+          if (lkB) {
+            lkB.child(sk).set(val).catch(() => {});
+          }
+          return { value: val };
+        }
+      } catch(e) {}
+
+      return null;
     },
     set: async function(key, value) {
-      await _getLicenseBase().child(_sanitizeKey(key)).set(value);
+      const sk = _sanitizeKey(key);
+      const base = _lkBase() || _uidBase();
+      await base.child(sk).set(value);
     },
     delete: async function(key) {
-      await _getLicenseBase().child(_sanitizeKey(key)).remove();
+      const sk = _sanitizeKey(key);
+      const base = _lkBase() || _uidBase();
+      await base.child(sk).remove();
     },
   };
 }
