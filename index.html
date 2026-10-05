@@ -2464,8 +2464,95 @@ function toggleSound(){
 document.getElementById('sound-btn')&&document.getElementById('sound-btn').addEventListener('click',toggleSound);
 
 </script>
-<script>
-(function(){if(!window.chatbase||window.chatbase("getState")!=="initialized"){window.chatbase=(...arguments)=>{if(!window.chatbase.q){window.chatbase.q=[]}window.chatbase.q.push(arguments)};window.chatbase=new Proxy(window.chatbase,{get(target,prop){if(prop==="q"){return target.q}return(...args)=>target(prop,...args)}})}const onLoad=function(){const script=document.createElement("script");script.src="https://www.chatbase.co/embed.min.js";script.id="OTlhv6N9vrZ3mumLJ7RRs";script.domain="www.chatbase.co";document.body.appendChild(script)};if(document.readyState==="complete"){onLoad()}else{window.addEventListener("load",onLoad)}})();
-</script>
+<!-- SimCivic AI Helper Floating Button -->
+<style>
+  #simcivicAIBtn {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: linear-gradient(135deg, #06b6d4, #8b5cf6);
+    color: white;
+    border: none;
+    border-radius: 50px;
+    padding: 12px 20px 12px 14px;
+    cursor: pointer;
+    box-shadow: 0 4px 24px rgba(6,182,212,0.45);
+    font-family: 'Sora', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: transform 0.2s, box-shadow 0.2s;
+    animation: simcivicBtnFloat 3s ease-in-out infinite;
+  }
+  #simcivicAIBtn:hover {
+    transform: scale(1.06) translateY(-2px);
+    box-shadow: 0 8px 32px rgba(6,182,212,0.55);
+  }
+  #simcivicAIBtn .ai-icon {
+    font-size: 1.3rem;
+    line-height: 1;
+    background: rgba(255,255,255,0.2);
+    border-radius: 50%;
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  #simcivicAIBtn .ai-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+  }
+  #simcivicAIBtn .ai-label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+  }
+  #simcivicAIBtn .ai-sub {
+    font-size: 0.58rem;
+    opacity: 0.85;
+    font-weight: 400;
+  }
+  #simcivicAIPulse {
+    position: fixed;
+    bottom: 52px;
+    right: 26px;
+    z-index: 99998;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #10b981;
+    border: 2px solid white;
+    animation: simcivicPulse 2s infinite;
+  }
+  @keyframes simcivicBtnFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+  }
+  @keyframes simcivicPulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+  }
+  @media (max-width: 480px) {
+    #simcivicAIBtn .ai-text { display: none; }
+    #simcivicAIBtn { padding: 14px; border-radius: 50%; }
+    #simcivicAIPulse { bottom: 54px; right: 22px; }
+  }
+</style>
+
+<div id="simcivicAIPulse"></div>
+<a id="simcivicAIBtn" href="https://www.chatbase.co/chatbot-iframe/OTlhv6N9vrZ3mumLJ7RRs" target="_blank" rel="noopener noreferrer">
+  <div class="ai-icon">🤖</div>
+  <div class="ai-text">
+    <span class="ai-label">Ask SimCivic AI</span>
+    <span class="ai-sub">Game rules &amp; tips</span>
+  </div>
+</a>
 </body>
 </html>
