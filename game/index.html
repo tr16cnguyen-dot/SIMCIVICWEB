@@ -12480,13 +12480,17 @@ async function loadFromLocalStorage() {
   const [
     savedData, savedSnaps, savedDescs, savedNotes, savedRules, savedRound,
     savedGlobalEvts, savedCityEvts, savedGlobalEnabled, savedCityEnabled,
-    savedPolHistory, savedMapItemTypes, savedMapItems
+    savedPolHistory, savedMapItemTypes, savedMapItems,
+    savedPoliticalRanks, savedRelations, savedPolicyPicks, savedUsedPolicy,
+    savedWar, savedCardPicks, savedAlliances,
   ] = await Promise.all([
     storageLoad(SK), storageLoad(SNAP_SK), storageLoad(ROUND_DESC_SK),
     storageLoad(ROUND_NOTES_SK), storageLoad(RULES_SK), storageLoad(ROUND_SK),
     storageLoad(GLOBAL_EVENTS_KEY), storageLoad(CITY_EVENTS_KEY),
     storageLoad(GLOBAL_ENABLED_KEY), storageLoad(CITY_ENABLED_KEY),
     storageLoad(POL_HISTORY_SK), storageLoad(MAP_ITEM_TYPES_SK), storageLoad(MAP_ITEMS_SK),
+    storageLoad(POLITICAL_SK), storageLoad(RELATIONS_SK), storageLoad(POLICY_SK), storageLoad(USED_POLICY_SK),
+    storageLoad(WAR_SK), storageLoad(CARD_PICKS_SK), storageLoad('city-monitor-alliances'),
   ]);
   if (savedData) {
     // Only restore if version stamp matches AND data looks valid
@@ -12538,6 +12542,32 @@ async function loadFromLocalStorage() {
       else draftRosters = initDraftRosters();
     }
   } catch { draftRosters = initDraftRosters(); }
+
+  // ── Restore full game state from cloud save ────────────────
+  if (savedPoliticalRanks) Object.assign(politicalRanks, savedPoliticalRanks);
+  if (savedRelations)      Object.assign(cityRelations,  savedRelations);
+  if (savedPolicyPicks)    Object.assign(policyPicks,    savedPolicyPicks);
+  if (savedUsedPolicy)     usedPolicyCards = new Set(savedUsedPolicy);
+  if (savedWar) {
+    try {
+      if (savedWar.warState)         Object.assign(warState, savedWar.warState);
+      if (savedWar.activeWars)       { activeWars.length=0; savedWar.activeWars.forEach(w=>activeWars.push(w)); }
+      if (savedWar.warImmuneRounds)  Object.assign(warImmuneRounds, savedWar.warImmuneRounds);
+    } catch(e) {}
+  }
+  if (savedCardPicks) {
+    try {
+      Object.entries(savedCardPicks).forEach(([rnd, cities]) => {
+        if (!cityCardPicks[rnd]) cityCardPicks[rnd] = {};
+        Object.entries(cities||{}).forEach(([cid, st]) => {
+          cityCardPicks[rnd][cid] = { selected: new Set(st.selected||[]), eliminated: new Set(st.eliminated||[]) };
+        });
+      });
+    } catch(e) {}
+  }
+  if (savedAlliances) {
+    try { activeAlliances.length=0; savedAlliances.forEach(r=>activeAlliances.push(r)); } catch(e) {}
+  }
 }
 
 // ════════════════════════════════════════════════════════
@@ -24999,9 +25029,20 @@ async function manualSave() {
         Object.entries(cityEnabledMap || {}).map(([k,v]) => [k,[...v]])
       )],
       [DRAFT_SK, { draftPool, draftRosters, teacherNames, teacherAssign, roleAssignments }],
+      [POLITICAL_SK,    politicalRanks],
+      [RELATIONS_SK,    cityRelations],
+      [POLICY_SK,       policyPicks],
+      [USED_POLICY_SK,  [...(usedPolicyCards || new Set())]],
+      [WAR_SK,          { warState, activeWars: activeWars||[], warImmuneRounds: warImmuneRounds||{} }],
+      [CARD_PICKS_SK,   (function(){ const out={}; Object.entries(cityCardPicks||{}).forEach(([rnd,cities])=>{ out[rnd]={}; Object.entries(cities||{}).forEach(([cid,st])=>{ out[rnd][cid]={selected:[...(st.selected||[])],eliminated:[...(st.eliminated||[])]}; }); }); return out; })()],
+      [POL_HISTORY_SK,  (politicalHistory||[]).slice(0, 200)],
+      [CUSTOM_POLICY_SK,(function(){ try { const s=localStorage.getItem(CUSTOM_POLICY_SK); return s?JSON.parse(s):null; } catch(e){return null;} })()],
+      ['city-monitor-alliances', (activeAlliances||[]).map(r=>JSON.parse(JSON.stringify(r)))],
     ];
     for (const [key, value] of pairs) {
-      localStorage.setItem(key, JSON.stringify(value));
+      if (value !== null && value !== undefined) {
+        localStorage.setItem(key, JSON.stringify(value));
+      }
     }
     localOk = true;
   } catch(e) {
@@ -25025,6 +25066,14 @@ async function manualSave() {
           Object.entries(cityEnabledMap || {}).map(([k,v]) => [k,[...v]])
         )],
         [DRAFT_SK, { draftPool, draftRosters, teacherNames, teacherAssign, roleAssignments }],
+        [POLITICAL_SK,    politicalRanks],
+        [RELATIONS_SK,    cityRelations],
+        [POLICY_SK,       policyPicks],
+        [USED_POLICY_SK,  [...(usedPolicyCards || new Set())]],
+        [WAR_SK,          { warState, activeWars: activeWars||[], warImmuneRounds: warImmuneRounds||{} }],
+        [CARD_PICKS_SK,   (function(){ const out={}; Object.entries(cityCardPicks||{}).forEach(([rnd,cities])=>{ out[rnd]={}; Object.entries(cities||{}).forEach(([cid,st])=>{ out[rnd][cid]={selected:[...(st.selected||[])],eliminated:[...(st.eliminated||[])]}; }); }); return out; })()],
+        [POL_HISTORY_SK,  (politicalHistory||[]).slice(0, 200)],
+        ['city-monitor-alliances', (activeAlliances||[]).map(r=>JSON.parse(JSON.stringify(r)))],
       ];
       await Promise.all(pairs.map(([key, value]) =>
         window.storage.set(key, JSON.stringify(value)).catch(() => {})
