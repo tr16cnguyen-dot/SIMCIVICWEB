@@ -2555,7 +2555,8 @@ document.getElementById('sound-btn')&&document.getElementById('sound-btn').addEv
   </div>
 </a>
 
-<!-- Chatbase embedded widget -->
+<!-- Chatbase embedded widget — default bubble hidden; our button triggers it -->
+<style>#chatbase-bubble-button{display:none!important;}#chatbase-bubble-window{bottom:80px!important;}</style>
 <script>
 (function(){
   if(!window.chatbase||window.chatbase("getState")!=="initialized"){
