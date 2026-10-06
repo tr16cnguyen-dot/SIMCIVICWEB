@@ -4502,6 +4502,29 @@ window.fbJoinAsNation = async function(nationId) {
     Object.assign(roleAssignments, val);
     if (window._fb && window._fb.mode === 'viewer') renderViewerPage && renderViewerPage();
   });
+  // ── Host Page / Call — show notification popup on viewer devices ──
+  var _lastHostPageTs = 0;
+  var _joinedAtPage = Date.now();
+  _fbDB.ref('games/'+code+'/events/hostPage').on('value', function(snap) {
+    var ev = snap.val();
+    if (!ev || ev.ts < _joinedAtPage - 3000 || ev.ts <= _lastHostPageTs) return;
+    _lastHostPageTs = ev.ts;
+    var myNation = window._fb.nation;
+    var isForMe  = false;
+    if (ev.type === 'all') {
+      isForMe = true;
+    } else if (ev.type === 'nation') {
+      isForMe = myNation === ev.cityId;
+    } else if (ev.type === 'role') {
+      var myRoles = roleAssignments[myNation] || {};
+      isForMe = Object.values(myRoles).some(function(val) {
+        return (val || '').split(',').map(function(s){ return s.trim(); }).indexOf(ev.roleId) !== -1;
+      });
+    } else if (ev.type === 'person') {
+      isForMe = !!myNation && myNation === ev.personCityId;
+    }
+    if (isForMe) window._showHostPagePopup(ev);
+  });
   window._fbSetupViewerSummitListener(code);
 };
 
