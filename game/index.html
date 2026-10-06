@@ -25927,9 +25927,9 @@ function showCityPicker(playerName, anchorEl) {
     background:linear-gradient(135deg,#06b6d4,#8b5cf6);
     display:flex; align-items:center; justify-content:center;
     box-shadow:0 4px 20px rgba(6,182,212,0.4);
-    transition:transform 0.2s; position:relative;
+    transition:transform 0.2s; position:relative; overflow:hidden;
   " onmouseover="this.style.transform='scale(1.08)'" onmouseout="this.style.transform='scale(1)'">
-    <span style="font-size:1.4rem;">🤖</span>
+    <img src="civvy-avatar.jpg" alt="Civvy" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">
     <div id="chatBubbleDot" style="
       position:absolute; top:2px; right:2px;
       width:12px; height:12px; border-radius:50%;
@@ -25953,10 +25953,10 @@ function showCityPicker(playerName, anchorEl) {
       display:flex; align-items:center; justify-content:space-between;
     ">
       <div style="display:flex;align-items:center;gap:8px;">
-        <span style="font-size:1.1rem;">🤖</span>
+        <img src="civvy-avatar.jpg" alt="Civvy" style="width:32px;height:32px;border-radius:50%;object-fit:cover;border:1px solid rgba(6,182,212,0.4);">
         <div>
           <div style="font-family:'Orbitron',sans-serif;font-size:0.62rem;font-weight:800;color:#06b6d4;letter-spacing:1px;">CIVVY</div>
-          <div style="font-size:0.5rem;color:#64748b;">SimCivic AI · Ask about game mechanics</div>
+          <div style="font-size:0.5rem;color:#64748b;">Research</div>
         </div>
       </div>
       <button onclick="toggleChat()" style="background:none;border:none;color:#64748b;cursor:pointer;font-size:1rem;line-height:1;">✕</button>
