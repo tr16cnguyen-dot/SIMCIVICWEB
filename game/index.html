@@ -4477,6 +4477,35 @@ window.fbJoinAsNation = async function(nationId) {
     const s = snap.val();
     if (s) applyRemoteState(s);
   });
+
+  // ── Viewer connection watchdog ──────────────────────────────────────────
+  // Firebase WebSocket can silently stall on school/mobile networks.
+  // 1) Watch .info/connected — when we reconnect, force a fresh state fetch.
+  // 2) Poll every 30 s as a backstop so the scoreboard never goes stale.
+  var _viewerStateRef = _fbDB.ref('games/' + code + '/state');
+  var _viewerLastTs   = 0;
+
+  function _viewerRefetchState() {
+    _viewerStateRef.once('value').then(function(snap) {
+      var s = snap.val();
+      if (s && s.ts && s.ts !== _viewerLastTs) {
+        _viewerLastTs = s.ts;
+        applyRemoteState(s);
+      }
+    }).catch(function(e) { console.warn('Viewer refetch error:', e); });
+  }
+
+  _fbDB.ref('.info/connected').on('value', function(snap) {
+    if (snap.val() === true) {
+      // Just reconnected — pull fresh state immediately
+      _viewerRefetchState();
+    }
+  });
+
+  // Fallback poll every 30 s
+  if (window._viewerPollInterval) clearInterval(window._viewerPollInterval);
+  window._viewerPollInterval = setInterval(_viewerRefetchState, 30000);
+  // ────────────────────────────────────────────────────────────────────────
   _fbDB.ref(`games/${code}/state/cityRelations`).on('value', snap => {
     const val = snap.val();
     if (!val) return;
@@ -4657,6 +4686,8 @@ window.enableViewerMode = function() {
 };
 
 window.exitStudentMode = async function() {
+  // Stop the viewer poll watchdog
+  if (window._viewerPollInterval) { clearInterval(window._viewerPollInterval); window._viewerPollInterval = null; }
   try {
     if (window._fb && window._fb.code && window._fb.viewerId && _fbDB) {
       await _fbDB.ref('games/' + window._fb.code + '/viewers/' + window._fb.viewerId).remove();
