@@ -3266,6 +3266,7 @@ window.fbGoLive = async function() {
   snapshots        = {};
   roundHistory     = [];
   politicalHistory = [];
+  buyLog           = [];
   roundNotes       = {};
   roundDescs       = {
     1: '8:15-8:45am — Plan, organize, record. Pick 1 nation card.',
@@ -4281,6 +4282,7 @@ window.fbPushState = async function() {
       roundNotes,
       roundHistory: roundHistory ? roundHistory.slice(0, 50) : [],
       politicalHistory: politicalHistory ? politicalHistory.slice(0, 200) : [],
+      buyLog: buyLog ? buyLog.slice(0, 200) : [],
       ts: Date.now()
     };
     await _fbDB.ref(`games/${window._fb.code}/state`).set(payload);
@@ -4424,6 +4426,7 @@ window.fbJoinAsNation = async function(nationId) {
       }
       if (s.warState)         Object.assign(warState, s.warState);
       if (s.roundHistory)     { roundHistory.length = 0; s.roundHistory.forEach(h => roundHistory.push(h)); }
+      if (s.buyLog)           { buyLog.length = 0; s.buyLog.forEach(function(e){ buyLog.push(e); }); }
     }
   } catch(e) { console.warn('Initial state fetch failed:', e); }
 
@@ -4620,6 +4623,7 @@ window.applyRemoteState = function(s) {
     if (s.roundDescs)         Object.assign(roundDescs, s.roundDescs);
     if (s.roundHistory)       { roundHistory.length = 0; s.roundHistory.forEach(function(h){ roundHistory.push(h); }); }
     if (s.politicalHistory)   { politicalHistory.length = 0; s.politicalHistory.forEach(function(e){ politicalHistory.push(e); }); }
+    if (s.buyLog)             { buyLog.length = 0; s.buyLog.forEach(function(e){ buyLog.push(e); }); if (window._renderBuyLog) window._renderBuyLog(); }
     renderScoreboard();
     typeof renderRelationsMatrix === 'function'    && renderRelationsMatrix();
     typeof renderPolicyCardsSidebar === 'function' && renderPolicyCardsSidebar();
@@ -11650,6 +11654,7 @@ const CITY_ENABLED_KEY   = 'city-monitor-city-enabled-v5';
 const DRAFT_SK           = 'city-monitor-draft';
 const MAP_ITEM_TYPES_SK  = 'city-monitor-map-item-types-v1';
 const MAP_ITEMS_SK       = 'city-monitor-map-items-v1';
+const BUY_LOG_SK         = 'city-monitor-buy-log-v1';
 
 function loadEventsFromStorage(key, defaults) {
   try { const s = localStorage.getItem(key); if (s) return JSON.parse(s); } catch {}
@@ -11911,6 +11916,7 @@ let maxAppliedRound  = 0;
 let viewingRound     = null;
 let roundHistory     = [];
 let politicalHistory = [];
+let buyLog           = [];   // persistent purchase log
 
 // ── Political history logger ───────────────────────────────────────────
 // Call after politicalRanks[cityId] has been updated.
@@ -11988,6 +11994,7 @@ async function save() {
     [RULES_SK,          cityRules],
     [MAP_ITEM_TYPES_SK, mapItemTypes],
     [MAP_ITEMS_SK,      mapItems],
+    [BUY_LOG_SK,        buyLog],
     [ROUND_SK,          { currentRound, maxAppliedRound }],
     [POL_HISTORY_SK,    politicalHistory.slice(0, 200)],
     [GLOBAL_EVENTS_KEY, globalEvents],
@@ -12678,6 +12685,15 @@ async function loadFromLocalStorage() {
   if (savedAlliances) {
     try { activeAlliances.length=0; savedAlliances.forEach(r=>activeAlliances.push(r)); } catch(e) {}
   }
+
+  // Buy log
+  try {
+    const buyLogLocal = localStorage.getItem(BUY_LOG_SK);
+    if (buyLogLocal) {
+      const parsed = JSON.parse(buyLogLocal);
+      if (Array.isArray(parsed)) { buyLog.length = 0; parsed.forEach(function(e){ buyLog.push(e); }); }
+    }
+  } catch(e) {}
 }
 
 // ════════════════════════════════════════════════════════
@@ -23804,6 +23820,7 @@ async function confirmReset() {
   snapshots       = {};
   roundHistory    = [];
   politicalHistory = [];
+  buyLog          = [];
   roundNotes      = {};
   roundDescs      = {
     1: '8:15-8:45am — Plan, organize, record. Pick 1 nation card.',
@@ -24744,6 +24761,7 @@ function executeImportSummary() {
         _safeSet(()=>{ if (s.maxAppliedRound != null) maxAppliedRound = s.maxAppliedRound; });
 
         _safeSet(()=>{ if (s.roundHistory)   { roundHistory.length=0;   s.roundHistory.forEach(h=>roundHistory.push(h)); } });
+        _safeSet(()=>{ if (s.buyLog)         { buyLog.length=0;          s.buyLog.forEach(function(e){ buyLog.push(e); }); if (window._renderBuyLog) window._renderBuyLog(); } });
         _safeSet(()=>{ if (s.activeAlliances){ activeAlliances.length=0; s.activeAlliances.forEach(r=>activeAlliances.push(r)); } });
         _safeSet(()=>{ if (s.activeWars)     { activeWars.length=0;      s.activeWars.forEach(w=>activeWars.push(w)); } });
 
@@ -24870,6 +24888,7 @@ function buildSnapshot() {
     globalEnabled: [...globalEnabled],
     cityEnabledMap: Object.fromEntries(Object.entries(cityEnabledMap || {}).map(([k,v]) => [k,[...v]])),
     draftPool, draftRosters, teacherNames, teacherAssign, roleAssignments,
+    buyLog: buyLog.slice(),
   };
 }
 
@@ -25088,6 +25107,7 @@ function loadFromSlot(slotNum) {
     if (s.teacherNames)    teacherNames    = s.teacherNames;
     if (s.teacherAssign)   teacherAssign   = s.teacherAssign;
     if (s.roleAssignments) roleAssignments = s.roleAssignments;
+    if (s.buyLog)          { buyLog.length = 0; s.buyLog.forEach(function(e){ buyLog.push(e); }); }
     viewingRound = null;
 
     // Re-render everything
@@ -25148,6 +25168,7 @@ async function manualSave() {
       [POL_HISTORY_SK,  (politicalHistory||[]).slice(0, 200)],
       [CUSTOM_POLICY_SK,(function(){ try { const s=localStorage.getItem(CUSTOM_POLICY_SK); return s?JSON.parse(s):null; } catch(e){return null;} })()],
       ['city-monitor-alliances', (activeAlliances||[]).map(r=>JSON.parse(JSON.stringify(r)))],
+      [BUY_LOG_SK,        buyLog || []],
     ];
     for (const [key, value] of pairs) {
       if (value !== null && value !== undefined) {
@@ -26225,7 +26246,7 @@ function showCityPicker(playerName, anchorEl) {
      ══════════════════════════════════════════════════════════ -->
 <script>
 (function() {
-  var _buyLog = [];
+  // Use the global buyLog so purchases survive saves/loads/slot restores
 
   window._initBuyPage = function() {
     // Populate nation dropdown
@@ -26281,7 +26302,7 @@ function showCityPicker(playerName, anchorEl) {
       notes: notes,
       round: currentRound
     };
-    _buyLog.unshift(entry);
+    buyLog.unshift(entry);
 
     // Add to round history
     var parts = [];
@@ -26315,7 +26336,7 @@ function showCityPicker(playerName, anchorEl) {
       }).catch(function(){});
     }
 
-    window._renderBuyLog();
+    window._renderBuyLog && window._renderBuyLog();
     showToastMsg('✅ Purchase applied: ' + city.name + ' bought "' + itemText + '"');
 
     // Clear form
@@ -26328,11 +26349,11 @@ function showCityPicker(playerName, anchorEl) {
   window._renderBuyLog = function() {
     var el = document.getElementById('buyLog');
     if (!el) return;
-    if (_buyLog.length === 0) {
+    if (buyLog.length === 0) {
       el.innerHTML = '<div style="text-align:center;opacity:0.4;padding:20px;">No purchases yet</div>';
       return;
     }
-    el.innerHTML = _buyLog.map(function(e) {
+    el.innerHTML = buyLog.map(function(e) {
       var parts = [];
       if (e.capital > 0) parts.push('💰 −' + e.capital);
       if (e.raw > 0)     parts.push('⛏️ −' + e.raw);
@@ -26349,7 +26370,7 @@ function showCityPicker(playerName, anchorEl) {
   };
 
   window._clearBuyLog = function() {
-    _buyLog = [];
+    buyLog.length = 0;
     window._renderBuyLog();
   };
 })();
