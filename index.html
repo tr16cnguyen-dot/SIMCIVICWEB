@@ -2547,13 +2547,31 @@ document.getElementById('sound-btn')&&document.getElementById('sound-btn').addEv
 </style>
 
 <div id="simcivicAIPulse"></div>
-<a id="simcivicAIBtn" href="https://www.chatbase.co/chatbot/OTlhv6N9vrZ3mumLJ7RRs" target="_blank" rel="noopener noreferrer">
+<a id="simcivicAIBtn" href="#" onclick="window.chatbase&&window.chatbase('open');return false;">
   <div class="ai-icon">🤖</div>
   <div class="ai-text">
     <span class="ai-label">Ask SimCivic AI</span>
     <span class="ai-sub">Game rules &amp; tips</span>
   </div>
 </a>
+
+<!-- Chatbase embedded widget -->
+<script>
+(function(){
+  if(!window.chatbase||window.chatbase("getState")!=="initialized"){
+    window.chatbase=(...args)=>{if(!window.chatbase.q){window.chatbase.q=[]}window.chatbase.q.push(args)};
+    window.chatbase=new Proxy(window.chatbase,{get(target,prop){if(prop==="q"){return target.q}return(...args)=>target(prop,...args)}});
+  }
+  const onLoad=function(){
+    const script=document.createElement("script");
+    script.src="https://www.chatbase.co/embed.min.js";
+    script.id="OTlhv6N9vrZ3mumLJ7RRs";
+    script.domain="www.chatbase.co";
+    document.body.appendChild(script);
+  };
+  if(document.readyState==="complete"){onLoad()}else{window.addEventListener("load",onLoad);}
+})();
+</script>
 </body>
 
 </html>
