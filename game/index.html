@@ -26049,5 +26049,260 @@ function showCityPicker(playerName, anchorEl) {
 })();
 </script>
 
+<!-- ══════════════════════════════════════════════════════════
+     AI RESEARCH GATE  (viewer-only, FREE / PAY5 codes)
+     ══════════════════════════════════════════════════════════ -->
+<script>
+(function() {
+  // ── State ──────────────────────────────────────────────────
+  var _aiAccess   = 'none';   // 'none' | 'free' | 'pay5'
+  var _aiExpiry   = 0;        // ms timestamp when PAY5 session ends
+  var _aiTimerEl  = null;     // live countdown element
+  var _aiTimerInt = null;     // setInterval handle
+
+  // ── Intercept toggleChat for viewer mode ──────────────────
+  var _originalToggleChat = window.toggleChat;
+  window.toggleChat = function() {
+    // Only gate in viewer mode
+    if (!window._fb || window._fb.mode !== 'viewer') {
+      _originalToggleChat();
+      return;
+    }
+    // FREE: always open
+    if (_aiAccess === 'free') { _originalToggleChat(); return; }
+    // PAY5: check timer
+    if (_aiAccess === 'pay5') {
+      if (Date.now() < _aiExpiry) { _originalToggleChat(); return; }
+      // Expired — reset and show lock
+      _aiAccess = 'none';
+      _clearAiTimer();
+      _showAiLockScreen();
+      return;
+    }
+    // No access — show gate modal
+    _showAiGateModal();
+  };
+
+  // ── Gate Modal ────────────────────────────────────────────
+  function _showAiGateModal() {
+    if (document.getElementById('aiGateModal')) return;
+    var modal = document.createElement('div');
+    modal.id = 'aiGateModal';
+    modal.style.cssText = 'position:fixed;inset:0;z-index:99998;background:rgba(5,8,15,0.95);'
+      +'display:flex;align-items:center;justify-content:center;font-family:Sora,sans-serif;'
+      +'backdrop-filter:blur(12px);animation:egFadeIn 0.25s ease-out;';
+    modal.innerHTML =
+      '<div style="max-width:360px;width:90%;background:#0f1623;border:1px solid rgba(6,182,212,0.3);'
+        +'border-radius:18px;padding:28px 24px;box-shadow:0 20px 60px rgba(0,0,0,0.8);text-align:center;">'
+        // Icon
+        +'<div style="font-size:2.4rem;margin-bottom:10px;">🔬</div>'
+        +'<div style="font-family:Orbitron,sans-serif;font-size:0.75rem;font-weight:900;color:#06b6d4;'
+          +'letter-spacing:3px;margin-bottom:4px;">AI RESEARCH ACCESS</div>'
+        +'<div style="font-size:0.6rem;color:rgba(255,255,255,0.4);margin-bottom:20px;line-height:1.5;">'
+          +'Enter a research code to access the SimCivic AI Helper.</div>'
+
+        // Tier cards
+        +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px;">'
+          +'<div style="border:1px solid rgba(251,191,36,0.4);border-radius:10px;padding:10px 8px;background:rgba(251,191,36,0.05);">'
+            +'<div style="font-size:1.1rem;margin-bottom:4px;">⭐</div>'
+            +'<div style="font-family:Orbitron,sans-serif;font-size:0.5rem;font-weight:800;color:#fbbf24;letter-spacing:1px;">FREE</div>'
+            +'<div style="font-size:0.5rem;color:rgba(255,255,255,0.4);margin-top:3px;">Unlimited access<br>5 Capital → Synapse</div>'
+          +'</div>'
+          +'<div style="border:1px solid rgba(139,92,246,0.4);border-radius:10px;padding:10px 8px;background:rgba(139,92,246,0.05);">'
+            +'<div style="font-size:1.1rem;margin-bottom:4px;">⏱️</div>'
+            +'<div style="font-family:Orbitron,sans-serif;font-size:0.5rem;font-weight:800;color:#a78bfa;letter-spacing:1px;">PAY5</div>'
+            +'<div style="font-size:0.5rem;color:rgba(255,255,255,0.4);margin-top:3px;">5-min session<br>5 Capital → Synapse</div>'
+          +'</div>'
+        +'</div>'
+
+        // Code input
+        +'<input id="aiGateInput" type="text" placeholder="Enter code (FREE or PAY5)…" maxlength="10"'
+          +' style="width:100%;box-sizing:border-box;padding:10px 14px;border-radius:8px;'
+            +'border:1px solid rgba(6,182,212,0.3);background:rgba(6,182,212,0.05);'
+            +'color:#e2e8f0;font-family:Sora,sans-serif;font-size:0.72rem;'
+            +'outline:none;text-align:center;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;"'
+          +' onkeydown="if(event.key===\'Enter\')window._aiGateSubmit()"/>'
+        +'<div id="aiGateErr" style="font-size:0.55rem;color:#ef4444;min-height:14px;margin-bottom:8px;"></div>'
+
+        // Buttons
+        +'<div style="display:flex;gap:8px;">'
+          +'<button onclick="document.getElementById(\'aiGateModal\').remove()" style="'
+            +'flex:1;padding:9px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);'
+            +'background:transparent;color:rgba(255,255,255,0.4);cursor:pointer;font-size:0.65rem;">Cancel</button>'
+          +'<button onclick="window._aiGateSubmit()" style="'
+            +'flex:2;padding:9px;border-radius:8px;border:none;cursor:pointer;font-size:0.65rem;font-weight:700;'
+            +'background:linear-gradient(135deg,#06b6d4,#8b5cf6);color:white;">Unlock Research</button>'
+        +'</div>'
+      +'</div>';
+    document.body.appendChild(modal);
+    setTimeout(function(){ var i=document.getElementById('aiGateInput'); if(i) i.focus(); }, 80);
+  }
+
+  window._aiGateSubmit = function() {
+    var inp = document.getElementById('aiGateInput');
+    if (!inp) return;
+    var code = (inp.value || '').trim().toUpperCase();
+    var err  = document.getElementById('aiGateErr');
+
+    if (code !== 'FREE' && code !== 'PAY5') {
+      if (err) err.textContent = 'Invalid code. Ask your host for a research code.';
+      inp.select();
+      return;
+    }
+
+    // Check the nation has enough capital
+    var myNation = window._fb && window._fb.nation;
+    var nationData = (typeof data !== 'undefined') && data && myNation && data[myNation];
+    var capitalVal = nationData && nationData.capital && nationData.capital.value;
+    if (typeof capitalVal !== 'number' || capitalVal < 5) {
+      if (err) err.textContent = 'Not enough Capital! You need at least 5 Capital to research.';
+      return;
+    }
+
+    // Send the aiResearch event to Firebase — host will apply the deduction
+    var gameCode = window._fb && window._fb.code;
+    if (!gameCode || typeof _fbDB === 'undefined') {
+      if (err) err.textContent = 'Not connected to a live game. Join a game first.';
+      return;
+    }
+
+    _fbDB.ref('games/' + gameCode + '/events/aiResearch').set({
+      ts: Date.now(),
+      nationId: myNation,
+      tier: code   // 'FREE' or 'PAY5'
+    });
+
+    // Grant local access immediately
+    if (code === 'FREE') {
+      _aiAccess = 'free';
+    } else {
+      _aiAccess = 'pay5';
+      _aiExpiry = Date.now() + 5 * 60 * 1000;
+      _startAiTimer();
+    }
+
+    // Remove modal and open chat
+    var modal = document.getElementById('aiGateModal');
+    if (modal) modal.remove();
+    _originalToggleChat();
+  };
+
+  // ── PAY5 Timer ────────────────────────────────────────────
+  function _startAiTimer() {
+    _clearAiTimer();
+    // Create floating timer badge
+    var badge = document.createElement('div');
+    badge.id = 'aiResearchTimer';
+    badge.style.cssText = 'position:fixed;bottom:82px;right:20px;z-index:99997;'
+      +'background:#0f1623;border:1px solid rgba(139,92,246,0.5);border-radius:20px;'
+      +'padding:5px 12px;font-family:Orbitron,sans-serif;font-size:0.6rem;'
+      +'color:#a78bfa;display:flex;align-items:center;gap:6px;'
+      +'box-shadow:0 4px 16px rgba(0,0,0,0.5);';
+    badge.innerHTML = '<span>⏱️</span><span id="aiResearchTimerText">5:00</span>';
+    document.body.appendChild(badge);
+    _aiTimerEl = document.getElementById('aiResearchTimerText');
+
+    _aiTimerInt = setInterval(function() {
+      var remaining = Math.max(0, _aiExpiry - Date.now());
+      var m = Math.floor(remaining / 60000);
+      var s = Math.floor((remaining % 60000) / 1000);
+      if (_aiTimerEl) _aiTimerEl.textContent = m + ':' + String(s).padStart(2,'0');
+
+      if (remaining <= 30000) {
+        var b = document.getElementById('aiResearchTimer');
+        if (b) { b.style.borderColor = 'rgba(239,68,68,0.6)'; b.style.color = '#ef4444'; }
+      }
+
+      if (remaining <= 0) {
+        _clearAiTimer();
+        _aiAccess = 'none';
+        // Close the chat panel if open
+        var panel = document.getElementById('chatPanel');
+        if (panel && panel.classList.contains('open')) {
+          panel.classList.remove('open');
+        }
+        _showAiLockScreen();
+      }
+    }, 1000);
+  }
+
+  function _clearAiTimer() {
+    if (_aiTimerInt) { clearInterval(_aiTimerInt); _aiTimerInt = null; }
+    var b = document.getElementById('aiResearchTimer');
+    if (b) b.remove();
+    _aiTimerEl = null;
+  }
+
+  // ── Lock Screen ───────────────────────────────────────────
+  function _showAiLockScreen() {
+    if (document.getElementById('aiLockScreen')) return;
+    var lock = document.createElement('div');
+    lock.id = 'aiLockScreen';
+    lock.style.cssText = 'position:fixed;inset:0;z-index:99998;background:rgba(5,8,15,0.97);'
+      +'display:flex;align-items:center;justify-content:center;font-family:Sora,sans-serif;'
+      +'backdrop-filter:blur(14px);animation:egFadeIn 0.3s ease-out;';
+    lock.innerHTML =
+      '<div style="max-width:340px;width:90%;text-align:center;padding:32px 24px;">'
+        +'<div style="font-size:3rem;margin-bottom:14px;">🔒</div>'
+        +'<div style="font-family:Orbitron,sans-serif;font-size:0.85rem;font-weight:900;color:#a78bfa;'
+          +'letter-spacing:3px;margin-bottom:8px;">SESSION EXPIRED</div>'
+        +'<div style="font-size:0.62rem;color:rgba(255,255,255,0.45);line-height:1.6;margin-bottom:24px;">'
+          +'Your 5-minute research session has ended.<br>Pay another 5 Capital to start a new session.'
+        +'</div>'
+        +'<div style="display:flex;gap:8px;justify-content:center;">'
+          +'<button onclick="document.getElementById(\'aiLockScreen\').remove()" style="'
+            +'padding:10px 20px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);'
+            +'background:transparent;color:rgba(255,255,255,0.4);cursor:pointer;font-size:0.65rem;">Close</button>'
+          +'<button onclick="document.getElementById(\'aiLockScreen\').remove();_showAiGateModal&&_showAiGateModal()" style="'
+            +'padding:10px 20px;border-radius:8px;border:none;cursor:pointer;font-size:0.65rem;font-weight:700;'
+            +'background:linear-gradient(135deg,#8b5cf6,#06b6d4);color:white;">Buy Again</button>'
+        +'</div>'
+      +'</div>';
+    document.body.appendChild(lock);
+  }
+  // expose for lock screen inline onclick
+  window._showAiGateModal = _showAiGateModal;
+
+  // ── Host-side: apply aiResearch capital transfer ──────────
+  // Registered inside fbGoLive so it only runs on the host device
+  var _origFbGoLive = window.fbGoLive;
+  window.fbGoLive = async function() {
+    var result = await _origFbGoLive.apply(this, arguments);
+    // Listen for aiResearch events from viewers and apply deduction
+    var code = window._fb && window._fb.code;
+    if (!code || typeof _fbDB === 'undefined') return result;
+    var _lastAiResearchTs = 0;
+    _fbDB.ref('games/' + code + '/events/aiResearch').on('value', function(snap) {
+      var ev = snap.val();
+      if (!ev || ev.ts <= _lastAiResearchTs) return;
+      _lastAiResearchTs = ev.ts;
+      var nationId = ev.nationId;
+      if (!nationId || !data || !data[nationId] || !data[nationId].capital) return;
+      var capBefore = data[nationId].capital.value || 0;
+      if (capBefore < 5) return; // can't afford — ignore (viewer already blocked)
+      var synBefore = (data['synapse-city'] && data['synapse-city'].capital && data['synapse-city'].capital.value) || 0;
+      data[nationId].capital.value = capBefore - 5;
+      if (data['synapse-city'] && data['synapse-city'].capital) {
+        data['synapse-city'].capital.value = synBefore + 5;
+      }
+      // Record in roundHistory
+      if (typeof roundHistory !== 'undefined') {
+        roundHistory.unshift({
+          round: (typeof currentRound !== 'undefined' ? currentRound : -1),
+          changes: [
+            { cityId: nationId,        resourceId: 'capital', valueBefore: capBefore,   valueAfter: capBefore - 5,   delta: -5, explanation: 'AI Research fee to Synapse (' + ev.tier + ')' },
+            { cityId: 'synapse-city',  resourceId: 'capital', valueBefore: synBefore,   valueAfter: synBefore + 5,   delta:  5, explanation: 'AI Research income from ' + nationId + ' (' + ev.tier + ')' }
+          ]
+        });
+      }
+      // Push updated state to all viewers
+      window.fbPushState && window.fbPushState();
+    });
+    return result;
+  };
+
+})();
+</script>
+
 </body>
 </html>
