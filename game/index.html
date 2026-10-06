@@ -26297,6 +26297,24 @@ function showCityPicker(playerName, anchorEl) {
     save();
     renderScoreboard();
     window.fbPushState && window.fbPushState();
+
+    // ── Notify the buying nation's student device ──
+    if (window._fb && window._fb.mode === 'host' && window._fb.code && _fbDB) {
+      var costStr = [];
+      if (capCost > 0) costStr.push('💰 ' + capCost + ' Capital');
+      if (rawCost > 0) costStr.push('⛏️ ' + rawCost + ' Raw Materials');
+      var notifMsg = '🛒 Your nation purchased: "' + itemText + '"\n'
+        + 'Cost: ' + costStr.join(' + ') + '\n\n'
+        + '📋 Financial Planner — please record this purchase in your budget log.';
+      _fbDB.ref('games/' + window._fb.code + '/events/hostPage').set({
+        ts:     Date.now(),
+        type:   'nation',
+        cityId: nationId,
+        label:  city.icon + ' ' + city.name,
+        message: notifMsg
+      }).catch(function(){});
+    }
+
     window._renderBuyLog();
     showToastMsg('✅ Purchase applied: ' + city.name + ' bought "' + itemText + '"');
 
