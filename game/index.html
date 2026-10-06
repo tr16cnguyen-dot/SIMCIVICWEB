@@ -9277,6 +9277,7 @@ window.fbToggleViewers = function() {
   body.viewer-mode #tabDraft,
   body.viewer-mode #tabEvents,
   body.viewer-mode #tabTrade,
+  body.viewer-mode #tabBuy,
   body.viewer-mode #btnGoLive,
   body.viewer-mode #btnHostPage {
     opacity: 0.3 !important;
@@ -9675,6 +9676,7 @@ window.fbToggleViewers = function() {
         <button class="page-tab active" id="tabScoreboard" onclick="switchPage('scoreboard')">📊 Scoreboard</button>
         <button class="page-tab" id="tabTrade" onclick="switchPage('trade')">🤝 Trade</button>
         <button class="page-tab" id="tabEvents" onclick="switchPage('events')">🎲 Events</button>
+        <button class="page-tab" id="tabBuy" onclick="switchPage('buy')">🛒 Buy</button>
       </div>
 
       <div class="header-spacer"></div>
@@ -10956,6 +10958,83 @@ window.fbToggleViewers = function() {
 </div><!-- end tradePage -->
 
 <!-- ══ EVENTS PAGE ══ -->
+<!-- ══════════════════ BUY PAGE ══════════════════ -->
+<div id="buyPage" style="display:none;position:fixed;left:0;right:0;bottom:0;top:60px;z-index:40;background:var(--bg);overflow-y:auto;">
+  <div style="max-width:620px;margin:0 auto;padding:20px 24px;">
+    <div class="section-card" style="margin-bottom:20px;">
+      <div class="section-header">
+        <div class="section-header-left">
+          <span class="section-icon">🛒</span>
+          <span class="section-title">Purchase Order</span>
+        </div>
+      </div>
+      <div style="padding:16px;display:flex;flex-direction:column;gap:14px;">
+
+        <!-- Nation -->
+        <div>
+          <label style="font-size:0.6rem;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px;">Nation (Buyer)</label>
+          <select id="buyNationSelect" style="width:100%;padding:9px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg-card);color:var(--text);font-size:0.8rem;font-family:Sora,sans-serif;">
+            <option value="">— select nation —</option>
+          </select>
+        </div>
+
+        <!-- Item bought -->
+        <div>
+          <label style="font-size:0.6rem;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px;">Item Purchased</label>
+          <input id="buyItemText" type="text" placeholder="e.g. Water Filtration Plant, Solar Farm…"
+            style="width:100%;box-sizing:border-box;padding:9px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg-card);color:var(--text);font-size:0.8rem;font-family:Sora,sans-serif;outline:none;">
+        </div>
+
+        <!-- Cost row -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div>
+            <label style="font-size:0.6rem;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px;">💰 Capital Cost</label>
+            <input id="buyCapitalCost" type="number" min="0" placeholder="0"
+              style="width:100%;box-sizing:border-box;padding:9px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg-card);color:var(--text);font-size:0.8rem;font-family:Sora,sans-serif;outline:none;">
+          </div>
+          <div>
+            <label style="font-size:0.6rem;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px;">⛏️ Raw Materials Cost</label>
+            <input id="buyRawCost" type="number" min="0" placeholder="0"
+              style="width:100%;box-sizing:border-box;padding:9px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg-card);color:var(--text);font-size:0.8rem;font-family:Sora,sans-serif;outline:none;">
+          </div>
+        </div>
+
+        <!-- Notes -->
+        <div>
+          <label style="font-size:0.6rem;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px;">Notes (optional)</label>
+          <input id="buyNotes" type="text" placeholder="e.g. Round 3 infrastructure purchase"
+            style="width:100%;box-sizing:border-box;padding:9px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg-card);color:var(--text);font-size:0.8rem;font-family:Sora,sans-serif;outline:none;">
+        </div>
+
+        <div id="buyError" style="font-size:0.6rem;color:#ef4444;min-height:14px;"></div>
+
+        <button onclick="window._applyBuyOrder()" style="
+          width:100%;padding:11px;border-radius:10px;border:none;cursor:pointer;
+          background:linear-gradient(135deg,#06b6d4,#8b5cf6);
+          color:white;font-family:Orbitron,sans-serif;font-size:0.68rem;
+          font-weight:800;letter-spacing:1.5px;">
+          ✅ APPLY PURCHASE
+        </button>
+      </div>
+    </div>
+
+    <!-- Purchase log -->
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-header-left">
+          <span class="section-icon">📋</span>
+          <span class="section-title">Purchase Log</span>
+        </div>
+        <button onclick="window._clearBuyLog()" style="font-size:0.58rem;padding:4px 10px;border-radius:6px;border:1px solid rgba(239,68,68,0.3);background:transparent;color:#ef4444;cursor:pointer;">Clear</button>
+      </div>
+      <div id="buyLog" style="padding:12px;font-size:0.68rem;color:var(--text-muted);max-height:320px;overflow-y:auto;">
+        <div style="text-align:center;opacity:0.4;padding:20px;">No purchases yet</div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- ══════════════════ END BUY PAGE ══════════════════ -->
+
 <div id="eventsPage" style="display:none;position:fixed;left:0;right:0;bottom:0;top:60px;z-index:40;background:var(--bg);overflow-y:auto;">
   <div style="max-width:860px;margin:0 auto;padding:20px 24px;">
 
@@ -25149,6 +25228,7 @@ function switchPage(page) {
   const isEvents     = page === 'events';
   const isDraft      = page === 'draft';
   const isViewer     = page === 'viewer';
+  const isBuy        = page === 'buy';
     const headerH = document.querySelector('header')?.offsetHeight || 60;
 
   // Scoreboard
@@ -25193,6 +25273,16 @@ function switchPage(page) {
     }
   }
 
+  // Buy page
+  const buyPage = document.getElementById('buyPage');
+  if (buyPage) {
+    buyPage.style.display = isBuy ? '' : 'none';
+    if (isBuy) {
+      buyPage.style.top = headerH + 'px';
+      window._initBuyPage && window._initBuyPage();
+    }
+  }
+
   // Events page
   const eventsPage = document.getElementById('eventsPage');
   if (eventsPage) {
@@ -25222,6 +25312,7 @@ function switchPage(page) {
   document.getElementById('tabScoreboard').className = 'page-tab' + (isScoreboard ? ' active' : '');
   document.getElementById('tabTrade').className      = 'page-tab' + (isTrade      ? ' active' : '');
   document.getElementById('tabEvents').className     = 'page-tab' + (isEvents     ? ' active' : '');
+  document.getElementById('tabBuy').className        = 'page-tab' + (isBuy        ? ' active' : '');
   document.getElementById('tabDraft').className      = 'page-tab draft-tab' + (isDraft ? ' active' : '');
   const tabViewer = document.getElementById('tabViewer');
   if (tabViewer) tabViewer.className = 'page-tab' + (isViewer ? ' active' : '');
@@ -26126,6 +26217,123 @@ function showCityPicker(playerName, anchorEl) {
     msgs.scrollTop = msgs.scrollHeight;
     return id;
   }
+})();
+</script>
+
+<!-- ══════════════════════════════════════════════════════════
+     BUY PAGE LOGIC
+     ══════════════════════════════════════════════════════════ -->
+<script>
+(function() {
+  var _buyLog = [];
+
+  window._initBuyPage = function() {
+    // Populate nation dropdown
+    var sel = document.getElementById('buyNationSelect');
+    if (!sel) return;
+    var current = sel.value;
+    sel.innerHTML = '<option value="">— select nation —</option>';
+    (CITIES || []).forEach(function(c) {
+      var opt = document.createElement('option');
+      opt.value = c.id;
+      opt.textContent = (c.icon || '') + ' ' + c.name;
+      sel.appendChild(opt);
+    });
+    if (current) sel.value = current;
+    window._renderBuyLog();
+  };
+
+  window._applyBuyOrder = function() {
+    var err = document.getElementById('buyError');
+    err.textContent = '';
+
+    var nationId  = document.getElementById('buyNationSelect').value;
+    var itemText  = (document.getElementById('buyItemText').value || '').trim();
+    var capCost   = parseFloat(document.getElementById('buyCapitalCost').value) || 0;
+    var rawCost   = parseFloat(document.getElementById('buyRawCost').value) || 0;
+    var notes     = (document.getElementById('buyNotes').value || '').trim();
+
+    if (!nationId) { err.textContent = 'Please select a nation.'; return; }
+    if (!itemText)  { err.textContent = 'Please enter an item name.'; return; }
+    if (capCost <= 0 && rawCost <= 0) { err.textContent = 'Enter at least one cost (Capital or Raw Materials).'; return; }
+
+    var city = (CITIES || []).find(function(c){ return c.id === nationId; });
+    if (!city) { err.textContent = 'Nation not found.'; return; }
+
+    // Deduct resources
+    if (!data[nationId]) { err.textContent = 'No data for this nation.'; return; }
+    if (capCost > 0) {
+      data[nationId].capital = (data[nationId].capital || 0) - capCost;
+    }
+    if (rawCost > 0) {
+      data[nationId]['raw-materials'] = (data[nationId]['raw-materials'] || 0) - rawCost;
+    }
+
+    // Log entry
+    var entry = {
+      ts: Date.now(),
+      nationId: nationId,
+      nationName: city.name,
+      nationIcon: city.icon || '',
+      item: itemText,
+      capital: capCost,
+      raw: rawCost,
+      notes: notes,
+      round: currentRound
+    };
+    _buyLog.unshift(entry);
+
+    // Add to round history
+    var parts = [];
+    if (capCost > 0) parts.push('−' + capCost + ' Capital');
+    if (rawCost > 0) parts.push('−' + rawCost + ' Raw Materials');
+    roundHistory.unshift({
+      round: currentRound,
+      changes: [],
+      label: '🛒 Purchase: ' + city.icon + ' ' + city.name + ' bought "' + itemText + '" (' + parts.join(', ') + ')' + (notes ? ' — ' + notes : ''),
+      icon: '🛒'
+    });
+
+    save();
+    renderScoreboard();
+    window.fbPushState && window.fbPushState();
+    window._renderBuyLog();
+    showToastMsg('✅ Purchase applied: ' + city.name + ' bought "' + itemText + '"');
+
+    // Clear form
+    document.getElementById('buyItemText').value = '';
+    document.getElementById('buyCapitalCost').value = '';
+    document.getElementById('buyRawCost').value = '';
+    document.getElementById('buyNotes').value = '';
+  };
+
+  window._renderBuyLog = function() {
+    var el = document.getElementById('buyLog');
+    if (!el) return;
+    if (_buyLog.length === 0) {
+      el.innerHTML = '<div style="text-align:center;opacity:0.4;padding:20px;">No purchases yet</div>';
+      return;
+    }
+    el.innerHTML = _buyLog.map(function(e) {
+      var parts = [];
+      if (e.capital > 0) parts.push('💰 −' + e.capital);
+      if (e.raw > 0)     parts.push('⛏️ −' + e.raw);
+      return '<div style="padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.06);">'
+        + '<div style="display:flex;justify-content:space-between;align-items:center;">'
+          + '<span style="color:var(--text);font-weight:600;">' + (e.nationIcon||'') + ' ' + e.nationName + '</span>'
+          + '<span style="color:var(--text-muted);font-size:0.55rem;">R' + e.round + ' · ' + new Date(e.ts).toLocaleTimeString() + '</span>'
+        + '</div>'
+        + '<div style="color:var(--cyan);margin:2px 0 3px;">"' + e.item + '"</div>'
+        + '<div style="color:#ef4444;font-size:0.62rem;">' + parts.join('  ') + '</div>'
+        + (e.notes ? '<div style="color:var(--text-muted);font-size:0.55rem;margin-top:2px;">' + e.notes + '</div>' : '')
+        + '</div>';
+    }).join('');
+  };
+
+  window._clearBuyLog = function() {
+    _buyLog = [];
+    window._renderBuyLog();
+  };
 })();
 </script>
 
