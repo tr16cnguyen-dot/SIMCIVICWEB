@@ -9198,6 +9198,10 @@ window.fbToggleViewers = function() {
   <div style="font-family:'Orbitron',sans-serif;font-size:1.4rem;font-weight:900;color:#f59e0b;letter-spacing:3px;margin-bottom:16px;">GLOBAL SUMMIT</div>
   <div id="summitAnnMsg" style="font-size:0.85rem;color:#e2e8f0;line-height:1.8;max-width:520px;margin-bottom:32px;"></div>
   <div style="font-size:0.6rem;color:#475569;letter-spacing:2px;">This screen will continue shortly...</div>
+  <button onclick="document.getElementById('summitAnnouncementOverlay').style.display='none'"
+    style="margin-top:20px;padding:6px 18px;border-radius:7px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.3);font-family:'Orbitron',sans-serif;font-size:0.5rem;cursor:pointer;letter-spacing:1px;">
+    ✕ DISMISS
+  </button>
 </div>
 
 <!-- ═══ TECH TAX MODAL ═══ -->
@@ -10359,6 +10363,14 @@ window.fbToggleViewers = function() {
     <div style="text-align:center;font-size:0.55rem;color:rgba(255,255,255,0.2);">
       Chosen side: relation → 85% (or 100% if already above 85%) &nbsp;|&nbsp; Rejected side: drops to lowest neutral level
       <br>If time runs out undecided nations remain neutral — no ally bonus or penalty.
+    </div>
+    <div style="text-align:center;margin-top:16px;">
+      <button onclick="(function(){var m=document.getElementById('allyDecisionModal');if(m)m.style.display='none';if(window._allyTimerInterval)clearInterval(window._allyTimerInterval);})()"
+        style="padding:5px 16px;border-radius:7px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.3);font-family:'Orbitron',sans-serif;font-size:0.52rem;font-weight:700;cursor:pointer;letter-spacing:1px;"
+        onmouseover="this.style.background='rgba(255,255,255,0.1)';this.style.color='rgba(255,255,255,0.6)'"
+        onmouseout="this.style.background='rgba(255,255,255,0.04)';this.style.color='rgba(255,255,255,0.3)'">
+        ✕ FORCE CLOSE (host only)
+      </button>
     </div>
   </div>
 </div>
@@ -24545,6 +24557,22 @@ function showExportModal() {
       ln('  (No events recorded)');
     }
 
+    // 6. Purchase / Buy Log
+    sec('6.  PURCHASE LOG (Buy Tab + Research Fees)');
+    const buyLogSnap = (typeof buyLog !== 'undefined' && Array.isArray(buyLog)) ? buyLog : [];
+    if (buyLogSnap && buyLogSnap.length) {
+      buyLogSnap.forEach((e, i) => {
+        const costs = [];
+        if (e.capital > 0) costs.push('💰 −' + e.capital + ' Capital');
+        if (e.raw > 0)     costs.push('⛏️ −' + e.raw + ' Raw Materials');
+        const costStr = costs.join('  ') || '(no cost recorded)';
+        ln('  ' + String(i+1).padStart(3) + '.  R' + (e.round||'?') + '  ' + (e.nationIcon||'·') + ' ' + (e.nationName||e.nationId||'') + '  —  "' + (e.item||'?') + '"  ' + costStr);
+        if (e.notes) ln('               ' + e.notes);
+      });
+    } else {
+      ln('  (No purchases recorded)');
+    }
+
     // Restore block
     blk(); hr();
     ln('  MACHINE-READABLE RESTORE BLOCK');
@@ -24596,6 +24624,7 @@ function showExportModal() {
         warImmuneRounds: _safe(()=>warImmuneRounds, {}),
         mapItems:        _safe(()=>mapItems, []),
         mapItemTypes:    _safe(()=>mapItemTypes, []),
+        buyLog:          _safe(()=>buyLog ? buyLog.slice() : [], []),
       };
 
       const jsonStr = JSON.stringify(restoreSnap);
@@ -26609,6 +26638,22 @@ function showCityPicker(playerName, anchorEl) {
             { cityId: 'synapse-city',  resourceId: 'capital', valueBefore: synBefore,   valueAfter: synBefore + 5,   delta:  5, explanation: 'AI Research income from ' + nationId + ' (' + ev.tier + ')' }
           ]
         });
+      }
+      // Record in buyLog so it appears in purchase history, exports, and saves
+      if (typeof buyLog !== 'undefined') {
+        var researchNation = (data && data[nationId]) || {};
+        buyLog.unshift({
+          ts: ev.ts || Date.now(),
+          round: (typeof currentRound !== 'undefined' ? currentRound : -1),
+          nationId: nationId,
+          nationName: researchNation.name || nationId,
+          nationIcon: researchNation.icon || '🔬',
+          item: 'AI Research (Synapse)',
+          capital: 5,
+          raw: 0,
+          notes: 'Research access fee — ' + (ev.tier || 'PAY5')
+        });
+        if (window._renderBuyLog) window._renderBuyLog();
       }
       // Push updated state to all viewers
       window.fbPushState && window.fbPushState();
