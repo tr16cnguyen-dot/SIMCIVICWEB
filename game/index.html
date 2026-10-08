@@ -9796,9 +9796,13 @@ window.fbToggleViewers = function() {
     <div class="ctrl-panel round-panel">
       <span style="font-size:1rem;">📋</span>
       <button class="btn-round" id="btnPrevRound" onclick="changeRound(-1)" disabled>−</button>
-      <div class="round-badge">
+      <div class="round-badge" title="Click round number to type manually">
         <span class="r-label">R</span>
-        <span class="r-num" id="roundNum">1</span>
+        <span class="r-num" id="roundNum" contenteditable="false"
+          onclick="(function(el){el.contentEditable='true';el.focus();var r=document.createRange();r.selectNodeContents(el);var s=window.getSelection();s.removeAllRanges();s.addRange(r);})(this)"
+          onblur="(function(el){el.contentEditable='false';var v=parseInt(el.textContent,10);if(!isNaN(v)&&v>=1&&v<=99){currentRound=v;if(typeof maxAppliedRound!=='undefined')maxAppliedRound=v-1;updateRoundUI();}else{el.textContent=currentRound;}})(this)"
+          onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}if(event.key==='Escape'){this.contentEditable='false';this.textContent=currentRound;}"
+          style="cursor:text;min-width:1.2em;display:inline-block;">1</span>
       </div>
       <button class="btn-round" id="btnNextRound" onclick="changeRound(1)" disabled>+</button>
       <span class="past-badge" id="pastBadge" style="display:none;">⏪ Viewing past state</span>
@@ -20049,9 +20053,10 @@ function _doUndoRound() {
   // boundary if the round gets replayed and needs undoing again, and it backs the
   // round-history scrubber.
 
-  // Remove the round's history entry (first matching round entry)
-  const idx = roundHistory.findIndex(h => h.round === maxAppliedRound);
-  if (idx !== -1) roundHistory.splice(idx, 1);
+  // Remove ALL history entries from this round (trades, events, card activations, etc.)
+  for (var _ui = roundHistory.length - 1; _ui >= 0; _ui--) {
+    if (roundHistory[_ui].round === maxAppliedRound) roundHistory.splice(_ui, 1);
+  }
 
   maxAppliedRound = maxAppliedRound - 1;
   currentRound    = maxAppliedRound + 1;
