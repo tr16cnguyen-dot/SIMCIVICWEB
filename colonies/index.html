@@ -332,12 +332,13 @@ body.student header .tabs, body.student #fs, body.student #sync, body.student #b
     <div class="desk" style="margin-top:18px">
       <div class="panel">
         <h2>Record an action</h2>
-        <p class="sub">Every action updates the board right away. Builds: Homes and Fort (2 Lumber, +2), Meeting House (2 Lumber, 1 Tools, +3), Wharf (3 Lumber, 1 Iron, +3), Gristmill (2 Lumber, 1 Iron, 2 Grain, +4), Market Hall (2 Lumber, 6 coins, +4), Schoolhouse (2 Lumber, 1 Tools, 1 Whale Oil, +4), Shipyard (3 Lumber, 1 Naval Stores, 1 Iron, +5), Print Shop (1 each Lumber, Iron, Tools, Whale Oil, Cloth, +5).</p>
+        <p class="sub">Every action updates the board right away. Builds: Homes and Fort (2 Lumber, +2), Meeting House (2 Lumber, 1 Tools, +3), Wharf (3 Lumber, 1 Iron, +3), Gristmill (2 Lumber, 1 Iron, 2 Grain, +4), Market Hall (2 Lumber, 6 coins, +4), Schoolhouse (2 Lumber, 1 Tools, 1 Whale Oil, +4), Shipyard (3 Lumber, 1 Naval Stores, 1 Iron, +5), Print Shop (1 each Lumber, Iron, Tools, Whale Oil, Cloth, +5). Each build comes with a craft kit to hand over. Every colony gets a free starter kit on Day 1: a cardboard base plus green and blue paper.</p>
         <div class="seg" role="group" aria-label="Action type">
           <button aria-pressed="true" data-act="sell">Sell to ship</button>
           <button aria-pressed="false" data-act="buy">Buy from ship</button>
           <button aria-pressed="false" data-act="trade">Colony trade</button>
           <button aria-pressed="false" data-act="build">Build</button>
+          <button aria-pressed="false" data-act="shop">Artisan Shop</button>
           <button aria-pressed="false" data-act="points">Points</button>
         </div>
 
@@ -401,6 +402,9 @@ body.student header .tabs, body.student #fs, body.student #sync, body.student #b
                 <option>Colony Report: all four parts</option>
                 <option>Strong evidence and vocabulary</option>
                 <option>Teamwork bonus</option>
+                <option>Settlement model: neat and finished</option>
+                <option>Settlement model: shows the colony's geography</option>
+                <option>Settlement model: shows the colony's culture or motto</option>
                 <option>Penalty</option>
               </select>
             </div>
@@ -415,6 +419,15 @@ body.student header .tabs, body.student #fs, body.student #sync, body.student #b
           </div>
           <div class="preview" id="bd-prev"></div>
           <div><button class="btn primary" type="submit">Record build</button></div>
+        </form>
+        <form class="form" id="f-shop" hidden>
+          <div class="row">
+            <div class="field"><label for="sh-col">Colony</label><select id="sh-col"></select></div>
+            <div class="field"><label for="sh-item">Craft item</label><select id="sh-item"></select></div>
+            <div class="field sm"><label for="sh-qty">Qty</label><input id="sh-qty" type="number" min="1" value="1"></div>
+          </div>
+          <div class="preview" id="sh-prev"></div>
+          <div><button class="btn primary" type="submit">Record purchase</button></div>
         </form>
         <div class="msg" id="act-msg" hidden></div>
       </div>
@@ -545,6 +558,27 @@ const BUILDS = [
   { id: "print", name: "Print Shop", pts: 5, cost: { lumber: 1, iron: 1, tools: 1, whale: 1, cloth: 1 } }
 ];
 const BLD = Object.fromEntries(BUILDS.map(b => [b.id, b]));
+const KITS = {
+  homes: "12 craft sticks, 2 index cards (roofs)",
+  meeting: "10 craft sticks, 1 index card, 1 toothpick (steeple)",
+  wharf: "12 craft sticks, 4 toothpicks, 1 blue paper strip (water)",
+  gristmill: "1 paper cup, 1 cardboard circle (water wheel), 6 craft sticks",
+  market: "10 craft sticks, 1 felt square (awning)",
+  school: "10 craft sticks, 1 index card, 2 mini craft sticks (bell tower)",
+  shipyard: "12 craft sticks, 1 piece of clay, 1 piece of string",
+  print: "8 craft sticks, 1 index card, 1 sheet of paper (tiny newspaper)"
+};
+const SHOP = [
+  { id: "sticks", name: "5 extra craft sticks", price: 1 },
+  { id: "picks", name: "10 toothpicks", price: 1 },
+  { id: "pipes", name: "3 pipe cleaners", price: 1 },
+  { id: "cotton", name: "3 cotton balls", price: 1 },
+  { id: "card", name: "1 index card", price: 1 },
+  { id: "clay", name: "Clay ball", price: 2 },
+  { id: "felt", name: "Felt square", price: 2 },
+  { id: "flag", name: "Colony flag kit", price: 2 }
+];
+const SHOPI = Object.fromEntries(SHOP.map(x => [x.id, x]));
 
 // Each era sets base prices. A small random wobble and a "flooded market" drop are added when the round opens.
 const B = (o) => Object.assign({ fish: 2, grain: 2, rice: 3, lumber: 2, whale: 3, iron: 3, furs: 4, tobacco: 4, indigo: null, naval: 3, ginseng: 0, cloth: 4, tea: 3, tools: 4 }, o);
@@ -773,7 +807,8 @@ function renderDesk() {
   $("btn-undo").disabled = !undo.length;
   $("btn-reveal").textContent = S.revealed ? "Hide the name (show Mystery Root)" : "Reveal: Mystery Root is Ginseng";
   const cols = COLONIES.map(c => ({ v: c.id, t: c.name }));
-  ["sell-col", "buy-col", "ta-col", "tb-col", "pt-col", "bd-col"].forEach(id => fillSelect(id, cols));
+  ["sell-col", "buy-col", "ta-col", "tb-col", "pt-col", "bd-col", "sh-col"].forEach(id => fillSelect(id, cols));
+  fillSelect("sh-item", SHOP.map(x => ({ v: x.id, t: `${x.name} (${x.price} coin${x.price > 1 ? "s" : ""})` })));
   fillSelect("bd-what", BUILDS.map(b => ({ v: b.id, t: `${b.name} (+${b.pts} points)` })));
   if (!$("tb-col").dataset.init) { $("tb-col").value = "va"; $("tb-col").dataset.init = 1; }
   fillSelect("sell-good", GOODS.filter(g => g.ship && price(g.id)).map(g => ({ v: g.id, t: `${gname(g.id)} (${price(g.id)} each)` })));
@@ -807,7 +842,12 @@ function previews() {
   if (bdc && bdw) {
     const bl = BLD[bdw], s = S.colonies[bdc];
     const parts = Object.entries(bl.cost).map(([k, q]) => { const have = k === "coins" ? s.coins : s.inv[k]; return `<span class="${have >= q ? "up" : "down"}">${q} ${k === "coins" ? "coins" : esc(gname(k))} (has ${have})</span>`; });
-    $("bd-prev").innerHTML = s.built.includes(bdw) ? `${esc(COL[bdc].name)} already built a ${esc(bl.name)}.` : `Costs ${parts.join(", ")}. Earns <b>+${bl.pts} points</b>.`;
+    $("bd-prev").innerHTML = s.built.includes(bdw) ? `${esc(COL[bdc].name)} already built a ${esc(bl.name)}.` : `Costs ${parts.join(", ")}. Earns <b>+${bl.pts} points</b>.<br>Craft kit to hand over: <b>${esc(KITS[bdw])}</b>.`;
+  }
+  const shc = $("sh-col").value, shi = $("sh-item").value, shq = Math.max(0, Math.floor(+$("sh-qty").value || 0));
+  if (shc && shi) {
+    const it = SHOPI[shi], cost = it.price * shq;
+    $("sh-prev").innerHTML = `${esc(COL[shc].name)} has <b>${S.colonies[shc].coins} coins</b>. ${shq} × ${esc(it.name)} costs <b>${cost} coin${cost === 1 ? "" : "s"}</b>. Glue, tape, scissors and markers are free.`;
   }
   const a = $("ta-col").value, b = $("tb-col").value;
   const side = (col, g, q, coins) => { const parts = []; if (g && q > 0) parts.push(`${q} ${gname(g)}`); if (coins > 0) parts.push(`${coins} coins`); return parts.length ? parts.join(" + ") : "nothing"; };
@@ -870,7 +910,15 @@ function doBuild(ev) {
     s.built.push(w); s.points += bl.pts;
     log("Build", `${COL[c].name} built a ${bl.name} (+${bl.pts}).`);
   });
-  say(`${COL[c].name} built a ${bl.name}: +${bl.pts} points.`, true);
+  say(`${COL[c].name} built a ${bl.name}: +${bl.pts} points. Hand over the kit: ${KITS[w]}.`, true);
+}
+function doShop(ev) {
+  ev.preventDefault();
+  const c = $("sh-col").value, it = SHOPI[$("sh-item").value], q = Math.floor(+$("sh-qty").value || 0), cost = it.price * q, s = S.colonies[c];
+  if (q < 1) return say("Enter a quantity of 1 or more.");
+  if (s.coins < cost) return say(`${COL[c].name} has ${s.coins} coins and needs ${cost}.`);
+  commit(() => { s.coins -= cost; s.shopSpent = (s.shopSpent || 0) + cost; log("Shop", `${COL[c].name} bought ${q} × ${it.name} from the Artisan Shop for ${cost} coin${cost === 1 ? "" : "s"}.`); });
+  say(`Recorded: ${COL[c].name} spent ${cost} coin${cost === 1 ? "" : "s"}. Hand over ${q} × ${it.name}.`, true);
 }
 function doPoints(ev) {
   ev.preventDefault();
@@ -960,7 +1008,7 @@ document.addEventListener("click", ev => {
 document.querySelectorAll(".seg button").forEach(b => b.addEventListener("click", () => {
   act = b.dataset.act;
   document.querySelectorAll(".seg button").forEach(x => x.setAttribute("aria-pressed", x === b));
-  ["sell", "buy", "trade", "build", "points"].forEach(k => $("f-" + k).hidden = k !== act);
+  ["sell", "buy", "trade", "build", "shop", "points"].forEach(k => $("f-" + k).hidden = k !== act);
   $("act-msg").hidden = true;
 }));
 document.querySelectorAll("#view-desk select, #view-desk input").forEach(el => el.addEventListener("input", previews));
@@ -969,6 +1017,7 @@ $("f-buy").addEventListener("submit", doBuy);
 $("f-trade").addEventListener("submit", doTrade);
 $("f-points").addEventListener("submit", doPoints);
 $("f-build").addEventListener("submit", doBuild);
+$("f-shop").addEventListener("submit", doShop);
 $("btn-harvest").addEventListener("click", doHarvest);
 $("btn-end").addEventListener("click", () => {
   $("end-confirm-text").textContent = (S.harvested ? "" : "Harvest hasn't been collected this round. ") + (S.round === LAST ? "End the final round? This runs the last needs check." : "End the round? This runs the needs check and moves to " + ERAS[S.round].year + ".");
@@ -1125,7 +1174,7 @@ function renderStudent() {
     if (s.built.includes(b.id)) return `<div class="si"><span class="sn">${esc(b.name)}</span><span class="sv up">Built ✓ <small>+${b.pts} points</small></span></div>`;
     const miss = Object.entries(b.cost).filter(([k, q]) => (k === "coins" ? s.coins : s.inv[k]) < q).map(([k, q]) => `${q - (k === "coins" ? s.coins : s.inv[k])} more ${k === "coins" ? "coins" : gname(k)}`);
     const cost = Object.entries(b.cost).map(([k, q]) => `${q} ${k === "coins" ? "coins" : gname(k)}`).join(", ");
-    return `<div class="si"><span class="sn">${esc(b.name)}<small style="display:block;font-family:var(--body);font-style:italic;font-size:.8rem;color:var(--ink-3)">${esc(cost)}</small></span><span class="sv ${miss.length ? "" : "up"}">${miss.length ? "Need " + esc(miss.join(", ")) : "Can build now!"}<small>+${b.pts} points</small></span></div>`;
+    return `<div class="si"><span class="sn">${esc(b.name)}<small style="display:block;font-family:var(--body);font-style:italic;font-size:.8rem;color:var(--ink-3)">${esc(cost)}</small><small style="display:block;font-family:var(--body);font-size:.78rem;color:var(--ink-3)">Kit: ${esc(KITS[b.id])}</small></span><span class="sv ${miss.length ? "" : "up"}">${miss.length ? "Need " + esc(miss.join(", ")) : "Can build now!"}<small>+${b.pts} points</small></span></div>`;
   };
   $("stu").innerHTML = `
     <div class="stu-top"><h2>${regionTag(c)}${esc(c.name)}</h2><button class="btn" id="stu-leave" type="button">Leave</button></div>
@@ -1154,7 +1203,8 @@ function renderStudent() {
       <div class="slist">${sellable.map(marketRow).join("")}</div>
       <p class="sub" style="margin:10px 0 0">Ship sells: ${CROWN.map(g => `${g.name} ${price(g.id)}`).join(" · ")}</p>
     </div>
-    <div class="panel"><h2>Buildings</h2><p class="sub">Each one can be built once.</p><div class="slist">${BUILDS.map(buildRow).join("")}</div></div>
+    <div class="panel"><h2>Buildings</h2><p class="sub">Each one can be built once. Paying for a building gets your Builder its craft kit.</p><div class="slist">${BUILDS.map(buildRow).join("")}</div></div>
+    <div class="panel"><h2>Artisan Shop</h2><p class="sub">Extra decorations for your settlement model. Ask the facilitator. Glue, tape, scissors and markers are free.</p><div class="slist">${SHOP.map(x => `<div class="si"><span class="sn">${esc(x.name)}</span><span class="sv">${x.price} coin${x.price > 1 ? "s" : ""}</span></div>`).join("")}</div></div>
     <div class="panel"><h2>Colony standings</h2><div class="slist">${ranked.map((x, i) => `<div class="si${x.id === myCol ? " me" : ""}"><span class="sn">${i + 1}. ${esc(x.name)}</span><span class="sv"><b>${S.colonies[x.id].points}</b> pts</span></div>`).join("")}</div></div>
     <div class="panel"><h2>Our recent activity</h2><div class="slist">${mine.length ? mine.map(l => `<div class="si"><span>${esc(l.text)}</span><span class="sv"><small>${l.y}</small></span></div>`).join("") : '<p class="sub">Nothing yet.</p>'}</div></div>`;
   $("stu-leave").addEventListener("click", leaveStudent);
