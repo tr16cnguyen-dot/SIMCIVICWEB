@@ -636,7 +636,7 @@ nav{backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:
     <div style="position:relative;flex-shrink:0;">
       <button id="btnNavMenu" onclick="toggleNavMenu(event)" aria-label="Site navigation" aria-expanded="false" style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:6px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.05);color:var(--ink);font-size:1.1rem;cursor:pointer;">☰</button>
       <div id="navMenuDropdown" style="display:none;position:absolute;top:calc(100% + 8px);left:0;min-width:170px;background:#0c1020;border:1px solid var(--border);border-radius:10px;padding:6px;box-shadow:0 12px 32px rgba(0,0,0,0.5);z-index:300;flex-direction:column;gap:2px;">
-        <a id="navMenuStartGame" href="/game/" target="_blank" rel="noopener noreferrer" data-external onclick="closeNavMenu()" style="display:none;text-align:left;padding:9px 12px;border-radius:6px;background:rgba(219,166,66,0.12);color:var(--gold);font-family:'Syne',sans-serif;font-weight:700;font-size:0.85rem;text-decoration:none;margin-bottom:4px;">Start Game →</a>
+        <a id="navMenuStartGame" href="/game/" target="_blank" rel="noopener noreferrer" data-external data-start-game onclick="closeNavMenu()" style="display:none;text-align:left;padding:9px 12px;border-radius:6px;background:rgba(219,166,66,0.12);color:var(--gold);font-family:'Syne',sans-serif;font-weight:700;font-size:0.85rem;text-decoration:none;margin-bottom:4px;">Start Game →</a>
         <button data-page="nations"   data-page-btn="nations"   onclick="closeNavMenu()" style="text-align:left;padding:9px 12px;border-radius:6px;border:none;background:none;color:var(--sub);font-family:'Inter',sans-serif;font-size:0.85rem;cursor:pointer;">Nations</button>
         <button data-page="roles"      data-page-btn="roles"      onclick="closeNavMenu()" style="text-align:left;padding:9px 12px;border-radius:6px;border:none;background:none;color:var(--sub);font-family:'Inter',sans-serif;font-size:0.85rem;cursor:pointer;">Roles</button>
         <button data-page="mechanics"  data-page-btn="mechanics"  onclick="closeNavMenu()" style="text-align:left;padding:9px 12px;border-radius:6px;border:none;background:none;color:var(--sub);font-family:'Inter',sans-serif;font-size:0.85rem;cursor:pointer;">Mechanics</button>
@@ -653,7 +653,7 @@ nav{backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:
       <button onclick="siteSignOut()" style="padding:3px 9px;border-radius:6px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.05);color:var(--sub);font-size:0.7rem;cursor:pointer;">Sign out</button>
     </div>
     <button id="btnEditToggle" onclick="toggleEditMode()" style="display:none;padding:7px 14px;border-radius:6px;border:1px solid rgba(219,166,66,0.4);background:rgba(219,166,66,0.1);color:var(--gold);font-family:'Inter',sans-serif;font-size:0.8rem;font-weight:600;cursor:pointer;flex-shrink:0;">✏ Edit</button>
-    <a id="navMainStartGame" href="/game/" target="_blank" rel="noopener noreferrer" data-external class="ncta" style="flex-shrink:0;">Start Game →</a>
+    <a id="navMainStartGame" href="/game/" target="_blank" rel="noopener noreferrer" data-external data-start-game class="ncta" style="flex-shrink:0;">Start Game →</a>
   </div>
 </nav>
 <script>
@@ -1548,7 +1548,7 @@ document.querySelectorAll('#navMenuDropdown button').forEach(function(b) {
     <h2 class="ctah" data-editable="cta-heading">Build. Lead.<br><em>Dominate.</em></h2>
     <p class="ctap" data-editable="cta-paragraph">Every round is a new challenge. Every decision has consequences. Will your nation rise to the top — or fall to war, poverty, and poor planning?</p>
     <div class="ctaa">
-      <a href="/game/" target="_blank" rel="noopener noreferrer" data-external class="btn-p">Start Game →</a>
+      <a href="/game/" target="_blank" rel="noopener noreferrer" data-external data-start-game class="btn-p">Start Game →</a>
       <button data-page="nations" class="btn-o">Explore Nations</button>
     </div>
   </div>
@@ -1567,9 +1567,68 @@ document.querySelectorAll('#navMenuDropdown button').forEach(function(b) {
     <button data-page="resources">Resources</button>
     <button data-page="contact">Contact</button>
     <a href="/game/" data-external>Dashboard</a>
+    <a href="/colonies/" data-external>13 Colonies Edition</a>
   </div>
   <div class="fcopy" data-editable="footer-copy">PBL City &amp; Nation Simulation</div>
 </footer>
+
+
+<!-- ═══ EDITION PICKER (opens from every Start Game button) ═══ -->
+<style>
+#editionPicker{position:fixed;inset:0;z-index:10000;display:none;align-items:center;justify-content:center;padding:24px 16px;background:rgba(4,6,13,0.82);backdrop-filter:blur(10px);overflow-y:auto;}
+#editionPicker.open{display:flex;}
+.ep-box{position:relative;width:min(760px,100%);background:#0c1020;border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:30px 28px 24px;box-shadow:0 24px 60px rgba(0,0,0,0.6);}
+.ep-eye{font-family:'Space Mono',monospace;font-size:0.6rem;letter-spacing:0.22em;color:var(--gold);text-transform:uppercase;margin-bottom:8px;}
+.ep-h{font-family:'Syne',sans-serif;font-weight:800;font-size:1.7rem;color:var(--ink);margin:0 0 6px;line-height:1.15;}
+.ep-p{color:var(--sub);font-size:0.9rem;margin:0 0 20px;}
+.ep-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.ep-card{display:flex;flex-direction:column;gap:8px;padding:20px;border-radius:10px;text-decoration:none;color:var(--ink);border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.03);transition:border-color 0.2s,transform 0.2s,background 0.2s;}
+.ep-card:hover,.ep-card:focus-visible{border-color:var(--gold);transform:translateY(-2px);background:rgba(219,166,66,0.06);outline:none;}
+.ep-tag{align-self:flex-start;font-family:'Space Mono',monospace;font-size:0.55rem;letter-spacing:0.16em;text-transform:uppercase;padding:3px 8px;border-radius:4px;border:1px solid rgba(255,255,255,0.15);color:var(--sub);}
+.ep-card.colonies .ep-tag{border-color:rgba(219,166,66,0.5);color:var(--gold);}
+.ep-name{font-family:'Syne',sans-serif;font-weight:800;font-size:1.2rem;line-height:1.2;}
+.ep-card.colonies .ep-name{font-family:'Playfair Display',serif;font-style:italic;font-weight:700;font-size:1.35rem;}
+.ep-desc{color:var(--sub);font-size:0.85rem;line-height:1.5;flex:1;}
+.ep-go{font-family:'Syne',sans-serif;font-weight:700;font-size:0.85rem;color:var(--gold);}
+.ep-note{color:var(--sub);font-size:0.78rem;margin:16px 0 0;text-align:center;}
+.ep-x{position:absolute;top:12px;right:12px;width:34px;height:34px;border-radius:6px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.05);color:var(--ink);font-size:1.1rem;cursor:pointer;line-height:1;}
+@media(max-width:620px){.ep-grid{grid-template-columns:1fr;}.ep-box{padding:26px 18px 20px;}.ep-h{font-size:1.4rem;}}
+</style>
+<div id="editionPicker" role="dialog" aria-modal="true" aria-labelledby="epTitle">
+  <div class="ep-box">
+    <button class="ep-x" type="button" aria-label="Close" data-ep-close>×</button>
+    <div class="ep-eye">Start Game</div>
+    <h2 class="ep-h" id="epTitle">Choose your edition</h2>
+    <p class="ep-p">Facilitators open the board here. Students open the same edition on their device and enter the join code.</p>
+    <div class="ep-grid">
+      <a class="ep-card" href="/game/" target="_blank" rel="noopener noreferrer" data-external data-ep-close>
+        <span class="ep-tag">Original</span>
+        <span class="ep-name">SimCivic: Nations</span>
+        <span class="ep-desc">Five nations manage resources, trade, diplomacy and alliances in a live simulation.</span>
+        <span class="ep-go">Open the Nations board →</span>
+      </a>
+      <a class="ep-card colonies" href="/colonies/" target="_blank" rel="noopener noreferrer" data-external data-ep-close>
+        <span class="ep-tag">New · Grade 5</span>
+        <span class="ep-name">The 13 Colonies Edition</span>
+        <span class="ep-desc">Nine colonies trade, build and grow from 1700 to 1784, with prices that follow real colonial history.</span>
+        <span class="ep-go">Open the Colonies board →</span>
+      </a>
+    </div>
+    <p class="ep-note">Each edition has its own join codes.</p>
+  </div>
+</div>
+<script>
+(function(){
+  var picker=document.getElementById('editionPicker'); if(!picker) return;
+  var lastFocus=null;
+  function open(e){ e.preventDefault(); lastFocus=document.activeElement; picker.classList.add('open'); var first=picker.querySelector('.ep-card'); if(first) first.focus(); }
+  function close(){ picker.classList.remove('open'); if(lastFocus&&lastFocus.focus) lastFocus.focus(); }
+  document.querySelectorAll('[data-start-game]').forEach(function(a){ a.addEventListener('click', open); });
+  picker.querySelectorAll('[data-ep-close]').forEach(function(el){ el.addEventListener('click', function(){ setTimeout(close,0); }); });
+  picker.addEventListener('click', function(e){ if(e.target===picker) close(); });
+  document.addEventListener('keydown', function(e){ if(e.key==='Escape'&&picker.classList.contains('open')) close(); });
+})();
+</script>
 
 <!-- ═══ IN-PAGE EDIT MODE (admin-only, Firebase-backed) ═══ -->
 <style>
