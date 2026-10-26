@@ -10,10 +10,14 @@ Hosted via GitHub Pages at: `https://tr16cnguyen-dot.github.io/SIMCIVICWEB/`
 
 The interactive teacher/student scoreboard lives in a separate repo: [SimCivic](https://github.com/tr16cnguyen-dot/SimCivic)
 
+The live boards are served from this site: `/game/` (SimCivic: Nations) and `/colonies/` (The 13 Colonies Edition). Every Start Game button opens an edition picker.
+
 ## Project Structure
 
 ```
-index.html   — single-file landing page (HTML + CSS + JS, no build step)
+index.html          — single-file landing page (HTML + CSS + JS, no build step)
+game/index.html     — SimCivic: Nations scoreboard
+colonies/index.html — The 13 Colonies Edition scoreboard (join codes via the same Firebase project)
 LICENSE      — MIT
 SECURITY.md  — vulnerability reporting policy
 .gitignore   — standard web ignores
