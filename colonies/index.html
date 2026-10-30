@@ -462,7 +462,7 @@ body.student header .tabs, body.student #fs, body.student #sync, body.student #b
         </div>
         <div class="msg" id="restore-msg" hidden></div>
       </div>
-      <p class="foot">Each round needs: 3 food (Fish, Grain or Rice, at least 2 kinds), 1 Tools (or 1 Iron), and 1 Cloth. All met: +3 points. Each need missed: −1. Any colony-to-colony trade that round: +1. 1700 is a setup year with no needs check. Builds cost goods and earn points once per colony. Fish and Grain are colony food, so the ship won't buy them.</p>
+      <p class="foot">Each round needs: 3 food (Fish, Grain or Rice, at least 2 kinds), 1 Tools (or 1 Iron), and 1 Cloth. All met: +3 points. Each need missed: −1. Any colony-to-colony trade that round: +1. 1700 is a setup year with no needs check. Builds cost goods and earn points every time; each building has a limited number of kits for the whole class. Fish and Grain are colony food, so the ship won't buy them.</p>
     </div>
   </section>
 
@@ -548,16 +548,18 @@ const COLONIES = [
 const COL = Object.fromEntries(COLONIES.map(c => [c.id, c]));
 const START_COINS = 10;
 const BUILDS = [
-  { id: "homes", name: "Homes and Fort", pts: 2, cost: { lumber: 2 } },
-  { id: "meeting", name: "Meeting House", pts: 3, cost: { lumber: 2, tools: 1 } },
-  { id: "wharf", name: "Wharf", pts: 3, cost: { lumber: 3, iron: 1 } },
-  { id: "gristmill", name: "Gristmill", pts: 4, cost: { lumber: 2, iron: 1, grain: 2 } },
-  { id: "market", name: "Market Hall", pts: 4, cost: { lumber: 2, coins: 6 } },
-  { id: "school", name: "Schoolhouse", pts: 4, cost: { lumber: 2, tools: 1, whale: 1 } },
-  { id: "shipyard", name: "Shipyard", pts: 5, cost: { lumber: 3, naval: 1, iron: 1 } },
-  { id: "print", name: "Print Shop", pts: 5, cost: { lumber: 1, iron: 1, tools: 1, whale: 1, cloth: 1 } }
+  { id: "homes", kits: 20, name: "Homes and Fort", pts: 2, cost: { lumber: 2 } },
+  { id: "meeting", kits: 18, name: "Meeting House", pts: 3, cost: { lumber: 2, tools: 1 } },
+  { id: "wharf", kits: 6, name: "Wharf", pts: 3, cost: { lumber: 3, iron: 1 } },
+  { id: "gristmill", kits: 5, name: "Gristmill", pts: 4, cost: { lumber: 2, iron: 1, grain: 2 } },
+  { id: "market", kits: 9, name: "Market Hall", pts: 4, cost: { lumber: 2, coins: 6 } },
+  { id: "school", kits: 9, name: "Schoolhouse", pts: 4, cost: { lumber: 2, tools: 1, whale: 1 } },
+  { id: "shipyard", kits: 9, name: "Shipyard", pts: 5, cost: { lumber: 3, naval: 1, iron: 1 } },
+  { id: "print", kits: 9, name: "Print Shop", pts: 5, cost: { lumber: 1, iron: 1, tools: 1, whale: 1, cloth: 1 } }
 ];
 const BLD = Object.fromEntries(BUILDS.map(b => [b.id, b]));
+function builtCount(cid, bid) { return S.colonies[cid].built.filter(x => x === bid).length; }
+function kitsLeft(bid) { let used = 0; COLONIES.forEach(c => { used += builtCount(c.id, bid); }); return BLD[bid].kits - used; }
 const KITS = {
   homes: "12 craft sticks, 2 index cards (roofs)",
   meeting: "10 craft sticks, 1 index card, 1 toothpick (steeple)",
@@ -809,7 +811,7 @@ function renderDesk() {
   const cols = COLONIES.map(c => ({ v: c.id, t: c.name }));
   ["sell-col", "buy-col", "ta-col", "tb-col", "pt-col", "bd-col", "sh-col"].forEach(id => fillSelect(id, cols));
   fillSelect("sh-item", SHOP.map(x => ({ v: x.id, t: `${x.name} (${x.price} coin${x.price > 1 ? "s" : ""})` })));
-  fillSelect("bd-what", BUILDS.map(b => ({ v: b.id, t: `${b.name} (+${b.pts} points)` })));
+  fillSelect("bd-what", BUILDS.map(b => ({ v: b.id, t: `${b.name} (+${b.pts} points, ${kitsLeft(b.id)} kits left)` })));
   if (!$("tb-col").dataset.init) { $("tb-col").value = "va"; $("tb-col").dataset.init = 1; }
   fillSelect("sell-good", GOODS.filter(g => g.ship && price(g.id)).map(g => ({ v: g.id, t: `${gname(g.id)} (${price(g.id)} each)` })));
   fillSelect("buy-good", CROWN.map(g => ({ v: g.id, t: `${g.name} (${price(g.id)} each)` })));
@@ -825,7 +827,7 @@ function renderDesk() {
       <span class="${n.tools ? "y" : "n"}">${n.tools ? "✓" : "✗"} Tools or Iron</span>
       <span class="${n.cloth ? "y" : "n"}">${n.cloth ? "✓" : "✗"} Cloth</span>
       <span>Harvest: ${esc(yields)}</span>
-      <span>Built: ${s.built.length ? esc(s.built.map(x => BLD[x].name).join(", ")) : "nothing yet"}</span>
+      <span>Built: ${s.built.length ? esc(BUILDS.filter(b => s.built.includes(b.id)).map(b => b.name + (builtCount(deskCol, b.id) > 1 ? " ×" + builtCount(deskCol, b.id) : "")).join(", ")) : "nothing yet"}</span>
     </div>
     <div class="inv">
       <div class="invrow"><span class="gn">Coins</span><span class="step"><button data-adj="coins" data-d="-1" aria-label="Remove a coin">−</button><b>${s.coins}</b><button data-adj="coins" data-d="1" aria-label="Add a coin">+</button></span></div>
@@ -842,7 +844,8 @@ function previews() {
   if (bdc && bdw) {
     const bl = BLD[bdw], s = S.colonies[bdc];
     const parts = Object.entries(bl.cost).map(([k, q]) => { const have = k === "coins" ? s.coins : s.inv[k]; return `<span class="${have >= q ? "up" : "down"}">${q} ${k === "coins" ? "coins" : esc(gname(k))} (has ${have})</span>`; });
-    $("bd-prev").innerHTML = s.built.includes(bdw) ? `${esc(COL[bdc].name)} already built a ${esc(bl.name)}.` : `Costs ${parts.join(", ")}. Earns <b>+${bl.pts} points</b>.<br>Craft kit to hand over: <b>${esc(KITS[bdw])}</b>.`;
+    const left = kitsLeft(bdw), mine = builtCount(bdc, bdw);
+    $("bd-prev").innerHTML = left <= 0 ? `No ${esc(bl.name)} kits are left.` : `${esc(COL[bdc].name)} has built ${mine}. ${left} kit${left === 1 ? "" : "s"} left for the class. Costs ${parts.join(", ")}. Earns <b>+${bl.pts} points</b>.<br>Craft kit to hand over: <b>${esc(KITS[bdw])}</b>.`;
   }
   const shc = $("sh-col").value, shi = $("sh-item").value, shq = Math.max(0, Math.floor(+$("sh-qty").value || 0));
   if (shc && shi) {
@@ -902,7 +905,7 @@ function doTrade(ev) {
 function doBuild(ev) {
   ev.preventDefault();
   const c = $("bd-col").value, w = $("bd-what").value, bl = BLD[w], s = S.colonies[c];
-  if (s.built.includes(w)) return say(`${COL[c].name} already has a ${bl.name}. Each colony can build each one once.`);
+  if (kitsLeft(w) <= 0) return say(`No ${bl.name} kits are left.`);
   const short = Object.entries(bl.cost).filter(([k, q]) => (k === "coins" ? s.coins : s.inv[k]) < q).map(([k, q]) => `${q} ${k === "coins" ? "coins" : gname(k)}`);
   if (short.length) return say(`${COL[c].name} still needs: ${short.join(", ")}.`);
   commit(() => {
@@ -1171,10 +1174,11 @@ function renderStudent() {
   const sm = S.lastSummary && S.lastSummary.rows.find(r => r.id === myCol);
   const marketRow = g => { const p = price(g.id), d = delta(g.id); const tag = p === hiP ? '<span class="tag hi">most valuable</span>' : p === loP ? '<span class="tag lo">least valuable</span>' : ""; return `<div class="si"><span class="sn">${esc(gname(g.id))}${tag}</span><span class="sv"><b>${p}</b> <em class="${d.cls}" style="font-style:normal;font-size:.85rem">${d.txt}</em></span></div>`; };
   const buildRow = b => {
-    if (s.built.includes(b.id)) return `<div class="si"><span class="sn">${esc(b.name)}</span><span class="sv up">Built ✓ <small>+${b.pts} points</small></span></div>`;
+    const mineN = builtCount(myCol, b.id), left = kitsLeft(b.id);
+    if (left <= 0) return `<div class="si"><span class="sn">${esc(b.name)}${mineN ? " (built ×" + mineN + ")" : ""}</span><span class="sv">No kits left</span></div>`;
     const miss = Object.entries(b.cost).filter(([k, q]) => (k === "coins" ? s.coins : s.inv[k]) < q).map(([k, q]) => `${q - (k === "coins" ? s.coins : s.inv[k])} more ${k === "coins" ? "coins" : gname(k)}`);
     const cost = Object.entries(b.cost).map(([k, q]) => `${q} ${k === "coins" ? "coins" : gname(k)}`).join(", ");
-    return `<div class="si"><span class="sn">${esc(b.name)}<small style="display:block;font-family:var(--body);font-style:italic;font-size:.8rem;color:var(--ink-3)">${esc(cost)}</small><small style="display:block;font-family:var(--body);font-size:.78rem;color:var(--ink-3)">Kit: ${esc(KITS[b.id])}</small></span><span class="sv ${miss.length ? "" : "up"}">${miss.length ? "Need " + esc(miss.join(", ")) : "Can build now!"}<small>+${b.pts} points</small></span></div>`;
+    return `<div class="si"><span class="sn">${esc(b.name)}${mineN ? " (built ×" + mineN + ")" : ""}<small style="display:block;font-family:var(--body);font-style:italic;font-size:.8rem;color:var(--ink-3)">${esc(cost)} · ${left} kit${left === 1 ? "" : "s"} left</small><small style="display:block;font-family:var(--body);font-size:.78rem;color:var(--ink-3)">Kit: ${esc(KITS[b.id])}</small></span><span class="sv ${miss.length ? "" : "up"}">${miss.length ? "Need " + esc(miss.join(", ")) : "Can build now!"}<small>+${b.pts} points</small></span></div>`;
   };
   $("stu").innerHTML = `
     <div class="stu-top"><h2>${regionTag(c)}${esc(c.name)}</h2><button class="btn" id="stu-leave" type="button">Leave</button></div>
@@ -1203,7 +1207,7 @@ function renderStudent() {
       <div class="slist">${sellable.map(marketRow).join("")}</div>
       <p class="sub" style="margin:10px 0 0">Ship sells: ${CROWN.map(g => `${g.name} ${price(g.id)}`).join(" · ")}</p>
     </div>
-    <div class="panel"><h2>Buildings</h2><p class="sub">Each one can be built once. Paying for a building gets your Builder its craft kit.</p><div class="slist">${BUILDS.map(buildRow).join("")}</div></div>
+    <div class="panel"><h2>Buildings</h2><p class="sub">Build as many as you can afford while kits last. Paying for a building gets your Builder its craft kit.</p><div class="slist">${BUILDS.map(buildRow).join("")}</div></div>
     <div class="panel"><h2>Artisan Shop</h2><p class="sub">Extra decorations for your settlement model. Ask the facilitator. Glue, tape, scissors and markers are free.</p><div class="slist">${SHOP.map(x => `<div class="si"><span class="sn">${esc(x.name)}</span><span class="sv">${x.price} coin${x.price > 1 ? "s" : ""}</span></div>`).join("")}</div></div>
     <div class="panel"><h2>Colony standings</h2><div class="slist">${ranked.map((x, i) => `<div class="si${x.id === myCol ? " me" : ""}"><span class="sn">${i + 1}. ${esc(x.name)}</span><span class="sv"><b>${S.colonies[x.id].points}</b> pts</span></div>`).join("")}</div></div>
     <div class="panel"><h2>Our recent activity</h2><div class="slist">${mine.length ? mine.map(l => `<div class="si"><span>${esc(l.text)}</span><span class="sv"><small>${l.y}</small></span></div>`).join("") : '<p class="sub">Nothing yet.</p>'}</div></div>`;
