@@ -7739,8 +7739,9 @@ const RULES_SK     = 'city-monitor-rules-v5';
 const ROUND_SK     = 'city-monitor-round';
 const GLOBAL_EVENTS_KEY  = 'city-monitor-global-events-v5';
 const CITY_EVENTS_KEY    = 'city-monitor-city-events-v6';
-const GLOBAL_ENABLED_KEY = 'city-monitor-global-enabled-v5';
-const CITY_ENABLED_KEY   = 'city-monitor-city-enabled-v5';
+const GLOBAL_ENABLED_KEY    = 'city-monitor-global-enabled-v5';
+const CITY_ENABLED_KEY      = 'city-monitor-city-enabled-v5';
+const TRIGGERED_EVENTS_KEY  = 'city-monitor-triggered-events';
 const DRAFT_SK           = 'city-monitor-draft';
 
 function loadEventsFromStorage(key, defaults) {
@@ -7999,6 +8000,7 @@ let currentRound     = 1;
 let maxAppliedRound  = 0;
 let viewingRound     = null;
 let roundHistory     = [];
+let triggeredEventIds = new Set(); // tracks which event IDs have been fired this session
 
 // timer
 let timerDuration  = 300;
@@ -8056,10 +8058,11 @@ async function save() {
     [ROUND_SK,          { currentRound, maxAppliedRound }],
     [GLOBAL_EVENTS_KEY, globalEvents],
     [CITY_EVENTS_KEY,   cityEvents],
-    [GLOBAL_ENABLED_KEY,[...globalEnabled]],
-    [CITY_ENABLED_KEY,  Object.fromEntries(
+    [GLOBAL_ENABLED_KEY,   [...globalEnabled]],
+    [CITY_ENABLED_KEY,     Object.fromEntries(
       Object.entries(cityEnabledMap || {}).map(([k, v]) => [k, [...v]])
     )],
+    [TRIGGERED_EVENTS_KEY, [...(triggeredEventIds || new Set())]],
   ];
   for (const [key, value] of pairs) {
     try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
@@ -8227,19 +8230,21 @@ function showSaveIndicator() {
 async function loadFromLocalStorage() {
   const [
     savedData, savedSnaps, savedDescs, savedNotes, savedRules, savedRound,
-    savedGlobalEvts, savedCityEvts, savedGlobalEnabled, savedCityEnabled
+    savedGlobalEvts, savedCityEvts, savedGlobalEnabled, savedCityEnabled,
+    savedTriggeredEvts
   ] = await Promise.all([
     storageLoad(SK), storageLoad(SNAP_SK), storageLoad(ROUND_DESC_SK),
     storageLoad(ROUND_NOTES_SK), storageLoad(RULES_SK), storageLoad(ROUND_SK),
     storageLoad(GLOBAL_EVENTS_KEY), storageLoad(CITY_EVENTS_KEY),
     storageLoad(GLOBAL_ENABLED_KEY), storageLoad(CITY_ENABLED_KEY),
+    storageLoad(TRIGGERED_EVENTS_KEY),
   ]);
   if (savedData) {
-    // Only restore if version stamp matches AND data looks valid
-    if (savedData._version === DATA_VERSION && savedData['azure-bay']?.capital?.value === 110 && savedData['ironvale']?.capital?.value === 140) {
+    // Only clear if version stamp is missing or wrong — never check stat values
+    if (savedData._version === DATA_VERSION) {
       data = savedData;
     } else {
-      // Stale or invalid data — use fresh defaults, wipe storage
+      // Stale schema — use fresh defaults, wipe storage
       data = initData();
       try { localStorage.removeItem(SK); } catch {}
       try { window.storage?.delete(SK); } catch {}
@@ -8259,6 +8264,7 @@ async function loadFromLocalStorage() {
   if (savedGlobalEvts)  globalEvents  = savedGlobalEvts;
   if (savedCityEvts)    cityEvents    = savedCityEvts;
   if (savedGlobalEnabled) globalEnabled = new Set(savedGlobalEnabled);
+  if (savedTriggeredEvts && Array.isArray(savedTriggeredEvts)) triggeredEventIds = new Set(savedTriggeredEvts);
   if (savedCityEnabled) {
     if (Array.isArray(savedCityEnabled)) {
       cityEnabledMap = {};
@@ -13896,8 +13902,13 @@ function renderEventsPool() {
       }
     }
 
+    const wasTriggered = triggeredEventIds.has(evt.id);
+
     const row = document.createElement('div');
     row.className = `event-pool-row ${evt.severity}-row ${isEnabled ? 'enabled' : ''}`;
+    row.style.cssText = wasTriggered
+      ? 'position:relative; opacity:0.72;'
+      : 'position:relative;';
     row.innerHTML = `
       <input type="checkbox" class="event-checkbox" ${isEnabled ? 'checked' : ''} onchange="toggleEventEnabled('${evt.id}')">
       <span class="event-pool-icon">${evt.icon}</span>
@@ -13907,11 +13918,18 @@ function renderEventsPool() {
           ${evt.name}
           <span class="event-scope-badge scope-${evt.scope === 'all' ? 'all' : 'one'}">${scopeLabel}</span>
           ${evt.choices ? '<span class="event-scope-badge" style="background:rgba(168,85,247,0.15);color:var(--purple);border:none;">⚖️ Choice</span>' : ''}
+          ${wasTriggered ? `<span style="
+            font-family:'Orbitron',sans-serif; font-size:0.5rem; font-weight:800;
+            letter-spacing:1.5px; padding:2px 7px; border-radius:4px;
+            background:rgba(251,191,36,0.15); color:#fbbf24;
+            border:1px solid rgba(251,191,36,0.4); vertical-align:middle;
+          ">✓ TRIGGERED</span>` : ''}
         </div>
         <div class="event-pool-desc">${evt.desc}</div>
         <div class="event-pool-effects">${effectsHtml}</div>
       </div>
       <div class="event-pool-btns">
+        ${wasTriggered ? `<button class="btn-evt-edit" onclick="resetTriggeredEvent('${evt.id}')" title="Allow this event to show as untriggered again" style="color:#fbbf24;border-color:rgba(251,191,36,0.4);background:rgba(251,191,36,0.08);">↺ Reset</button>` : ''}
         <button class="btn-evt-edit" onclick="editEvent('${evt.id}')">✏️ Edit</button>
         <button class="btn-evt-delete" onclick="deleteEvent('${evt.id}')">🗑 Delete</button>
       </div>
@@ -14231,7 +14249,8 @@ function applyEventEffects(evt, affectedCityIds, effects) {
 
   const affectedNames = affectedCityIds.map(id => CITIES.find(c => c.id === id)?.name || id).join(', ');
   roundHistory.unshift({ round: -2, changes, label: `${evt.name} → ${affectedNames}`, icon: evt.icon });
-  save(); renderScoreboard(); renderHistory();
+  triggeredEventIds.add(evt.id);
+  save(); renderScoreboard(); renderHistory(); renderEventsPool();
   showToast(evt, affectedNames);
   playEventTrigger();
   setTimeout(() => {
@@ -14496,9 +14515,21 @@ function deleteEvent(evtId) {
     const idx = arr.findIndex(e => e.id === evtId);
     if (idx !== -1) arr.splice(idx, 1);
     currentEnabledSet().delete(evtId);
+    triggeredEventIds.delete(evtId);
     save();
     renderEventsPool();
   }, '🗑');
+}
+
+function resetTriggeredEvent(evtId) {
+  triggeredEventIds.delete(evtId);
+  save();
+  renderEventsPool();
+  showRuleAddedPopup({
+    label: 'Event can be triggered again',
+    resIcon: '↺', resName: 'Reset', delta: '',
+    target: '', condDisplay: '', positive: true,
+  });
 }
 
 function renderEventForm(evt) {
@@ -16844,6 +16875,8 @@ function buildSnapshot() {
     globalEnabled: [...globalEnabled],
     cityEnabledMap: Object.fromEntries(Object.entries(cityEnabledMap || {}).map(([k,v]) => [k,[...v]])),
     draftPool, draftRosters, teacherNames, teacherAssign, roleAssignments,
+    roundHistory: (roundHistory || []).slice(0, 200),
+    triggeredEventIds: [...(triggeredEventIds || new Set())],
   };
 }
 
@@ -17055,6 +17088,9 @@ function loadFromSlot(slotNum) {
     if (s.teacherNames)    teacherNames    = s.teacherNames;
     if (s.teacherAssign)   teacherAssign   = s.teacherAssign;
     if (s.roleAssignments) roleAssignments = s.roleAssignments;
+    if (s.roundHistory)    { roundHistory.length = 0; s.roundHistory.forEach(h => roundHistory.push(h)); }
+    if (s.triggeredEventIds) triggeredEventIds = new Set(s.triggeredEventIds);
+    else                     triggeredEventIds = new Set();
     viewingRound = null;
 
     // Re-render everything
