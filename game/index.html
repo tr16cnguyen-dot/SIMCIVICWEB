@@ -8016,21 +8016,22 @@ async function storageSave(key, value) {
   try { await window.storage.set(key, json); } catch {}
 }
 
-// Read: prefer localStorage (instant), fall back to window.storage.
+// Read: always try cloud storage first (authoritative, shared across accounts/devices).
+// Fall back to localStorage only when cloud is unavailable or returns nothing.
 async function storageLoad(key) {
-  // Try localStorage first (same session / same browser)
-  try {
-    const local = localStorage.getItem(key);
-    if (local) return JSON.parse(local);
-  } catch {}
-  // Fall back to cloud storage (different device / fresh browser)
+  // Always read from cloud first so a different account/device gets the latest save
   try {
     const result = await window.storage.get(key);
     if (result && result.value) {
-      // Warm the local cache
+      // Warm the local cache so same-session subsequent reads are fast
       try { localStorage.setItem(key, result.value); } catch {}
       return JSON.parse(result.value);
     }
+  } catch {}
+  // Cloud unavailable — fall back to this browser's localStorage
+  try {
+    const local = localStorage.getItem(key);
+    if (local) return JSON.parse(local);
   } catch {}
   return null;
 }
@@ -8069,14 +8070,16 @@ async function save() {
     window.fbPushState && window.fbPushState();
   }
 
-  // Also write to window.storage (existing cross-device)
-  // Swallow rejected promises so a storage failure never blocks the Firebase push above
-  Promise.all(pairs.map(([key, value]) => {
-    try {
-      const p = window.storage.set(key, JSON.stringify(value));
-      return (p && typeof p.then === 'function') ? p.catch(() => {}) : Promise.resolve();
-    } catch { return Promise.resolve(); }
-  })).catch(() => {});
+  // Also write to window.storage (cloud, cross-device/cross-account)
+  // Fire-and-forget but catch all rejections so nothing silently breaks
+  try {
+    await Promise.all(pairs.map(([key, value]) => {
+      try {
+        const p = window.storage.set(key, JSON.stringify(value));
+        return (p && typeof p.then === 'function') ? p.catch(() => {}) : Promise.resolve();
+      } catch { return Promise.resolve(); }
+    }));
+  } catch {}
 
   const ts = document.getElementById('lastUpdateTime');
   if (ts) ts.textContent = new Date().toLocaleTimeString('en-US', { timeZone:'America/New_York', hour:'2-digit', minute:'2-digit', second:'2-digit' });
