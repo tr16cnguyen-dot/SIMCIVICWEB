@@ -814,6 +814,7 @@ table.scoreboard tbody tr:hover td:nth-child(2) { background: #111827; }
   100% { transform: scale(1); }
 }
 .sync-pulse { animation: syncPulse 0.4s ease; }
+@keyframes rankChangePop {
   0%   { opacity: 0; transform: scale(0.4) translateY(-6px); }
   60%  { opacity: 1; transform: scale(1.15) translateY(0); }
   100% { opacity: 1; transform: scale(1); }
@@ -5571,7 +5572,7 @@ window.fbToggleViewers = function() {
   <div style="text-align:center;max-width:480px;padding:40px 32px;width:100%;">
     <div style="font-size:3.5rem;margin-bottom:20px;">🌐</div>
     <div style="font-family:'Orbitron',sans-serif;font-size:1.2rem;font-weight:900;color:#e2e8f0;letter-spacing:3px;margin-bottom:6px;">SIMCIVIC</div>
-    <div style="font-family:'Orbitron',sans-serif;font-size:0.6rem;color:#475569;letter-spacing:3px;margin-bottom:40px;">NATION RESOURCE MONITOR</div>
+    <div style="font-family:'Orbitron',sans-serif;font-size:0.6rem;color:#475569;letter-spacing:3px;margin-bottom:40px;">SIMCIVIC NATIONS</div>
 
     <!-- Host button -->
     <button onclick="document.getElementById('fbLandingScreen').style.display='none'" style="
@@ -5615,7 +5616,7 @@ window.fbToggleViewers = function() {
   <!-- Step 1: Enter code -->
   <div id="fbJoinStep1" style="text-align:center;max-width:420px;padding:40px 32px;">
     <div style="font-size:3rem;margin-bottom:16px;">🎮</div>
-    <div style="font-family:'Orbitron',sans-serif;font-size:1.1rem;font-weight:900;color:#e2e8f0;letter-spacing:2px;margin-bottom:6px;">NATION RESOURCE MONITOR</div>
+    <div style="font-family:'Orbitron',sans-serif;font-size:1.1rem;font-weight:900;color:#e2e8f0;letter-spacing:2px;margin-bottom:6px;">SIMCIVIC NATIONS</div>
     <div style="font-size:0.7rem;color:#64748b;margin-bottom:32px;letter-spacing:1px;">LIVE VIEWER</div>
     <div style="margin-bottom:20px;">
       <div style="font-size:0.65rem;color:#94a3b8;margin-bottom:8px;letter-spacing:1px;text-transform:uppercase;">Enter Join Code</div>
@@ -6076,8 +6077,8 @@ window.fbToggleViewers = function() {
       <div class="logo-block">
         <div class="logo-icon">🎮</div>
         <div>
-          <div class="logo-title">NATION RESOURCE MONITOR</div>
-          <div class="logo-sub">Nation Simulation Tracker</div>
+          <div class="logo-title">SIMCIVIC NATIONS</div>
+          <div class="logo-sub">SimCivic · Nations Edition</div>
         </div>
       </div>
 
@@ -6184,7 +6185,7 @@ window.fbToggleViewers = function() {
           <span class="r-hint">(saved per round)</span>
         </div>
         <div id="roundDescView" class="round-desc-text" onclick="editRoundDesc()">
-          <span id="roundDescText">Welcome! Set up your cities and prepare for Round 1.</span>
+          <span id="roundDescText">Welcome! Set up your nations and prepare for Round 1.</span>
           <span class="edit-hint"> ✏️ click to edit</span>
         </div>
         <div id="roundDescEdit" style="display:none;">
@@ -6249,7 +6250,7 @@ window.fbToggleViewers = function() {
         <div class="sb-grid-wrap" id="scoreboardWrap">
           <div class="sb-grid" id="scoreboard"></div>
         </div>
-        <div class="table-legend">✏️ Click any value to edit &nbsp;•&nbsp; Press Enter to save &nbsp;•&nbsp; Cities ranked by overall health score</div>
+        <div class="table-legend">✏️ Click any value to edit &nbsp;•&nbsp; Press Enter to save &nbsp;•&nbsp; Nations ranked by overall health score</div>
       </div>
     </div>
 
@@ -6317,7 +6318,7 @@ window.fbToggleViewers = function() {
             <div id="standardRuleForm">
               <div style="font-size:0.58rem;color:var(--text-muted);margin-bottom:8px;">
                 Applies to:
-                <label style="cursor:pointer;margin-right:8px;"><input type="radio" name="ruleScope" value="all" checked onchange="toggleCitySelector()"> All cities</label>
+                <label style="cursor:pointer;margin-right:8px;"><input type="radio" name="ruleScope" value="all" checked onchange="toggleCitySelector()"> All countries</label>
                 <label style="cursor:pointer;"><input type="radio" name="ruleScope" value="specific" onchange="toggleCitySelector()"> Specific country</label>
               </div>
               <div id="ruleCitySelector" style="display:none;margin-bottom:8px;">
@@ -6492,7 +6493,7 @@ window.fbToggleViewers = function() {
   </div><!-- end main-layout -->
 
   <footer id="scoreboardFooter">
-    <p>CITY SIMULATOR DASHBOARD v2.0 &nbsp;•&nbsp; CITY SIMULATION &nbsp;•&nbsp; STONEWALL CITY SIM</p>
+    <p>SIMCIVIC NATIONS &nbsp;•&nbsp; Nation Simulation Dashboard &nbsp;•&nbsp; SimCivic</p>
   </footer>
 </div><!-- end scoreboard-page -->
 
@@ -7243,7 +7244,7 @@ const GLOBAL_EVENTS = [
     id: 'global-pest', name: 'Global Pest Infestation', icon: '🐛',
     desc: 'Crops fail worldwide due to a massive pest outbreak.',
     scope: 'all', severity: 'negative',
-    textMessage: 'A global pest outbreak reduces food supply across all cities!',
+    textMessage: 'A global pest outbreak reduces food supply across all nations!',
     effects: [{r:'food',d:-10},{r:'population',d:-5}],
     politicalEffects: [{cityId:'global', delta:-5}]
   },
@@ -7279,7 +7280,7 @@ const GLOBAL_EVENTS = [
     id: 'global-resource-discovery', name: 'Resource Discovery', icon: '⛰️',
     desc: 'New natural resources are discovered underground across the region.',
     scope: 'all', severity: 'positive',
-    textMessage: 'New natural resources discovered beneath all cities!',
+    textMessage: 'New natural resources discovered beneath all nations!',
     effects: [{r:'raw-materials',d:12},{r:'pollution',d:5}],
     politicalEffects: [{cityId:'global', delta:5}]
   },
@@ -7296,15 +7297,15 @@ const GLOBAL_EVENTS = [
   },
   {
     id: 'global-tech-boom', name: 'Global Tech Boom', icon: '🚀',
-    desc: 'A wave of technological improvements boosts efficiency in all cities.',
+    desc: 'A wave of technological improvements boosts efficiency in all nations.',
     scope: 'all', severity: 'positive',
-    textMessage: 'A global tech boom benefits all cities!',
+    textMessage: 'A global tech boom benefits all nations!',
     effects: [{r:'capital',d:10},{r:'happiness',d:5}],
     politicalEffects: [{cityId:'global', delta:7}]
   },
   {
     id: 'global-oil-gift', name: 'Oil Reserve Gift', icon: '🛢️',
-    desc: 'Shared oil reserves become available to all cities.',
+    desc: 'Shared oil reserves become available to all nations.',
     scope: 'all', severity: 'neutral',
     textMessage: 'Accept shared global oil reserves?',
     effects: [],
@@ -7315,16 +7316,16 @@ const GLOBAL_EVENTS = [
   },
   {
     id: 'global-cultural-renaissance', name: 'Cultural Renaissance', icon: '🎭',
-    desc: 'Art, music, and cultural unity spread across all cities.',
+    desc: 'Art, music, and cultural unity spread across all nations.',
     scope: 'all', severity: 'positive',
-    textMessage: 'A cultural revival sweeps across all cities!',
+    textMessage: 'A cultural revival sweeps across all nations!',
     effects: [{r:'happiness',d:8}]
   },
   {
     id: 'global-renewable-energy', name: 'Renewable Energy Breakthrough', icon: '🌿',
     desc: 'Cleaner energy solutions become available worldwide, reducing pollution.',
     scope: 'all', severity: 'positive',
-    textMessage: 'Renewable energy improves sustainability for all cities!',
+    textMessage: 'Renewable energy improves sustainability for all nations!',
     effects: [{r:'capital',d:6},{r:'pollution',d:-10}]
   },
   {
@@ -14981,7 +14982,7 @@ function renderRules() {
         <div class="rule-row-left">
           <div class="rule-text-block">
             <span class="rule-label-text">${city ? `${city.icon} ${city.name}: ` : ''}${rule.label}</span>
-            <span class="rule-sub">${res?.icon||''} ${res?.name||rule.resource_id} ${deltaStr} —${condStr}${citySpecific?' (city-specific)':' (all cities)'}</span>
+            <span class="rule-sub">${res?.icon||''} ${res?.name||rule.resource_id} ${deltaStr} —${condStr}${citySpecific?' (country-specific)':' (all countries)'}</span>
           </div>
         </div>
         <button class="btn-delete-rule" onclick="deleteRuleByKey('${rule.resource_id}','${rule.delta}','${(rule.condition||'').replace(/'/g,"\\'")}','${(rule.label||'').replace(/'/g,"\\'")}','${rule.city_specific?rule.city_id:''}')">✕</button>
@@ -16256,7 +16257,7 @@ function showExportModal() {
 
   // ══ COVER ══════════════════════════════════════════════
   ln(SEP,
-    '         STONEWALL CITY SIMULATION',
+    '         SIMCIVIC NATIONS SIMULATION',
     '               COMPLETE GAME SUMMARY',
     '',
     `  Generated : ${now}`,
@@ -17518,7 +17519,7 @@ function renderDraftPage() {
                 onkeydown="if(event.key==='Enter') addPlayer()">
               <button class="draft-btn-add" onclick="addPlayer()">+ Add Player</button>
               <div class="draft-pool-actions">
-                <button class="draft-btn-secondary" onclick="shufflePool()" title="Randomly redistribute drafted players across all cities">🔀 Shuffle Teams</button>
+                <button class="draft-btn-secondary" onclick="shufflePool()" title="Randomly redistribute drafted players across all nations">🔀 Shuffle Teams</button>
                 <button class="draft-btn-secondary" onclick="clearAllDrafted()" title="Return everyone to pool">↩ Return All</button>
               </div>
               <button class="draft-btn-danger" onclick="resetDraft()">🗑 Clear All Players</button>
