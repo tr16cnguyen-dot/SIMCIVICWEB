@@ -16822,6 +16822,36 @@ function renderSlotsList() {
         <div style="font-size:0.58rem; color:#475569; margin-top:1px;">R${slot.round} · ${timeStr}</div>
       `;
     }
+
+    // Screenshot thumbnail (shown before info area, only on filled slots with a screenshot)
+    if (!isEmpty && slot.screenshot) {
+      const thumb = document.createElement('div');
+      thumb.title = 'Click to preview full screenshot';
+      thumb.style.cssText = `
+        flex-shrink:0; width:64px; height:40px; border-radius:6px; overflow:hidden;
+        border:1px solid rgba(6,182,212,0.25); cursor:pointer; position:relative;
+        background:#0d1526;
+      `;
+      thumb.innerHTML = `
+        <img src="${slot.screenshot}" style="width:100%;height:100%;object-fit:cover;display:block;">
+        <div style="position:absolute;inset:0;background:rgba(0,0,0,0);transition:background 0.15s;
+          display:flex;align-items:center;justify-content:center;font-size:1rem;" class="thumb-hover">
+          <span style="opacity:0;transition:opacity 0.15s;" class="thumb-icon">🔍</span>
+        </div>
+      `;
+      thumb.onmouseenter = () => {
+        thumb.querySelector('.thumb-hover').style.background = 'rgba(0,0,0,0.45)';
+        thumb.querySelector('.thumb-icon').style.opacity = '1';
+      };
+      thumb.onmouseleave = () => {
+        thumb.querySelector('.thumb-hover').style.background = 'rgba(0,0,0,0)';
+        thumb.querySelector('.thumb-icon').style.opacity = '0';
+      };
+      thumb.onclick = (e) => { e.stopPropagation(); previewSlotScreenshot(slot.screenshot, slot.name); };
+      // Insert thumbnail before the info div
+      row.insertBefore(thumb, info);
+    }
+
     row.appendChild(info);
 
     // Buttons
@@ -16896,14 +16926,20 @@ function saveToSlot(slotNum) {
   list.prepend(inputRow);
   document.getElementById('slotNameInput').focus();
 
-  const doSave = () => {
+  const doSave = async () => {
     const name = document.getElementById('slotNameInput')?.value?.trim() || `Slot ${slotNum}`;
-    const snap  = buildSnapshot();
+    // Show capturing state
+    const confirmBtn = document.getElementById('slotSaveConfirm');
+    if (confirmBtn) { confirmBtn.textContent = '📸...'; confirmBtn.disabled = true; }
+    // Capture screenshot of full scoreboard
+    const screenshot = await captureScoreboardScreenshot();
+    const snap = buildSnapshot();
     slots[slotNum] = {
       name,
       round: currentRound,
       savedAt: Date.now(),
       state: snap,
+      screenshot: screenshot || null,
     };
     writeSlotsToStorage(slots);
     inputRow.remove();
@@ -17680,6 +17716,68 @@ function showCityPicker(playerName, anchorEl) {
     loadFirebase();
   }
 })();
+</script>
+<script>
+// Load html2canvas for save-slot screenshots
+(function() {
+  var s = document.createElement('script');
+  s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+  s.onerror = function() {
+    // fallback CDN
+    var s2 = document.createElement('script');
+    s2.src = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
+    document.body.appendChild(s2);
+  };
+  document.body.appendChild(s);
+})();
+
+// Capture the full scoreboard as a compressed JPEG data URL
+// Returns null if html2canvas is unavailable or capture fails
+async function captureScoreboardScreenshot() {
+  if (typeof html2canvas !== 'function') return null;
+  try {
+    const el = document.getElementById('app') || document.body;
+    // Close any open modals temporarily so they don't block the board
+    const modal = document.getElementById('saveSlotsModal');
+    const prevDisplay = modal ? modal.style.display : null;
+    if (modal) modal.style.display = 'none';
+
+    const canvas = await html2canvas(el, {
+      scale: 0.35,          // small enough for localStorage (≈ 150-200 KB as JPEG)
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: '#0d1526',
+      logging: false,
+      imageTimeout: 3000,
+    });
+
+    if (modal && prevDisplay !== null) modal.style.display = prevDisplay;
+    // JPEG at 0.6 quality gives tiny file, good enough for thumbnail
+    return canvas.toDataURL('image/jpeg', 0.6);
+  } catch (e) {
+    console.warn('Screenshot capture failed:', e);
+    return null;
+  }
+}
+
+// Show full-size screenshot in an overlay
+function previewSlotScreenshot(dataUrl, slotName) {
+  const overlay = document.createElement('div');
+  overlay.style.cssText = `
+    position:fixed; inset:0; z-index:99999; background:rgba(0,0,0,0.88);
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px;
+    cursor:pointer;
+  `;
+  overlay.innerHTML = `
+    <div style="font-family:'Orbitron',sans-serif;font-size:0.7rem;color:#06b6d4;letter-spacing:1px;">
+      ${slotName} · <span style="color:#64748b;">click anywhere to close</span>
+    </div>
+    <img src="${dataUrl}" style="max-width:95vw;max-height:85vh;border-radius:10px;
+      border:1px solid rgba(6,182,212,0.3);box-shadow:0 0 40px rgba(6,182,212,0.15);">
+  `;
+  overlay.onclick = () => overlay.remove();
+  document.body.appendChild(overlay);
+}
 </script>
 </body>
 </html>
