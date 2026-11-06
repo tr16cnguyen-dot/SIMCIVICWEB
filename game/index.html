@@ -1210,7 +1210,7 @@ select.trade-select:focus, select.res-select:focus { border-color: var(--border-
 .hc-explanation { font-size: 0.6rem; color: var(--text-muted); }
 
 /* ═══════════════════════════════════════
-   CITY RULES PANEL
+   COUNTRY RULES PANEL
 ═══════════════════════════════════════ */
 .rules-empty { padding: 8px 0; text-align: center; font-size: 0.72rem; color: var(--text-muted); }
 
@@ -2234,7 +2234,7 @@ footer p { font-family: 'Orbitron', sans-serif; font-size: 0.55rem; letter-spaci
 }
 .outcome-close:hover { background: rgba(6,182,212,0.25); }
 
-/* ── City event filter chips ── */
+/* ── Country event filter chips ── */
 #cityFilterBar { padding: 8px 0 4px; }
 
 /* ── Draft spotlight overlay ── */
@@ -6300,7 +6300,7 @@ window.fbToggleViewers = function() {
       </div>
     </div>
 
-    <!-- ─── CITY RULES ─── -->
+    <!-- ─── COUNTRY RULES ─── -->
     <div class="section-card" style="border-color:rgba(180,120,30,0.25);background:linear-gradient(135deg,rgba(15,22,35,0.85),rgba(30,18,5,0.4));">
       <div class="section-header" onclick="toggleSection('rulesBody')" style="cursor:pointer;">
         <div class="section-header-left">
@@ -6318,7 +6318,7 @@ window.fbToggleViewers = function() {
               <div style="font-size:0.58rem;color:var(--text-muted);margin-bottom:8px;">
                 Applies to:
                 <label style="cursor:pointer;margin-right:8px;"><input type="radio" name="ruleScope" value="all" checked onchange="toggleCitySelector()"> All cities</label>
-                <label style="cursor:pointer;"><input type="radio" name="ruleScope" value="specific" onchange="toggleCitySelector()"> Specific city</label>
+                <label style="cursor:pointer;"><input type="radio" name="ruleScope" value="specific" onchange="toggleCitySelector()"> Specific country</label>
               </div>
               <div id="ruleCitySelector" style="display:none;margin-bottom:8px;">
                 <select id="ruleSpecificCity" style="width:100%;padding:4px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:0.72rem;"></select>
@@ -6583,7 +6583,7 @@ window.fbToggleViewers = function() {
         display:flex;align-items:flex-start;flex-direction:column;gap:4px;transition:background 0.15s;"
         onmouseover="this.style.background='rgba(239,68,68,0.18)'" onmouseout="this.style.background='rgba(239,68,68,0.08)'">
         <div style="font-family:'Orbitron',sans-serif;font-size:0.65rem;font-weight:800;">✕ DENY the Mayor Trade</div>
-        <div style="font-size:0.6rem;opacity:0.8;">The trade is refused. As a penalty for rejection, the denying city loses −20 Capital and −3% political rating.</div>
+        <div style="font-size:0.6rem;opacity:0.8;">The trade is refused. As a penalty for rejection, the denying country loses −20 Capital and −3% political rating.</div>
         <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:4px;">
           <span style="font-size:0.55rem;padding:1px 6px;border-radius:4px;background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.3);font-family:'JetBrains Mono',monospace;font-weight:700;">💰 −20 Capital</span>
           <span style="font-size:0.55rem;padding:1px 6px;border-radius:4px;background:rgba(168,85,247,0.12);color:#c084fc;border:1px solid rgba(168,85,247,0.3);font-family:'JetBrains Mono',monospace;font-weight:700;">🏛️ −3%</span>
@@ -6933,7 +6933,7 @@ window.fbToggleViewers = function() {
       </div>
       <div class="section-body" id="tradeBody">
         <div class="trade-body">
-          <p class="trade-desc">Each city enters what they're offering. Both sides send simultaneously. Azure collects a tax on trades it's not part of.</p>
+          <p class="trade-desc">Each country enters what they're offering. Both sides send simultaneously. Azure collects a tax on trades it's not part of.</p>
 
           <!-- Nation selectors -->
           <div class="trade-selectors" style="margin-bottom:12px;">
@@ -6987,7 +6987,7 @@ window.fbToggleViewers = function() {
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
               <span style="font-size:0.8rem;">🌊</span>
               <span style="font-family:'Orbitron',sans-serif;font-size:0.55rem;font-weight:700;letter-spacing:1px;color:#eab308;">AZURE BAY TRADE TAX</span>
-              <span style="font-size:0.58rem;color:var(--text-muted);">— per city rate, applied when Azure is not in the trade</span>
+              <span style="font-size:0.58rem;color:var(--text-muted);">— per country rate, applied when Azure is not in the trade</span>
             </div>
             <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;" id="cityTaxRateGrid"></div>
             <div id="tradeTaxPreview" style="font-size:0.6rem;color:rgba(234,179,8,0.7);font-style:italic;margin-top:6px;"></div>
@@ -7156,10 +7156,10 @@ window.fbToggleViewers = function() {
       <div class="section-body" id="eventsBody">
         <div class="events-tabs">
           <button class="events-tab active" id="tabGlobal" onclick="switchEventsTab('global')">🌍 Global Events</button>
-          <button class="events-tab" id="tabCity" onclick="switchEventsTab('city')">🏙️ Nation Events</button>
+          <button class="events-tab" id="tabCity" onclick="switchEventsTab('city')">🏙️ Country Events</button>
         </div>
         <div id="cityFilterBar" style="display:none;margin-bottom:8px;">
-          <div style="font-size:0.58rem;font-family:'Orbitron',sans-serif;letter-spacing:1.5px;color:var(--text-muted);text-transform:uppercase;margin-bottom:6px;">Filter by city:</div>
+          <div style="font-size:0.58rem;font-family:'Orbitron',sans-serif;letter-spacing:1.5px;color:var(--text-muted);text-transform:uppercase;margin-bottom:6px;">Filter by country:</div>
           <div style="display:flex;gap:5px;flex-wrap:wrap;" id="cityFilterChips"></div>
         </div>
         <div class="events-trigger-bar" id="eventsTriggerBar">
@@ -7271,7 +7271,7 @@ const GLOBAL_EVENTS = [
     id: 'global-economic-impact', name: 'Economic Impact', icon: '📉',
     desc: 'Global conflicts raise prices and destabilize economies worldwide.',
     scope: 'all', severity: 'negative',
-    textMessage: 'Global instability impacts every city\'s economy.',
+    textMessage: 'Global instability impacts every country\'s economy.',
     effects: [{r:'capital',d:-5},{r:'happiness',d:-3}],
     politicalEffects: [{cityId:'global', delta:-6}]
   },
@@ -8773,8 +8773,8 @@ const POLICY_CARDS = {
     { id:'sc-p1', name:'AI Efficiency Program',  desc:'+5 Capital every round if Raw Materials stay above 65', red:false },
     { id:'sc-p2', name:'Data Monopoly',          desc:'+10 Capital one time when activated', red:false },
     { id:'sc-p3', name:'A Reset',                desc:'Return the starting amount of your currently lowest resource when applied', red:false },
-    { id:'sc-p4', name:'Era of Expenses',        desc:'−10 Capital now, but every other city pays 2 Capital per minute researched instead of 1', red:true },
-    { id:'sc-p5', name:'New Vision',             desc:'Trade your Engineer for another city\'s Engineer', red:true },
+    { id:'sc-p4', name:'Era of Expenses',        desc:'−10 Capital now, but every other country pays 2 Capital per minute researched instead of 1', red:true },
+    { id:'sc-p5', name:'New Vision',             desc:'Trade your Engineer for another country\'s Engineer', red:true },
   ],
   'ironvale': [
     { id:'ih-p1', name:'Union Contract',         desc:'Pay −10 Capital now, prevent Happiness from dropping below 40', red:false },
@@ -8787,15 +8787,15 @@ const POLICY_CARDS = {
     { id:'vd-p1', name:'Green Subsidy',          desc:'+3 Food and +1 Water every round', red:false },
     { id:'vd-p2', name:'Nature Reserve',         desc:'Pollution cannot exceed 70 for the rest of the game', red:false },
     { id:'vd-p3', name:'Eco Tourism',            desc:'+1 Happiness, +3 Pollution, and +3 Capital every round', red:false },
-    { id:'vd-p4', name:'Espionage',              desc:'Pick 2 cities & a role — they now negotiate instead of the negotiator for that round', red:true },
-    { id:'vd-p5', name:'Numbers Over Friends',   desc:'Trade your Budget Manager for another city\'s Budget Manager', red:true },
+    { id:'vd-p4', name:'Espionage',              desc:'Pick 2 countries & a role — they now negotiate instead of the negotiator for that round', red:true },
+    { id:'vd-p5', name:'Numbers Over Friends',   desc:'Trade your Budget Manager for another country\'s Budget Manager', red:true },
   ],
   'nova-haven': [
     { id:'nh-p1', name:'Land Development Rush',  desc:'+12 Raw Materials now, −10 Happiness', red:false },
     { id:'nh-p2', name:'Immigration Policy',     desc:'+3 Population every round', red:false },
     { id:'nh-p3', name:'Infrastructure Grant',   desc:'+10 Capital, +5 Water one time', red:false },
-    { id:'nh-p4', name:'Exploration',            desc:'Gain 1 more area of territory for your city', red:false },
-    { id:'nh-p5', name:'Political Instability Insurance', desc:'Gain the ability to force trade one member of your team for another city\'s member of the same role', red:true },
+    { id:'nh-p4', name:'Exploration',            desc:'Gain 1 more area of territory for your country', red:false },
+    { id:'nh-p5', name:'Political Instability Insurance', desc:'Gain the ability to force trade one member of your team for another country\'s member of the same role', red:true },
   ],
 };
 
@@ -9431,10 +9431,10 @@ function activateOneTimeCard(cityId, cardId) {
 
 const PEOPLE_TRADE_CARDS = {
   'ab-p5': { type:'mayor-trade', desc:'Propose a Trade of Mayors', roles:['mayor'] },
-  'sc-p5': { type:'role-swap',   desc:'Trade your Engineer for another city\'s', roles:['engineer'] },
+  'sc-p5': { type:'role-swap',   desc:'Trade your Engineer for another country\'s', roles:['engineer'] },
   'ih-p5': { type:'internal-role-change', desc:'Choose a new mayor from your team — internal Ironvale change only', roles:['mayor'], sameCity: true },
-  'vd-p4': { type:'role-swap',   desc:'Pick 2 cities & a role, they negotiate instead', roles:['negotiator'] },
-  'vd-p5': { type:'role-swap',   desc:'Trade your Budget Manager for another city\'s', roles:['financial'] },
+  'vd-p4': { type:'role-swap',   desc:'Pick 2 countries & a role, they negotiate instead', roles:['negotiator'] },
+  'vd-p5': { type:'role-swap',   desc:'Trade your Budget Manager for another country\'s', roles:['financial'] },
   'nh-p5': { type:'role-swap',   desc:'Force trade one member for same role', roles:null },
 };
 
@@ -9728,10 +9728,10 @@ function refreshPeopleTradeForm() {
       const toSel = document.getElementById('ptToCity');
       if (toSel) {
         if (policyInfo?.sameCity) {
-          // Internal action — To City = same city, locked
+          // Internal action — To Country = same country, locked
           toSel.value = ownerCityId;
           toSel.disabled = true;
-          toSel.title = 'Internal change — same city only';
+          toSel.title = 'Internal change — same country only';
         } else {
           toSel.disabled = false;
           toSel.title = '';
@@ -9878,7 +9878,7 @@ function executePeopleTrade() {
 
   // Allow same-city for internal role changes; block it for everything else
   if (fromId === toId && !isInternal) {
-    fb.style.display=''; fb.textContent='⚠️ Cannot trade to the same city.'; return;
+    fb.style.display=''; fb.textContent='⚠️ Cannot trade to the same country.'; return;
   }
 
   if (isInternal) {
@@ -10121,7 +10121,7 @@ function showEndGame() {
       <div style="text-align:center;margin-bottom:32px;animation:egFadeIn 0.6s ease-out;">
         <div style="font-size:3rem;margin-bottom:8px;">🏁</div>
         <div class="eg-glow-text" style="font-family:'Orbitron',sans-serif;font-size:2rem;font-weight:900;color:#f59e0b;letter-spacing:4px;margin-bottom:6px;">SIMULATION COMPLETE</div>
-        <div style="font-size:0.8rem;color:var(--text-muted);">Stonewall City Simulation — Final Results</div>
+        <div style="font-size:0.8rem;color:var(--text-muted);">Stonewall Country Simulation — Final Results</div>
       </div>
 
       <!-- Winner spotlight -->
@@ -13870,7 +13870,7 @@ function renderEventsPool() {
   for (const evt of events) {
     const isEnabled = enabled.has(evt.id);
     const sevKey    = evt.severity === 'positive' ? 'pos' : evt.severity === 'negative' ? 'neg' : 'neu';
-    const scopeLabel = evt.scope === 'all' ? 'ALL CITIES' : '1 CITY';
+    const scopeLabel = evt.scope === 'all' ? 'ALL COUNTRIES' : '1 COUNTRY';
 
     // ── Effects / choices chips ──
     let effectsHtml = '';
@@ -14054,7 +14054,7 @@ function showEventTriggerScreen(evt, affectedCityIds, afterReveal) {
         <div class="trigger-alert-badge">⚠ ALERT ⚠</div>
         <div class="trigger-spinner">🎲</div>
         <div class="trigger-suspense-text">DRAWING EVENT...</div>
-        <div class="trigger-warning-line">ALL CITIES STAND BY · INCOMING TRANSMISSION</div>
+        <div class="trigger-warning-line">ALL COUNTRIES STAND BY · INCOMING TRANSMISSION</div>
       </div>
       <!-- Phase 1.5: WHO DOES IT HIT? -->
       <div class="trigger-phase" id="triggerPhase15" style="display:none;">
@@ -14270,7 +14270,7 @@ function showChoiceModal() {
   const { event: evt, affectedCityIds } = pendingChoiceEvent;
   document.getElementById('choiceModalIcon').textContent = evt.icon;
   document.getElementById('choiceModalName').textContent = evt.name;
-  document.getElementById('choiceModalScope').textContent = evt.scope === 'all' ? '🌍 Global Event' : '🏙️ Nation Event';
+  document.getElementById('choiceModalScope').textContent = evt.scope === 'all' ? '🌍 Global Event' : '🏙️ Country Event';
   document.getElementById('choiceModalDesc').textContent = evt.desc;
 
   const citiesEl = document.getElementById('choiceModalCities');
@@ -14645,7 +14645,7 @@ function addPoliticalRow(containerId, existing) {
   if (!container) return;
   const cityOpts = [
     `<option value="all">All Affected Cities</option>`,
-    `<option value="global">All 5 Cities</option>`,
+    `<option value="global">All 5 Countries</option>`,
     ...CITIES.map(c=>`<option value="${c.id}" ${existing?.cityId===c.id?'selected':''}>${c.icon} ${c.name}</option>`)
   ].join('');
   const row = document.createElement('div');
@@ -16809,7 +16809,7 @@ function showExportModal() {
   blank();
   ln(SEP,
     '  END OF GAME SUMMARY',
-    '  Stonewall City Simulation  —  Nation Simulator Dashboard',
+    '  Stonewall Country Simulation  —  Nation Simulator Dashboard',
     `  Exported: ${now}`,
     SEP);
 
