@@ -15238,6 +15238,81 @@ function addCityRule() {
   });
 
   save(); hideRuleForm(); renderRules(); renderAllianceBoard(); playRuleAdded();
+
+  // Show confirmation popup
+  const targetLabel = specificCity
+    ? (CITIES.find(c=>c.id===specificCity)?.name || specificCity)
+    : 'All Nations';
+  const res = RESOURCES.find(r => r.id === resource_id);
+  showRuleAddedPopup({
+    label,
+    resIcon: res?.icon || '📊',
+    resName: res?.name || resource_id,
+    delta: `${delta > 0 ? '+' : ''}${delta}`,
+    target: targetLabel,
+    condDisplay: hasCondition && condition_resource && condition_operator
+      ? `<div style="font-size:0.6rem;color:#94a3b8;margin-top:3px;">when ${condition_resource} ${condition_operator} ${condition_value}</div>`
+      : '',
+    positive: delta > 0,
+  });
+}
+
+function showRuleAddedPopup({ label, resIcon, resName, delta, target, condDisplay, positive }) {
+  const old = document.getElementById('ruleAddedPopup');
+  if (old) { clearTimeout(old._t); old.remove(); }
+
+  const color  = positive ? '#10b981' : '#f59e0b';
+  const border = positive ? 'rgba(16,185,129,0.4)' : 'rgba(245,158,11,0.4)';
+  const icon   = positive ? '✅' : '📉';
+
+  const popup = document.createElement('div');
+  popup.id = 'ruleAddedPopup';
+  popup.style.cssText = `
+    position:fixed; top:70px; left:50%; transform:translateX(-50%) translateY(-20px);
+    z-index:10000; opacity:0; transition:opacity 0.25s ease, transform 0.25s ease;
+    background:rgba(13,21,38,0.96); border:1px solid ${border};
+    border-radius:12px; padding:14px 20px 12px;
+    min-width:260px; max-width:400px;
+    box-shadow:0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px ${border};
+    backdrop-filter:blur(12px); text-align:center; pointer-events:none;
+  `;
+  popup.innerHTML = `
+    <div style="font-size:1.3rem;margin-bottom:4px;">${icon}</div>
+    <div style="font-family:'Orbitron',sans-serif;font-size:0.62rem;font-weight:800;
+      color:${color};letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px;">
+      Rule Added
+    </div>
+    <div style="font-size:0.78rem;font-weight:600;color:#e2e8f0;margin-bottom:4px;">
+      ${resIcon} ${resName} <span style="color:${color};font-family:'JetBrains Mono',monospace;">${delta}</span>
+    </div>
+    <div style="font-size:0.62rem;color:#94a3b8;">🎯 ${target}</div>
+    ${condDisplay}
+    <div style="font-size:0.58rem;color:#475569;margin-top:5px;font-style:italic;
+      overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:360px;">"${label}"</div>
+    <div style="margin-top:8px;height:2px;border-radius:2px;background:rgba(255,255,255,0.08);overflow:hidden;">
+      <div style="height:100%;width:100%;background:${color};transform-origin:left;
+        animation:ruleBarShrink 3.8s linear forwards;"></div>
+    </div>
+  `;
+  document.body.appendChild(popup);
+
+  if (!document.getElementById('ruleBarKf')) {
+    const s = document.createElement('style');
+    s.id = 'ruleBarKf';
+    s.textContent = `@keyframes ruleBarShrink{from{transform:scaleX(1)}to{transform:scaleX(0)}}`;
+    document.head.appendChild(s);
+  }
+
+  requestAnimationFrame(() => {
+    popup.style.opacity = '1';
+    popup.style.transform = 'translateX(-50%) translateY(0)';
+  });
+
+  popup._t = setTimeout(() => {
+    popup.style.opacity = '0';
+    popup.style.transform = 'translateX(-50%) translateY(-12px)';
+    setTimeout(() => popup.remove(), 300);
+  }, 4000);
 }
 
 function deleteRule(i) {
