@@ -8089,16 +8089,11 @@ async function save() {
 async function loadAll() {
   showLoadingOverlay(true);
 
-  // Check version stamp AND validate stats are current
+  // Check version stamp — clear only if data is missing or from an incompatible version.
+  // Do NOT check stat values: mid-game saves have different values and should be kept.
   try {
     const probe = await storageLoad(SK);
-    const expectedStats = {
-      'azure-bay': 110, 'synapse-city': 105, 'verdantia': 42, 'ironvale': 140, 'nova-haven': 60
-    };
-    const statsMatch = probe && Object.entries(expectedStats).every(
-      ([id, cap]) => probe[id]?.capital?.value === cap
-    );
-    const isStale = !probe || probe._version !== DATA_VERSION || !statsMatch;
+    const isStale = !probe || probe._version !== DATA_VERSION;
     if (isStale) {
       console.log('Clearing stale data — loading fresh DEFAULT_STATS');
       const allKeys = [SK, SNAP_SK, ROUND_DESC_SK, ROUND_NOTES_SK, RULES_SK, ROUND_SK,
