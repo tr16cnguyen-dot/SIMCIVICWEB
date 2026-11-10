@@ -1217,7 +1217,7 @@ function renderStudent() {
 // ───────── Boot ─────────
 function loadLocal() { try { const raw = localStorage.getItem(LS_KEY); if (raw) return JSON.parse(raw); } catch (e) {} return null; }
 function valid(x) { return x && x.v === 1 && x.colonies && x.history; }
-function norm(x) { Object.values(x.colonies).forEach(c => { if (!Array.isArray(c.built)) c.built = []; }); return x; }
+function norm(x) { const fresh = x.round === 1 && !(x.log && x.log.length); Object.values(x.colonies).forEach(c => { if (!Array.isArray(c.built)) c.built = []; if (fresh) c.coins = START_COINS; }); return x; }
 show((location.hash || "#board").slice(1));
 S = loadLocal(); S = valid(S) ? norm(S) : newGame();
 mode = "local"; setSync("local", "Connecting…"); render();
