@@ -8022,16 +8022,19 @@ async function storageSave(key, value) {
 // Read: always try cloud storage first (authoritative, shared across accounts/devices).
 // Fall back to localStorage only when cloud is unavailable or returns nothing.
 async function storageLoad(key) {
-  // Always read from cloud first so a different account/device gets the latest save
+  // Always read from cloud first so a different account/device gets the latest save.
+  // Wrap in a 3-second timeout so a hanging cloud SDK never stalls the entire load.
   try {
-    const result = await window.storage.get(key);
+    const cloudPromise = window.storage.get(key);
+    const timeoutPromise = new Promise(res => setTimeout(() => res(null), 3000));
+    const result = await Promise.race([cloudPromise, timeoutPromise]);
     if (result && result.value) {
       // Warm the local cache so same-session subsequent reads are fast
       try { localStorage.setItem(key, result.value); } catch {}
       return JSON.parse(result.value);
     }
   } catch {}
-  // Cloud unavailable — fall back to this browser's localStorage
+  // Cloud unavailable or timed out — fall back to this browser's localStorage
   try {
     const local = localStorage.getItem(key);
     if (local) return JSON.parse(local);
@@ -8093,6 +8096,17 @@ async function save() {
 async function loadAll() {
   showLoadingOverlay(true);
 
+  // Hard safety net: if anything inside hangs, force the scoreboard open after 8s
+  var _loadDone = false;
+  var _safetyTimer = setTimeout(function() {
+    if (!_loadDone) {
+      console.warn('loadAll safety timeout fired — forcing scoreboard open');
+      _loadDone = true;
+      showLoadingOverlay(false);
+      try { init(); } catch(e) { console.warn('init() error:', e); }
+    }
+  }, 8000);
+
   // Check version stamp — clear only if data is missing or from an incompatible version.
   // Do NOT check stat values: mid-game saves have different values and should be kept.
   try {
@@ -8125,6 +8139,9 @@ async function loadAll() {
   // Keep loading screen visible for 1.5–2.5s minimum for the cinematic effect
   var minDelay = 1500 + Math.random() * 1000;
   setTimeout(function() {
+    if (_loadDone) return; // safety timer already fired
+    clearTimeout(_safetyTimer);
+    _loadDone = true;
     showLoadingOverlay(false);
     init();
   }, minDelay);
