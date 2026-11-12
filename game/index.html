@@ -15292,7 +15292,6 @@ function addCityRule() {
   const targetLabel = specificCity
     ? (CITIES.find(c=>c.id===specificCity)?.name || specificCity)
     : 'All Nations';
-  const res = RESOURCES.find(r => r.id === resource_id);
   showRuleAddedPopup({
     label,
     resIcon: res?.icon || '📊',
