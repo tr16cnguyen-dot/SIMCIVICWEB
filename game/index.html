@@ -5651,7 +5651,7 @@ window.fbToggleViewers = function() {
 </div>
 
 <!-- ═══ NATION SYNC STATUS BAR (host only) ═══ -->
-<div id="fbSyncBar" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:500;background:rgba(10,14,23,0.95);border-top:1px solid rgba(255,255,255,0.08);padding:6px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+<div id="fbSyncBar" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:500;background:rgba(10,14,23,0.95);border-top:1px solid rgba(255,255,255,0.08);padding:6px 16px;align-items:center;gap:12px;flex-wrap:wrap;">
   <span style="font-family:'Orbitron',sans-serif;font-size:0.52rem;font-weight:700;color:#64748b;letter-spacing:1px;flex-shrink:0;">📡 NATION SYNC</span>
   <div id="fbSyncNations" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
 </div>
@@ -16232,28 +16232,33 @@ function playRuleAdded() {
 // ════════════════════════════════════════════════════════
 
 function init() {
-  loadPoliticalRanks();
-  loadRelations();
-  loadWarState();
-  loadPolicyPicks();
-  loadCustomPolicyCards();
-  renderPolicySummary();
-  renderTradeSelects();
-  renderTradeItems();
-  initRuleSelects();
-  renderRules(); renderAllianceBoard();
-  renderScoreboard();
-  // Populate city target dropdown for nation events
-  const sel = document.getElementById('globalCityTarget');
-  sel.innerHTML = CITIES.map(c => `<option value="${c.id}">${c.icon} ${c.name}</option>`).join('');
-  renderEventsPool();
-  updateRoundUI();
-  updateTimerDisplay();
-  renderHistory();
-  renderCityCards();
-  renderRelationsMatrix();
-  renderAllianceBoard();
-  document.getElementById('lastUpdateTime').textContent = new Date().toLocaleTimeString('en-US', { timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  const _step = (name, fn) => { try { fn(); } catch(e) { console.error('init() step failed:', name, e); } };
+  _step('loadPoliticalRanks',  () => loadPoliticalRanks());
+  _step('loadRelations',       () => loadRelations());
+  _step('loadWarState',        () => loadWarState());
+  _step('loadPolicyPicks',     () => loadPolicyPicks());
+  _step('loadCustomPolicyCards', () => loadCustomPolicyCards());
+  _step('renderPolicySummary', () => renderPolicySummary());
+  _step('renderTradeSelects',  () => renderTradeSelects());
+  _step('renderTradeItems',    () => renderTradeItems());
+  _step('initRuleSelects',     () => initRuleSelects());
+  _step('renderRules',         () => { renderRules(); renderAllianceBoard(); });
+  _step('renderScoreboard',    () => renderScoreboard());
+  _step('globalCityTarget',    () => {
+    const sel = document.getElementById('globalCityTarget');
+    if (sel) sel.innerHTML = CITIES.map(c => `<option value="${c.id}">${c.icon} ${c.name}</option>`).join('');
+  });
+  _step('renderEventsPool',    () => renderEventsPool());
+  _step('updateRoundUI',       () => updateRoundUI());
+  _step('updateTimerDisplay',  () => updateTimerDisplay());
+  _step('renderHistory',       () => renderHistory());
+  _step('renderCityCards',     () => renderCityCards());
+  _step('renderRelationsMatrix', () => renderRelationsMatrix());
+  _step('renderAllianceBoard', () => renderAllianceBoard());
+  _step('lastUpdateTime',      () => {
+    const ts = document.getElementById('lastUpdateTime');
+    if (ts) ts.textContent = new Date().toLocaleTimeString('en-US', { timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  });
   requestAnimationFrame(() => setTimeout(autoScaleToFit, 100));
 }
 
