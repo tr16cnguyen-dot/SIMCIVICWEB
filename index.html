@@ -535,6 +535,9 @@ nav{backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:
 #hscroll-track{overflow:hidden;width:100%;}
 #hscroll-track .ngrid{display:flex;flex-wrap:nowrap;gap:20px;padding:0 40px 40px;width:max-content;}
 #hscroll-track .ncard{flex:0 0 300px;min-width:0;}
+
+/* ── OPPORTUNITIES ── */
+@media(max-width:680px){.opp-grid{grid-template-columns:1fr !important;}}
 </style>
 </head>
 <body>
@@ -641,6 +644,7 @@ nav{backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:
         <button data-page="roles"      data-page-btn="roles"      onclick="closeNavMenu()" style="text-align:left;padding:9px 12px;border-radius:6px;border:none;background:none;color:var(--sub);font-family:'Inter',sans-serif;font-size:0.85rem;cursor:pointer;">Roles</button>
         <button data-page="mechanics"  data-page-btn="mechanics"  onclick="closeNavMenu()" style="text-align:left;padding:9px 12px;border-radius:6px;border:none;background:none;color:var(--sub);font-family:'Inter',sans-serif;font-size:0.85rem;cursor:pointer;">Mechanics</button>
         <button data-page="resources"  data-page-btn="resources"  onclick="closeNavMenu()" style="text-align:left;padding:9px 12px;border-radius:6px;border:none;background:none;color:var(--sub);font-family:'Inter',sans-serif;font-size:0.85rem;cursor:pointer;">Resources</button>
+        <button data-page="opportunities" data-page-btn="opportunities" onclick="closeNavMenu()" style="text-align:left;padding:9px 12px;border-radius:6px;border:none;background:none;color:var(--sub);font-family:'Inter',sans-serif;font-size:0.85rem;cursor:pointer;">Opportunities</button>
         <button data-page="contact"    data-page-btn="contact"    onclick="closeNavMenu()" style="text-align:left;padding:9px 12px;border-radius:6px;border:none;background:none;color:var(--sub);font-family:'Inter',sans-serif;font-size:0.85rem;cursor:pointer;">Contact</button>
       </div>
     </div>
@@ -1494,6 +1498,86 @@ document.querySelectorAll('#navMenuDropdown button').forEach(function(b) {
 </section>
 
 <!-- CONTACT -->
+<!-- OPPORTUNITIES -->
+<section id="opportunities" class="res" data-section="opportunities" style="display:none;padding-top:82px;">
+  <div class="wrap">
+    <div class="rev">
+      <div class="eye">Get Involved</div>
+      <h2 class="sh">Volunteer <em>Opportunities</em></h2>
+      <p class="sp">SimCivic is currently running live classroom simulations at partner schools. We're looking for volunteers to help students experience civics firsthand — no experience needed.</p>
+    </div>
+
+    <!-- Rise STEM Academy card -->
+    <div style="margin:48px 0 0;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:start;" class="opp-grid">
+
+        <!-- Left: details -->
+        <div class="rev" style="background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:14px;padding:32px 28px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;">
+            <div style="width:44px;height:44px;border-radius:10px;background:rgba(219,166,66,0.12);border:1px solid rgba(219,166,66,0.25);display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;">🏫</div>
+            <div>
+              <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.15rem;color:var(--ink);">Rise STEM Academy</div>
+              <div style="font-size:0.78rem;color:var(--sub);margin-top:2px;">988 Mason Headley Rd · Lexington, KY</div>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:22px;">
+            <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:8px;padding:12px 14px;">
+              <div style="font-family:'Space Mono',monospace;font-size:0.55rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--sub);margin-bottom:5px;">Program</div>
+              <div style="font-size:0.9rem;color:var(--ink);font-weight:600;">13 Colonies Simulation</div>
+            </div>
+            <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:8px;padding:12px 14px;">
+              <div style="font-family:'Space Mono',monospace;font-size:0.55rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--sub);margin-bottom:5px;">Students</div>
+              <div style="font-size:0.9rem;color:var(--ink);font-weight:600;">42 Fifth Graders</div>
+            </div>
+            <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:8px;padding:12px 14px;">
+              <div style="font-family:'Space Mono',monospace;font-size:0.55rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--sub);margin-bottom:5px;">Teams</div>
+              <div style="font-size:0.9rem;color:var(--ink);font-weight:600;">9 Colony Teams</div>
+            </div>
+            <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:8px;padding:12px 14px;">
+              <div style="font-family:'Space Mono',monospace;font-size:0.55rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--sub);margin-bottom:5px;">Finale</div>
+              <div style="font-size:0.9rem;color:var(--ink);font-weight:600;">Awards Day</div>
+            </div>
+          </div>
+
+          <p style="font-size:0.88rem;color:var(--sub);line-height:1.75;margin:0;">Students form colony teams and run their own colonies — harvesting and trading colonial goods like tobacco, fish, lumber, and ginseng. They respond to historical events from 1700 to 1784, build model settlements, and finish with Colony Reports and an awards day.</p>
+        </div>
+
+        <!-- Right: volunteer info + CTA -->
+        <div class="rev">
+          <!-- Dates -->
+          <div style="background:rgba(219,166,66,0.06);border:1px solid rgba(219,166,66,0.22);border-radius:14px;padding:20px 22px;margin-bottom:16px;display:flex;align-items:flex-start;gap:14px;">
+            <div style="font-size:1.5rem;flex-shrink:0;margin-top:2px;">📅</div>
+            <div>
+              <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:0.9rem;color:var(--gold);margin-bottom:5px;">When</div>
+              <div style="font-size:0.88rem;color:var(--ink);line-height:1.6;">Nov 30 – Dec 11 &nbsp;·&nbsp; Mon–Fri mornings</div>
+              <div style="font-size:0.78rem;color:var(--sub);margin-top:3px;">Exception: Tue Dec 1 is 12:30–2:00 pm</div>
+            </div>
+          </div>
+
+          <div style="background:rgba(219,166,66,0.04);border:1px solid rgba(219,166,66,0.15);border-radius:14px;padding:22px 22px;margin-bottom:16px;">
+            <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:0.95rem;color:var(--gold);margin-bottom:12px;">We need help with:</div>
+            <ul style="margin:0 0 0 2px;padding:0;list-style:none;display:flex;flex-direction:column;gap:9px;">
+              <li style="display:flex;align-items:flex-start;gap:9px;font-size:0.88rem;color:var(--sub);line-height:1.6;"><span style="color:var(--gold);font-size:0.9rem;margin-top:1px;">›</span> Help teams trade colonial goods</li>
+              <li style="display:flex;align-items:flex-start;gap:9px;font-size:0.88rem;color:var(--sub);line-height:1.6;"><span style="color:var(--gold);font-size:0.9rem;margin-top:1px;">›</span> Build model settlements</li>
+              <li style="display:flex;align-items:flex-start;gap:9px;font-size:0.88rem;color:var(--sub);line-height:1.6;"><span style="color:var(--gold);font-size:0.9rem;margin-top:1px;">›</span> Research historical events (1700–1784)</li>
+              <li style="display:flex;align-items:flex-start;gap:9px;font-size:0.88rem;color:var(--sub);line-height:1.6;"><span style="color:var(--gold);font-size:0.9rem;margin-top:1px;">›</span> Practice Colony Report presentations</li>
+            </ul>
+          </div>
+
+          <div style="background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:14px;padding:22px;">
+            <div style="font-size:0.85rem;color:var(--sub);line-height:1.75;margin-bottom:18px;">No experience needed — we'll give you a quick briefing before your first session.</div>
+            <a href="https://forms.gle/fFygqxBZxYxoaWnE8" data-external target="_blank" rel="noopener noreferrer" class="btn-p" style="display:inline-block;text-decoration:none;width:100%;box-sizing:border-box;text-align:center;margin-bottom:10px;">Sign Up to Volunteer →</a>
+            <div style="font-size:0.75rem;color:var(--sub);line-height:1.6;text-align:center;margin-bottom:14px;">After signing up, we'll reach out with next steps — including completing your <a href="https://www.fcps.net/families/engagement-opportunities/volunteering-in-fcps" data-external target="_blank" rel="noopener noreferrer" style="color:var(--gold);text-decoration:none;">FCPS volunteer application</a>.</div>
+            <div style="text-align:center;font-size:0.78rem;color:var(--sub);">Questions? <a href="mailto:truc.nguyen@sim-civic.com" data-external style="color:var(--gold);text-decoration:none;">truc.nguyen@sim-civic.com</a></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
 <section id="contact" class="res" data-section="contact" style="display:none;padding-top:82px;">
   <div class="wrap">
     <div class="rev">
@@ -1565,6 +1649,7 @@ document.querySelectorAll('#navMenuDropdown button').forEach(function(b) {
     <button data-page="roles">Roles</button>
     <button data-page="mechanics">Mechanics</button>
     <button data-page="resources">Resources</button>
+    <button data-page="opportunities">Opportunities</button>
     <button data-page="contact">Contact</button>
     <a href="/game/" data-external>Dashboard</a>
     <a href="/colonies/" data-external>13 Colonies Edition</a>
