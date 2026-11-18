@@ -17514,6 +17514,8 @@ async function writeSlotsToStorage(slots) {
 function buildSnapshot() {
   return {
     data, snapshots, roundDescs, roundNotes, cityRules,
+    mapItemTypes: JSON.parse(JSON.stringify(mapItemTypes)),
+    mapItems:     JSON.parse(JSON.stringify(mapItems)),
     currentRound, maxAppliedRound,
     globalEvents, cityEvents,
     globalEnabled: [...globalEnabled],
@@ -17735,6 +17737,8 @@ function loadFromSlot(slotNum) {
     if (s.roundHistory)    { roundHistory.length = 0; s.roundHistory.forEach(h => roundHistory.push(h)); }
     if (s.triggeredEventIds) triggeredEventIds = new Set(s.triggeredEventIds);
     else                     triggeredEventIds = new Set();
+    if (s.mapItemTypes)      mapItemTypes      = s.mapItemTypes;
+    if (s.mapItems)          mapItems          = s.mapItems;
     viewingRound = null;
 
     // Re-render everything
@@ -17744,6 +17748,8 @@ function loadFromSlot(slotNum) {
     renderHistory();
     updateSidebar();
     renderRules();
+    renderMapItemTypes();
+    renderMapItemsNations();
     document.getElementById('saveSlotsModal').style.display = 'none';
     playSuccess();
     // Push restored state to storage
@@ -17804,6 +17810,8 @@ async function manualSave() {
         [ROUND_DESC_SK,     roundDescs],
         [ROUND_NOTES_SK,    roundNotes],
         [RULES_SK,          cityRules],
+        [MAP_ITEM_TYPES_SK, mapItemTypes],
+        [MAP_ITEMS_SK,      mapItems],
         [ROUND_SK,          { currentRound, maxAppliedRound }],
         [GLOBAL_EVENTS_KEY, globalEvents],
         [CITY_EVENTS_KEY,   cityEvents],
