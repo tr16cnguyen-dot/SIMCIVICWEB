@@ -451,6 +451,7 @@ footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:38
 /* ── RESPONSIVE ── */
 @media(max-width:1100px){.ngrid{grid-template-columns:repeat(3,1fr)}.ncard{border-bottom:1px solid var(--border)}.hinner{grid-template-columns:1fr}.hright{display:none}}
 @media(max-width:900px){nav{padding:0 24px}.nlinks{display:none}.hero{padding:120px 24px 0}.wrap{padding:0 24px}.about-grid{grid-template-columns:1fr;gap:40px}.ngrid{grid-template-columns:1fr 1fr}.rlayout{grid-template-columns:1fr;gap:40px}.rsticky{position:static}.rgrid{grid-template-columns:1fr}.mgrid{grid-template-columns:1fr}.mtop{flex-direction:column;align-items:flex-start}.rlyt{grid-template-columns:1fr}footer{padding:28px 24px}.nd-stats{grid-template-columns:1fr 1fr}.nd-wrap{padding:0 24px 60px}}
+@media(max-width:760px){#partnerships .partner-body{grid-template-columns:1fr!important;gap:28px!important;padding:28px 22px!important}#partnerships .media-grid{grid-template-columns:1fr 1fr!important}}
 /* Narrow-header fix: below ~640px the full button row (hamburger, sound,
    sign-in, Start Game) plus the logo subtitle no longer fit — since nav is
    position:fixed, overflow here doesn't create a scrollbar, it just makes
@@ -645,6 +646,7 @@ nav{backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:
         <button data-page="mechanics"  data-page-btn="mechanics"  onclick="closeNavMenu()" style="text-align:left;padding:9px 12px;border-radius:6px;border:none;background:none;color:var(--sub);font-family:'Inter',sans-serif;font-size:0.85rem;cursor:pointer;">Mechanics</button>
         <button data-page="resources"  data-page-btn="resources"  onclick="closeNavMenu()" style="text-align:left;padding:9px 12px;border-radius:6px;border:none;background:none;color:var(--sub);font-family:'Inter',sans-serif;font-size:0.85rem;cursor:pointer;">Resources</button>
         <button data-page="opportunities" data-page-btn="opportunities" onclick="closeNavMenu()" style="text-align:left;padding:9px 12px;border-radius:6px;border:none;background:none;color:var(--sub);font-family:'Inter',sans-serif;font-size:0.85rem;cursor:pointer;">Opportunities</button>
+        <button data-page="partnerships" data-page-btn="partnerships" onclick="closeNavMenu()" style="text-align:left;padding:9px 12px;border-radius:6px;border:none;background:none;color:var(--sub);font-family:'Inter',sans-serif;font-size:0.85rem;cursor:pointer;">Partnerships</button>
         <button data-page="contact"    data-page-btn="contact"    onclick="closeNavMenu()" style="text-align:left;padding:9px 12px;border-radius:6px;border:none;background:none;color:var(--sub);font-family:'Inter',sans-serif;font-size:0.85rem;cursor:pointer;">Contact</button>
       </div>
     </div>
@@ -1579,6 +1581,146 @@ document.querySelectorAll('#navMenuDropdown button').forEach(function(b) {
   </div>
 </section>
 
+<section id="partnerships" class="res" data-section="partnerships" style="display:none;padding-top:82px;">
+  <div class="wrap">
+
+    <!-- Eyebrow + heading -->
+    <div class="rev" style="margin-bottom:56px;">
+      <div class="eye">Partners</div>
+      <h2 class="sh">Schools That <em>Believe</em> in This</h2>
+      <p class="sp">SimCivic grows through the educators who take a chance on a different kind of learning. These are the schools that brought it into their classrooms first.</p>
+    </div>
+
+    <!-- ── SUCCESS ACADEMY CARD ── -->
+    <div class="rev" style="background:rgba(255,255,255,0.025);border:1px solid rgba(255,255,255,0.08);border-radius:16px;overflow:hidden;margin-bottom:56px;">
+
+      <!-- Logo lockup bar -->
+      <div style="display:flex;align-items:center;justify-content:center;gap:28px;padding:36px 32px 28px;border-bottom:1px solid rgba(255,255,255,0.06);flex-wrap:wrap;">
+
+        <!-- SimCivic logo text -->
+        <div style="display:flex;flex-direction:column;align-items:center;gap:5px;">
+          <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.9rem;letter-spacing:0.02em;line-height:1;">
+            <span style="color:var(--gold)">SIM</span><span style="color:var(--ink)">CIVIC</span>
+          </div>
+          <div style="font-family:'Space Mono',monospace;font-size:0.52rem;letter-spacing:0.16em;color:var(--sub);text-transform:uppercase;">Where Leaders Are Made</div>
+        </div>
+
+        <!-- Connector -->
+        <div style="display:flex;align-items:center;gap:10px;color:rgba(255,255,255,0.18);font-family:'Space Mono',monospace;font-size:0.65rem;letter-spacing:0.1em;">
+          <div style="width:28px;height:1px;background:rgba(255,255,255,0.15);"></div>
+          <span style="color:var(--gold);opacity:0.6;">×</span>
+          <div style="width:28px;height:1px;background:rgba(255,255,255,0.15);"></div>
+        </div>
+
+        <!-- Success Academy logo placeholder (text-based, clean) -->
+        <div style="display:flex;flex-direction:column;align-items:center;gap:5px;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <!-- Graduation cap SVG icon -->
+            <svg width="34" height="34" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M17 7L3 13.5L17 20L31 13.5L17 7Z" fill="rgba(219,166,66,0.85)" stroke="rgba(219,166,66,0.4)" stroke-width="0.5"/>
+              <path d="M8 16.5V23C8 23 11.5 26 17 26C22.5 26 26 23 26 23V16.5" stroke="rgba(219,166,66,0.7)" stroke-width="1.6" stroke-linecap="round"/>
+              <line x1="31" y1="13.5" x2="31" y2="21" stroke="rgba(219,166,66,0.5)" stroke-width="1.5" stroke-linecap="round"/>
+              <circle cx="31" cy="22" r="1.5" fill="rgba(219,166,66,0.6)"/>
+            </svg>
+            <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.3rem;letter-spacing:0.01em;color:var(--ink);">Success Academy</div>
+          </div>
+          <div style="font-family:'Space Mono',monospace;font-size:0.52rem;letter-spacing:0.14em;color:var(--sub);text-transform:uppercase;">Lexington, Kentucky</div>
+        </div>
+      </div>
+
+      <!-- Partner content body -->
+      <div class="partner-body" style="display:grid;grid-template-columns:1fr 1fr;gap:40px;padding:36px 40px;align-items:start;">
+
+        <!-- Left: about the school -->
+        <div>
+          <div style="font-family:'Space Mono',monospace;font-size:0.58rem;letter-spacing:0.18em;color:var(--gold);text-transform:uppercase;margin-bottom:14px;">About the School</div>
+          <h3 style="font-family:'Syne',sans-serif;font-weight:700;font-size:1.35rem;line-height:1.2;color:var(--ink);margin-bottom:16px;">A Second Chance at the Diploma</h3>
+          <p style="font-size:0.9rem;color:rgba(237,240,250,0.65);line-height:1.85;margin-bottom:20px;">Success Academy is a Fayette County public alternative high school in Lexington, Kentucky serving students 16 and older who need a flexible, supportive path to graduation. Founded in 2018, the program helps young people build academic skills, career readiness, and the confidence to finish what they started.</p>
+          <p style="font-size:0.9rem;color:rgba(237,240,250,0.65);line-height:1.85;margin-bottom:24px;">Program director Dr. Janice Wyatt-Ross has over 28 years of teaching experience. Her team meets students where they are — using individualized technology and hands-on learning to get them across the finish line.</p>
+
+          <!-- Key facts row -->
+          <div style="display:flex;gap:20px;flex-wrap:wrap;">
+            <div style="background:rgba(219,166,66,0.06);border:1px solid rgba(219,166,66,0.14);border-radius:8px;padding:14px 18px;min-width:100px;flex:1;">
+              <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.5rem;color:var(--gold);line-height:1;margin-bottom:4px;">16+</div>
+              <div style="font-family:'Space Mono',monospace;font-size:0.56rem;letter-spacing:0.08em;color:var(--sub);text-transform:uppercase;line-height:1.4;">Student Age</div>
+            </div>
+            <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:14px 18px;min-width:100px;flex:1;">
+              <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.5rem;color:var(--ink);line-height:1;margin-bottom:4px;">2018</div>
+              <div style="font-family:'Space Mono',monospace;font-size:0.56rem;letter-spacing:0.08em;color:var(--sub);text-transform:uppercase;line-height:1.4;">Founded</div>
+            </div>
+            <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:14px 18px;min-width:100px;flex:1;">
+              <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.5rem;color:var(--ink);line-height:1;margin-bottom:4px;">FCPS</div>
+              <div style="font-family:'Space Mono',monospace;font-size:0.56rem;letter-spacing:0.08em;color:var(--sub);text-transform:uppercase;line-height:1.4;">Fayette County</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: partnership detail -->
+        <div>
+          <div style="font-family:'Space Mono',monospace;font-size:0.58rem;letter-spacing:0.18em;color:var(--gold);text-transform:uppercase;margin-bottom:14px;">The Partnership</div>
+          <h3 style="font-family:'Syne',sans-serif;font-weight:700;font-size:1.35rem;line-height:1.2;color:var(--ink);margin-bottom:16px;">SimCivic as a Civic Learning Tool</h3>
+          <p style="font-size:0.9rem;color:rgba(237,240,250,0.65);line-height:1.85;margin-bottom:20px;">Success Academy brought SimCivic Nations into their classroom to give students a hands-on way to understand economics, governance, and decision-making — the same real-world skills their program is built around.</p>
+          <p style="font-size:0.9rem;color:rgba(237,240,250,0.65);line-height:1.85;margin-bottom:24px;">Students ran nations, competed in markets, managed crises, and debated policy — giving abstract civic concepts a concrete, memorable form.</p>
+
+          <!-- Location chip -->
+          <div style="display:inline-flex;align-items:center;gap:8px;padding:8px 14px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:8px;font-family:'Space Mono',monospace;font-size:0.6rem;letter-spacing:0.08em;color:var(--sub);text-transform:uppercase;">
+            <svg width="12" height="14" viewBox="0 0 12 14" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M6 0C3.24 0 1 2.24 1 5C1 8.75 6 14 6 14C6 14 11 8.75 11 5C11 2.24 8.76 0 6 0ZM6 6.5C5.17 6.5 4.5 5.83 4.5 5C4.5 4.17 5.17 3.5 6 3.5C6.83 3.5 7.5 4.17 7.5 5C7.5 5.83 6.83 6.5 6 6.5Z" fill="currentColor" opacity="0.6"/>
+            </svg>
+            1555 Georgetown Road, Lexington, KY
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── COMING SOON: MEDIA SECTION ── -->
+    <div class="rev">
+      <div style="text-align:center;margin-bottom:28px;">
+        <div style="display:inline-flex;align-items:center;gap:10px;padding:5px 16px;background:rgba(219,166,66,0.08);border:1px solid rgba(219,166,66,0.22);border-radius:100px;font-family:'Space Mono',monospace;font-size:0.58rem;letter-spacing:0.2em;color:var(--gold);text-transform:uppercase;margin-bottom:20px;">
+          <span style="width:5px;height:5px;border-radius:50%;background:var(--gold);display:inline-block;animation:lnBlink 1.4s ease-in-out infinite;"></span>
+          Coming Soon
+        </div>
+        <h3 style="font-family:'Syne',sans-serif;font-weight:700;font-size:1.6rem;color:var(--ink);margin-bottom:10px;">Photos, Videos &amp; Quotes</h3>
+        <p style="font-size:0.9rem;color:var(--sub);line-height:1.75;max-width:480px;margin:0 auto;">Real moments from our pilot classrooms. We'll be adding student quotes, classroom photos, and video recaps here as they come in.</p>
+      </div>
+
+      <!-- Placeholder grid -->
+      <div class="media-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:16px;">
+        <!-- Photo placeholders -->
+        <div style="aspect-ratio:4/3;background:rgba(255,255,255,0.025);border:1px dashed rgba(255,255,255,0.1);border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:20px;">
+          <div style="font-size:1.8rem;opacity:0.25;">📷</div>
+          <div style="font-family:'Space Mono',monospace;font-size:0.55rem;letter-spacing:0.1em;color:rgba(255,255,255,0.18);text-transform:uppercase;">Photo</div>
+        </div>
+        <div style="aspect-ratio:4/3;background:rgba(255,255,255,0.025);border:1px dashed rgba(255,255,255,0.1);border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:20px;">
+          <div style="font-size:1.8rem;opacity:0.25;">🎥</div>
+          <div style="font-family:'Space Mono',monospace;font-size:0.55rem;letter-spacing:0.1em;color:rgba(255,255,255,0.18);text-transform:uppercase;">Video</div>
+        </div>
+        <div style="aspect-ratio:4/3;background:rgba(255,255,255,0.025);border:1px dashed rgba(255,255,255,0.1);border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:20px;">
+          <div style="font-size:1.8rem;opacity:0.25;">💬</div>
+          <div style="font-family:'Space Mono',monospace;font-size:0.55rem;letter-spacing:0.1em;color:rgba(255,255,255,0.18);text-transform:uppercase;">Quote</div>
+        </div>
+      </div>
+
+      <!-- Quote placeholder card -->
+      <div style="background:rgba(255,255,255,0.02);border:1px dashed rgba(255,255,255,0.08);border-radius:12px;padding:28px 32px;text-align:center;position:relative;overflow:hidden;">
+        <div style="position:absolute;top:16px;left:20px;font-size:3rem;line-height:1;opacity:0.06;font-family:'Playfair Display',serif;color:var(--gold);">"</div>
+        <p style="font-family:'Playfair Display',serif;font-style:italic;font-size:1.05rem;color:rgba(237,240,250,0.2);line-height:1.75;max-width:520px;margin:0 auto 16px;">Student and teacher quotes will appear here after the first full run of SimCivic at Success Academy.</p>
+        <div style="font-family:'Space Mono',monospace;font-size:0.58rem;letter-spacing:0.14em;color:rgba(255,255,255,0.12);text-transform:uppercase;">— Coming Soon</div>
+      </div>
+    </div>
+
+    <!-- Want to be a partner CTA -->
+    <div style="text-align:center;padding:52px 20px 12px;">
+      <div style="font-family:'Space Mono',monospace;font-size:0.6rem;letter-spacing:0.14em;color:var(--sub);text-transform:uppercase;margin-bottom:14px;">Your school next?</div>
+      <h3 style="font-family:'Syne',sans-serif;font-weight:700;font-size:1.35rem;color:var(--ink);margin-bottom:12px;">Become a Partner School</h3>
+      <p style="font-size:0.9rem;color:var(--sub);line-height:1.75;max-width:440px;margin:0 auto 24px;">Join the growing network of schools using SimCivic to build the next generation of civic leaders.</p>
+      <button data-page="contact" class="btn-p">Get in Touch →</button>
+    </div>
+
+  </div>
+</section>
+
 <section id="contact" class="res" data-section="contact" style="display:none;padding-top:82px;">
   <div class="wrap">
     <div class="rev">
@@ -1651,6 +1793,7 @@ document.querySelectorAll('#navMenuDropdown button').forEach(function(b) {
     <button data-page="mechanics">Mechanics</button>
     <button data-page="resources">Resources</button>
     <button data-page="opportunities">Opportunities</button>
+    <button data-page="partnerships">Partnerships</button>
     <button data-page="contact">Contact</button>
     <a href="/game/" data-external>Dashboard</a>
     <a href="/colonies/" data-external>13 Colonies Edition</a>
