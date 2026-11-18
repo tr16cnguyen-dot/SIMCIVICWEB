@@ -3775,6 +3775,32 @@ function renderViewerPage() {
       viewerCallSummit();
     }
   });
+
+  // ── Resource Guide (viewer-only) ──
+  // Append a collapsible resource guide card at the bottom of the viewer page
+  (function() {
+    var existingGuide = document.getElementById('viewerResourceGuide');
+    if (existingGuide) existingGuide.remove();
+    var wrapper = document.createElement('div');
+    wrapper.id = 'viewerResourceGuide';
+    wrapper.style.cssText = 'margin-top:18px;border-radius:14px;background:var(--card-bg);border:1px solid var(--border);overflow:hidden;';
+    wrapper.innerHTML = ''
+      +'<div style="display:flex;align-items:center;gap:8px;padding:12px 14px;cursor:pointer;user-select:none;" onclick="'
+      +'var b=this.nextElementSibling;b.style.display=b.style.display===\'none\'?\'\':\'none\';'
+      +'var ch=this.querySelector(\'.vg-chev\');if(ch)ch.style.transform=b.style.display===\'none\'?\'rotate(-90deg)\':\'\';'
+      +'">'
+      +'<span style="font-size:1rem;">📋</span>'
+      +'<span style="font-family:\'Orbitron\',sans-serif;font-size:0.65rem;font-weight:800;color:var(--text);letter-spacing:1px;">Resource Guide</span>'
+      +'<span class="vg-chev" style="margin-left:auto;font-size:0.65rem;color:var(--text-muted);transition:transform 0.2s;display:inline-block;">▼</span>'
+      +'</div>'
+      +'<div class="sidebar-guide-body" id="viewerResourceGuideContent" style="border-top:1px solid var(--border);"></div>';
+    el.appendChild(wrapper);
+    // Render guide content into viewer copy
+    var guideEl = document.getElementById('viewerResourceGuideContent');
+    if (guideEl && typeof renderResourceGuideInto === 'function') {
+      renderResourceGuideInto(guideEl);
+    }
+  })();
 } // close renderViewerPage
 
 var _origApplyRemoteState = window.applyRemoteState;
@@ -6559,85 +6585,8 @@ window.fbToggleViewers = function() {
         </div>
       </div>
 
-      <!-- Negotiation Chips -->
-      <div class="sidebar-card" id="negChipsCard">
-        <div class="sidebar-card-header" onclick="toggleNegChips()" style="cursor:pointer;">
-          <span class="sidebar-card-icon">🪙</span>
-          <span class="sidebar-card-title">Negotiation Chips</span>
-          <span id="negChipsChevron" style="margin-left:auto;font-size:0.7rem;color:var(--text-muted);transition:transform 0.2s;">▼</span>
-        </div>
-        <div id="negChipsBody" style="padding:0 10px 10px;">
-          <!-- Azure -->
-          <div style="margin-bottom:8px;padding:7px 8px;border-radius:7px;background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);">
-            <div style="display:flex;align-items:center;gap:5px;margin-bottom:3px;">
-              <span style="font-size:0.8rem;">🌊</span>
-              <span style="font-family:'Orbitron',sans-serif;font-size:0.56rem;font-weight:800;color:#3b82f6;letter-spacing:0.5px;">AZURE</span>
-              <span style="margin-left:auto;font-size:0.52rem;font-weight:700;color:#3b82f6;background:rgba(59,130,246,0.15);padding:1px 6px;border-radius:8px;">Trade Tax</span>
-            </div>
-            <div style="font-size:0.56rem;color:var(--text-muted);line-height:1.5;">Nations that trade <strong style="color:var(--text);">without involving Azure</strong> owe <strong style="color:var(--text);">30% of every resource</strong> exchanged in that deal — paid to Azure. Involving Azure in a trade exempts both parties from the tax.</div>
-          </div>
-          <!-- Synapse -->
-          <div style="margin-bottom:8px;padding:7px 8px;border-radius:7px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);">
-            <div style="display:flex;align-items:center;gap:5px;margin-bottom:3px;">
-              <span style="font-size:0.8rem;">⚡</span>
-              <span style="font-family:'Orbitron',sans-serif;font-size:0.56rem;font-weight:800;color:#ef4444;letter-spacing:0.5px;">SYNAPSE</span>
-              <span style="margin-left:auto;font-size:0.52rem;font-weight:700;color:#ef4444;background:rgba(239,68,68,0.15);padding:1px 6px;border-radius:8px;">Tech Tax</span>
-            </div>
-            <div style="font-size:0.56rem;color:var(--text-muted);line-height:1.5;">Charges <strong style="color:var(--text);">1 Capital per minute</strong> for any nation using online research during the simulation. The fee applies only while actively researching online — not during negotiations.</div>
-          </div>
-          <!-- Ironvale -->
-          <div style="margin-bottom:8px;padding:7px 8px;border-radius:7px;background:rgba(156,163,175,0.08);border:1px solid rgba(156,163,175,0.2);">
-            <div style="display:flex;align-items:center;gap:5px;margin-bottom:3px;">
-              <span style="font-size:0.8rem;">🏭</span>
-              <span style="font-family:'Orbitron',sans-serif;font-size:0.56rem;font-weight:800;color:#9ca3af;letter-spacing:0.5px;">IRONVALE</span>
-              <span style="margin-left:auto;font-size:0.52rem;font-weight:700;color:#9ca3af;background:rgba(156,163,175,0.15);padding:1px 6px;border-radius:8px;">Free Materials</span>
-            </div>
-            <div style="font-size:0.56rem;color:var(--text-muted);line-height:1.5;">Receives <strong style="color:var(--text);">free building materials every round</strong>. Ironvale can offer Raw Materials as a bargaining chip without spending their own reserves.</div>
-          </div>
-          <!-- Verdantia -->
-          <div style="margin-bottom:8px;padding:7px 8px;border-radius:7px;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2);">
-            <div style="display:flex;align-items:center;gap:5px;margin-bottom:3px;">
-              <span style="font-size:0.8rem;">🌿</span>
-              <span style="font-family:'Orbitron',sans-serif;font-size:0.56rem;font-weight:800;color:#22c55e;letter-spacing:0.5px;">VERDANTIA</span>
-              <span style="margin-left:auto;font-size:0.52rem;font-weight:700;color:#22c55e;background:rgba(34,197,94,0.15);padding:1px 6px;border-radius:8px;">Green Cert</span>
-            </div>
-            <div style="font-size:0.56rem;color:var(--text-muted);line-height:1.5;">Any nation allied with Verdantia gains <strong style="color:var(--text);">−3 Pollution per round</strong> (Green Certification). Only Verdantia can grant this benefit — and only while the alliance holds.</div>
-          </div>
-          <!-- Novan -->
-          <div style="padding:7px 8px;border-radius:7px;background:rgba(234,179,8,0.08);border:1px solid rgba(234,179,8,0.2);">
-            <div style="display:flex;align-items:center;gap:5px;margin-bottom:3px;">
-              <span style="font-size:0.8rem;">☀️</span>
-              <span style="font-family:'Orbitron',sans-serif;font-size:0.56rem;font-weight:800;color:#eab308;letter-spacing:0.5px;">NOVAN</span>
-              <span style="margin-left:auto;font-size:0.52rem;font-weight:700;color:#eab308;background:rgba(234,179,8,0.15);padding:1px 6px;border-radius:8px;">Land Trade</span>
-            </div>
-            <div style="font-size:0.56rem;color:var(--text-muted);line-height:1.5;">Controls the most <strong style="color:var(--text);">open territory</strong> in the region. Novan can trade or lease land to other nations as a unique bargaining chip unavailable to anyone else.</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Round Notes Journal -->
-      <div class="sidebar-card" id="notesCard">
-        <div class="sidebar-card-header" onclick="toggleNotesCard()" style="cursor:pointer;">
-          <span class="sidebar-card-icon">📝</span>
-          <span class="sidebar-card-title">Round Notes</span>
-          <span class="sidebar-card-hint" id="notesCardHint">teacher journal</span>
-          <span id="notesChevron" style="margin-left:auto;font-size:0.7rem;color:var(--text-muted);transition:transform 0.2s;">▼</span>
-        </div>
-        <div id="notesCardBody">
-          <!-- Tab bar for rounds with notes -->
-          <div class="notes-tab-bar" id="notesTabBar"></div>
-          <!-- Active note textarea -->
-          <div class="notes-active-panel">
-            <div class="notes-active-label" id="notesActiveLabel">R1 — Current Round</div>
-            <textarea class="sidebar-notes-input" id="roundNotesInput"
-              placeholder="Log what happened this round..."
-              oninput="saveRoundNote(this.value, viewingNotesRound)"></textarea>
-          </div>
-        </div>
-      </div>
-
-      <!-- Resource Guide -->
-      <div class="sidebar-card" style="display:flex;flex-direction:column;">
+      <!-- Resource Guide (viewer-only — hidden in host sidebar) -->
+      <div class="sidebar-card" id="resourceGuideCard" style="display:none;flex-direction:column;">
         <div class="sidebar-card-header" onclick="toggleResourceGuide()" style="cursor:pointer;flex-shrink:0;">
           <span class="sidebar-card-icon">📋</span>
           <span class="sidebar-card-title">Resource Guide</span>
@@ -13429,8 +13378,7 @@ function renderNotesTabs() {
   }
 }
 
-function renderResourceGuide() {
-  const el = document.getElementById('resourceGuideContent');
+function renderResourceGuideInto(el) {
   if (!el) return;
 
   const row = (label, val, pos) =>
@@ -13502,6 +13450,11 @@ function renderResourceGuide() {
   }
 
   el.innerHTML = html;
+}
+
+function renderResourceGuide() {
+  const el = document.getElementById('resourceGuideContent');
+  renderResourceGuideInto(el);
 }
 
 function applyRound() {
