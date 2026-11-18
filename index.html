@@ -452,6 +452,31 @@ footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:38
 @media(max-width:1100px){.ngrid{grid-template-columns:repeat(3,1fr)}.ncard{border-bottom:1px solid var(--border)}.hinner{grid-template-columns:1fr}.hright{display:none}}
 @media(max-width:900px){nav{padding:0 24px}.nlinks{display:none}.hero{padding:120px 24px 0}.wrap{padding:0 24px}.about-grid{grid-template-columns:1fr;gap:40px}.ngrid{grid-template-columns:1fr 1fr}.rlayout{grid-template-columns:1fr;gap:40px}.rsticky{position:static}.rgrid{grid-template-columns:1fr}.mgrid{grid-template-columns:1fr}.mtop{flex-direction:column;align-items:flex-start}.rlyt{grid-template-columns:1fr}footer{padding:28px 24px}.nd-stats{grid-template-columns:1fr 1fr}.nd-wrap{padding:0 24px 60px}}
 @media(max-width:760px){#partnerships .partner-body{grid-template-columns:1fr!important;gap:28px!important;padding:28px 22px!important}#partnerships .media-grid{grid-template-columns:1fr 1fr!important}}
+@media(max-width:540px){
+  /* Grids that are still 2-col on mid-phones */
+  .ngrid{grid-template-columns:1fr!important}
+  .nd-stats{grid-template-columns:1fr!important}
+  /* Wrap padding tighter */
+  .wrap{padding:0 16px!important}
+  .nd-wrap{padding:0 16px 48px!important}
+  /* Partnerships logo lockup stacks tighter */
+  #partnerships .rev[style*="margin-bottom:56px"] .sp{font-size:0.88rem}
+  /* Media placeholder grid goes 1 col */
+  #partnerships .media-grid{grid-template-columns:1fr!important}
+  /* Section headings a touch tighter */
+  .sh{font-size:clamp(1.5rem,6vw,2.2rem)!important}
+  /* About grid text */
+  .sp{font-size:0.9rem}
+  /* Nations section  */
+  #nations{padding-top:60px}
+  /* Footer link grid */
+  footer .ngrid{grid-template-columns:1fr 1fr!important}
+}
+@media(max-width:380px){
+  .wrap{padding:0 12px!important}
+  .sh{font-size:clamp(1.3rem,7vw,1.8rem)!important}
+  .btn-p{padding:11px 20px;font-size:0.82rem}
+}
 /* Narrow-header fix: below ~640px the full button row (hamburger, sound,
    sign-in, Start Game) plus the logo subtitle no longer fit — since nav is
    position:fixed, overflow here doesn't create a scrollbar, it just makes

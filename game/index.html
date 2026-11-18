@@ -2389,6 +2389,32 @@ html, body { max-width: 100vw; overflow-x: hidden; }
   .round-sidebar { width: 100% !important; max-height: none !important; position: static !important; flex-direction: row !important; flex-wrap: wrap !important; }
   .sidebar-card { flex: 1; min-width: 200px; }
 }
+
+/* ── Trade & Events: mobile tightening ── */
+@media (max-width: 700px) {
+  /* Two-column trade offer panels → single column */
+  #tradePage [style*="grid-template-columns:1fr 1fr"],
+  #tradePage [style*="grid-template-columns: 1fr 1fr"] {
+    grid-template-columns: 1fr !important;
+  }
+  /* Trade selectors wrap cleanly */
+  .trade-selectors { flex-direction: column; align-items: stretch; }
+  .trade-arrow { align-self: center; transform: rotate(90deg); }
+  /* Events tabs wrap */
+  .events-tabs { flex-wrap: wrap; gap: 4px; }
+  .events-tab  { flex: 1; min-width: 120px; text-align: center; font-size: 0.6rem; }
+}
+
+@media (max-width: 480px) {
+  /* Trade page padding */
+  #tradePage > div, #eventsPage > div { padding: 12px 10px !important; }
+  /* Section header text */
+  .section-title { font-size: 0.72rem !important; }
+  /* Trade selectors full-width */
+  .trade-select, select.res-select { width: 100% !important; }
+  /* Tech tax button smaller */
+  #tradePage button[onclick="openTechTaxModal()"] { font-size: 0.55rem !important; padding: 6px 10px !important; }
+}
 </style>
 <!-- ═══ FIREBASE LIVE SYNC ═══ -->
 <script>
@@ -7511,7 +7537,7 @@ window.fbToggleViewers = function() {
 
 <!-- ══ TRADE PAGE ══ -->
 <div id="tradePage" style="display:none;position:fixed;left:0;right:0;bottom:0;top:60px;z-index:40;background:var(--bg);overflow-y:auto;">
-  <div style="max-width:860px;margin:0 auto;padding:20px 24px;">
+  <div style="width:100%;box-sizing:border-box;padding:20px clamp(12px,2vw,32px);">
 
     <!-- Tech Tax button -->
     <div style="display:flex;justify-content:flex-end;margin-bottom:14px;">
@@ -7748,7 +7774,7 @@ window.fbToggleViewers = function() {
 
 <!-- ══ EVENTS PAGE ══ -->
 <div id="eventsPage" style="display:none;position:fixed;left:0;right:0;bottom:0;top:60px;z-index:40;background:var(--bg);overflow-y:auto;">
-  <div style="max-width:860px;margin:0 auto;padding:20px 24px;">
+  <div style="width:100%;box-sizing:border-box;padding:20px clamp(12px,2vw,32px);">
 
     <div class="section-card" id="eventsSectionCard" style="margin-bottom:20px;">
       <div class="section-header" onclick="toggleSection('eventsBody')" style="cursor:pointer;">
