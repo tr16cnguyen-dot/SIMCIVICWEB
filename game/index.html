@@ -17989,8 +17989,17 @@ function getAllSlots() {
 }
 
 async function writeSlotsToStorage(slots) {
-  try { localStorage.setItem(SAVE_SLOTS_KEY, JSON.stringify(slots)); } catch {}
-  try { window.storage?.set?.(SAVE_SLOTS_KEY, JSON.stringify(slots)).catch(() => {}); } catch {}
+  const json = JSON.stringify(slots);
+  try { localStorage.setItem(SAVE_SLOTS_KEY, json); } catch(e) { console.warn('localStorage slot write failed:', e); }
+  // Push to cloud (fire-and-forget, with retry once)
+  if (typeof window.storage !== 'undefined' && window.storage?.set) {
+    window.storage.set(SAVE_SLOTS_KEY, json).catch(() => {
+      // Retry once after 2s in case the cloud connection wasn't ready yet
+      setTimeout(() => {
+        try { window.storage?.set?.(SAVE_SLOTS_KEY, json).catch(() => {}); } catch {}
+      }, 2000);
+    });
+  }
 }
 
 function buildSnapshot() {
@@ -18008,11 +18017,37 @@ function buildSnapshot() {
   };
 }
 
-function showSaveSlots() {
+async function showSaveSlots() {
   const modal = document.getElementById('saveSlotsModal');
   modal.style.display = 'flex';
-  renderSlotsList();
   playClick();
+
+  // Pull cloud saves and merge into localStorage before rendering,
+  // so saves made on another device or after a sign-in reload are visible.
+  if (typeof window.storage !== 'undefined' && window.storage?.get) {
+    try {
+      const list = document.getElementById('saveSlotsList');
+      list.innerHTML = '<div style="padding:18px;text-align:center;color:#475569;font-family:\'Orbitron\',sans-serif;font-size:0.6rem;letter-spacing:1px;">SYNCING SAVES…</div>';
+      const cloudResult = await window.storage.get(SAVE_SLOTS_KEY).catch(() => null);
+      if (cloudResult?.value) {
+        const cloudSlots = JSON.parse(cloudResult.value);
+        const localSlots = getAllSlots();
+        // Merge: cloud wins if it has a newer savedAt for a given slot number
+        let merged = { ...localSlots };
+        for (const [key, cSlot] of Object.entries(cloudSlots)) {
+          const lSlot = localSlots[key];
+          if (!lSlot || (cSlot?.savedAt && (!lSlot.savedAt || cSlot.savedAt > lSlot.savedAt))) {
+            merged[key] = cSlot;
+          }
+        }
+        try { localStorage.setItem(SAVE_SLOTS_KEY, JSON.stringify(merged)); } catch {}
+      }
+    } catch (e) {
+      console.warn('Cloud save sync failed:', e);
+    }
+  }
+
+  renderSlotsList();
 }
 
 function renderSlotsList() {
