@@ -2553,7 +2553,16 @@ function _initFirebaseAuth() {
 window.googleSignIn = async function() {
   if (!_fbAuth) {
     showToastMsg && showToastMsg('⏳ Connecting to Firebase...');
-    return;
+    // Wait up to 8s for auth SDK to finish loading
+    let waited = 0;
+    while (!_fbAuth && waited < 8000) {
+      await new Promise(r => setTimeout(r, 300));
+      waited += 300;
+    }
+    if (!_fbAuth) {
+      showToastMsg && showToastMsg('⚠️ Firebase auth unavailable — check connection and reload');
+      return;
+    }
   }
   try {
     const provider = new firebase.auth.GoogleAuthProvider();
@@ -18918,6 +18927,10 @@ function showCityPicker(playerName, anchorEl) {
     'https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js',
     'https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-app-compat.min.js',
   ];
+  var authCdns = [
+    'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-auth-compat.min.js',
+  ];
   var dbCdns = [
     'https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js',
     'https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-database-compat.min.js',
@@ -18934,12 +18947,18 @@ function showCityPicker(playerName, anchorEl) {
 
   function loadFirebase() {
     loadScript(cdns, function() {
-      loadScript(dbCdns, function() {
-        if (typeof _initFirebase === 'function') _initFirebase();
-        else console.warn('_initFirebase not defined');
-      }, function() {
-        console.warn('Firebase database SDK failed to load from all CDNs');
-      });
+      // Load auth and database SDKs in parallel, init once both are ready
+      var authDone = false, dbDone = false;
+      function checkBothReady() {
+        if (authDone && dbDone) {
+          if (typeof _initFirebase === 'function') _initFirebase();
+          else console.warn('_initFirebase not defined');
+        }
+      }
+      loadScript(authCdns, function() { authDone = true; checkBothReady(); },
+        function() { console.warn('Firebase auth SDK failed — Google sign-in unavailable'); authDone = true; checkBothReady(); });
+      loadScript(dbCdns, function() { dbDone = true; checkBothReady(); },
+        function() { console.warn('Firebase database SDK failed to load from all CDNs'); dbDone = true; checkBothReady(); });
     }, function() {
       console.warn('Firebase app SDK failed to load from all CDNs — live sync unavailable');
     });
