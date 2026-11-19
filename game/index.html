@@ -6309,10 +6309,11 @@ window.fbToggleViewers = function() {
 ">
   <div style="
     background:#0f1623; border:1px solid rgba(255,255,255,0.12);
-    border-radius:16px; padding:24px 28px; max-width:460px; width:90%;
+    border-radius:16px; padding:24px 28px; max-width:560px; width:94%;
+    max-height:88vh; display:flex; flex-direction:column;
     box-shadow:0 20px 60px rgba(0,0,0,0.7);
   ">
-    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:18px;">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; flex-shrink:0;">
       <div>
         <div style="font-family:'Orbitron',sans-serif; font-size:0.8rem; font-weight:800; letter-spacing:2px; color:#e0f7fa;">📂 SAVE SLOTS</div>
         <div style="font-size:0.62rem; color:#64748b; margin-top:2px;">Save up to 5 named snapshots · load or overwrite anytime</div>
@@ -6321,7 +6322,7 @@ window.fbToggleViewers = function() {
         background:none; border:none; color:#64748b; cursor:pointer; font-size:1.2rem; line-height:1;
       ">✕</button>
     </div>
-    <div id="saveSlotsList" style="display:flex; flex-direction:column; gap:8px;"></div>
+    <div id="saveSlotsList" style="display:flex; flex-direction:column; gap:8px; overflow-y:auto; flex:1;"></div>
   </div>
 </div>
 
@@ -18049,7 +18050,14 @@ async function showSaveSlots() {
 
   // ── 3. Fetch and render saves from OTHER license keys on this account ──
   const user = _fbAuth?.currentUser;
-  if (!user || !_fbDB) return;
+  if (!user || !_fbDB) {
+    // Not signed in — show a note below the active slots
+    const note = document.createElement('div');
+    note.style.cssText = 'margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.07);font-size:0.62rem;color:#374151;font-style:italic;text-align:center;';
+    note.textContent = 'Sign in with Google to see saves across all license keys';
+    list.appendChild(note);
+    return;
+  }
   try {
     const allKeys = [...(await _getMyLicenseKeys(user.uid))];
     let activeKey = null;
