@@ -18022,33 +18022,126 @@ async function showSaveSlots() {
   modal.style.display = 'flex';
   playClick();
 
-  // Pull cloud saves and merge into localStorage before rendering,
-  // so saves made on another device or after a sign-in reload are visible.
+  const list = document.getElementById('saveSlotsList');
+  list.innerHTML = '<div style="padding:18px;text-align:center;color:#475569;font-family:\'Orbitron\',sans-serif;font-size:0.6rem;letter-spacing:1px;">SYNCING SAVES…</div>';
+
+  // ── 1. Merge active-key cloud saves into localStorage ──
   if (typeof window.storage !== 'undefined' && window.storage?.get) {
     try {
-      const list = document.getElementById('saveSlotsList');
-      list.innerHTML = '<div style="padding:18px;text-align:center;color:#475569;font-family:\'Orbitron\',sans-serif;font-size:0.6rem;letter-spacing:1px;">SYNCING SAVES…</div>';
       const cloudResult = await window.storage.get(SAVE_SLOTS_KEY).catch(() => null);
       if (cloudResult?.value) {
         const cloudSlots = JSON.parse(cloudResult.value);
         const localSlots = getAllSlots();
-        // Merge: cloud wins if it has a newer savedAt for a given slot number
         let merged = { ...localSlots };
-        for (const [key, cSlot] of Object.entries(cloudSlots)) {
-          const lSlot = localSlots[key];
+        for (const [k, cSlot] of Object.entries(cloudSlots)) {
+          const lSlot = localSlots[k];
           if (!lSlot || (cSlot?.savedAt && (!lSlot.savedAt || cSlot.savedAt > lSlot.savedAt))) {
-            merged[key] = cSlot;
+            merged[k] = cSlot;
           }
         }
         try { localStorage.setItem(SAVE_SLOTS_KEY, JSON.stringify(merged)); } catch {}
       }
-    } catch (e) {
-      console.warn('Cloud save sync failed:', e);
-    }
+    } catch (e) { console.warn('Cloud save sync failed:', e); }
   }
 
+  // ── 2. Render active-key slots ──
   renderSlotsList();
+
+  // ── 3. Fetch and render saves from OTHER license keys on this account ──
+  const user = _fbAuth?.currentUser;
+  if (!user || !_fbDB) return;
+  try {
+    const allKeys = [...(await _getMyLicenseKeys(user.uid))];
+    let activeKey = null;
+    try { activeKey = localStorage.getItem('_activeLicenseKey'); } catch {}
+    const otherKeys = allKeys.filter(k => k !== activeKey);
+    if (otherKeys.length === 0) return;
+
+    // Section header
+    const sep = document.createElement('div');
+    sep.style.cssText = 'margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.07);';
+    sep.innerHTML = '<div style="font-family:\'Orbitron\',sans-serif;font-size:0.55rem;font-weight:800;letter-spacing:2px;color:#475569;text-transform:uppercase;margin-bottom:8px;">Other License Keys</div>';
+    list.appendChild(sep);
+
+    for (const key of otherKeys) {
+      // Fetch saves for this key from Firebase directly
+      let keySlots = {};
+      try {
+        const snap = await _fbDB.ref('licenseKeys/' + _sanitizeKey(key) + '/kv/' + _sanitizeKey(SAVE_SLOTS_KEY)).get();
+        if (snap.exists()) keySlots = JSON.parse(snap.val()) || {};
+      } catch {}
+
+      const filledSlots = Object.entries(keySlots).filter(([,s]) => s?.name);
+      const keyRow = document.createElement('div');
+      keyRow.style.cssText = 'margin-bottom:8px;';
+
+      // Key label
+      const keyLabel = document.createElement('div');
+      keyLabel.style.cssText = 'font-family:\'Orbitron\',sans-serif;font-size:0.58rem;font-weight:700;letter-spacing:1px;color:#f0c060;margin-bottom:5px;';
+      keyLabel.textContent = '🔑 ' + key;
+      keyRow.appendChild(keyLabel);
+
+      if (filledSlots.length === 0) {
+        const empty = document.createElement('div');
+        empty.style.cssText = 'font-size:0.65rem;color:#374151;font-style:italic;padding:4px 0;';
+        empty.textContent = 'No saves on this key';
+        keyRow.appendChild(empty);
+      } else {
+        for (const [slotNum, slot] of filledSlots) {
+          const row = document.createElement('div');
+          row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;border:1px solid rgba(240,192,96,0.15);background:rgba(240,192,96,0.04);margin-bottom:4px;';
+
+          const info = document.createElement('div');
+          info.style.cssText = 'flex:1;min-width:0;';
+          const d = new Date(slot.savedAt || 0);
+          const timeStr = d.toLocaleString('en-US', { timeZone: 'America/New_York', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+          info.innerHTML = `
+            <div style="font-family:'Orbitron',sans-serif;font-size:0.65rem;font-weight:700;color:#e0d9c4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${slot.name}</div>
+            <div style="font-size:0.56rem;color:#475569;margin-top:1px;">Slot ${slotNum} · R${slot.round || '?'} · ${timeStr}</div>
+          `;
+          row.appendChild(info);
+
+          const switchBtn = document.createElement('button');
+          switchBtn.textContent = '⇄ Switch & Load';
+          switchBtn.title = 'Switch to license key ' + key + ' and load this save';
+          switchBtn.style.cssText = 'padding:4px 9px;border-radius:6px;cursor:pointer;border:1px solid rgba(240,192,96,0.4);background:rgba(240,192,96,0.1);color:#f0c060;font-family:\'Orbitron\',sans-serif;font-size:0.5rem;font-weight:700;letter-spacing:0.5px;white-space:nowrap;';
+          switchBtn.onclick = () => {
+            showConfirm(`Switch to license key "${key}" and load "${slot.name}"? This will reload the page.`, () => {
+              try { localStorage.setItem('_activeLicenseKey', key); } catch {}
+              try { localStorage.setItem('_pendingLoadSlot', slotNum.toString()); } catch {}
+              showToastMsg && showToastMsg('Switching to ' + key + '…');
+              setTimeout(() => location.reload(), 600);
+            });
+          };
+          row.appendChild(switchBtn);
+          keyRow.appendChild(row);
+        }
+      }
+      list.appendChild(keyRow);
+    }
+  } catch (e) { console.warn('Other-key save fetch failed:', e); }
 }
+
+// After a key-switch reload, auto-load the pending slot
+(function _checkPendingSlotLoad() {
+  document.addEventListener('DOMContentLoaded', function() {
+    let pending = null;
+    try { pending = localStorage.getItem('_pendingLoadSlot'); } catch {}
+    if (!pending) return;
+    try { localStorage.removeItem('_pendingLoadSlot'); } catch {}
+    // Wait until game state is hydrated, then load the slot
+    setTimeout(() => {
+      const slotNum = parseInt(pending, 10);
+      if (!isNaN(slotNum)) {
+        const slots = getAllSlots();
+        if (slots[slotNum]?.state) {
+          showToastMsg && showToastMsg('Loading save: ' + (slots[slotNum].name || 'Slot ' + slotNum));
+          setTimeout(() => loadFromSlot(slotNum), 800);
+        }
+      }
+    }, 2500);
+  });
+})();
 
 function renderSlotsList() {
   const list  = document.getElementById('saveSlotsList');
