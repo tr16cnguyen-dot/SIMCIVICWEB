@@ -1822,6 +1822,7 @@ document.querySelectorAll('#navMenuDropdown button').forEach(function(b) {
     <button data-page="contact">Contact</button>
     <a href="/game/" data-external>Dashboard</a>
     <a href="/colonies/" data-external>13 Colonies Edition</a>
+    <a href="/virtual/" data-external>Virtual SimCivic (Early Development)</a>
   </div>
   <div class="fcopy" data-editable="footer-copy">PBL City &amp; Nation Simulation</div>
 </footer>
@@ -1831,11 +1832,15 @@ document.querySelectorAll('#navMenuDropdown button').forEach(function(b) {
 <style>
 #editionPicker{position:fixed;inset:0;z-index:10000;display:none;align-items:center;justify-content:center;padding:24px 16px;background:rgba(4,6,13,0.82);backdrop-filter:blur(10px);overflow-y:auto;}
 #editionPicker.open{display:flex;}
-.ep-box{position:relative;width:min(760px,100%);background:#0c1020;border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:30px 28px 24px;box-shadow:0 24px 60px rgba(0,0,0,0.6);}
+.ep-box{position:relative;width:min(1000px,100%);background:#0c1020;border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:30px 28px 24px;box-shadow:0 24px 60px rgba(0,0,0,0.6);}
 .ep-eye{font-family:'Space Mono',monospace;font-size:0.6rem;letter-spacing:0.22em;color:var(--gold);text-transform:uppercase;margin-bottom:8px;}
 .ep-h{font-family:'Syne',sans-serif;font-weight:800;font-size:1.7rem;color:var(--ink);margin:0 0 6px;line-height:1.15;}
 .ep-p{color:var(--sub);font-size:0.9rem;margin:0 0 20px;}
-.ep-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.ep-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+.ep-card.virtual .ep-tag{border-color:rgba(34,211,238,0.5);color:#22d3ee;}
+.ep-card.virtual:hover,.ep-card.virtual:focus-visible{border-color:#22d3ee;background:rgba(34,211,238,0.06);}
+.ep-card.virtual .ep-go{color:#22d3ee;}
+@media(max-width:900px){.ep-grid{grid-template-columns:1fr 1fr;}}
 .ep-card{display:flex;flex-direction:column;gap:8px;padding:20px;border-radius:10px;text-decoration:none;color:var(--ink);border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.03);transition:border-color 0.2s,transform 0.2s,background 0.2s;}
 .ep-card:hover,.ep-card:focus-visible{border-color:var(--gold);transform:translateY(-2px);background:rgba(219,166,66,0.06);outline:none;}
 .ep-tag{align-self:flex-start;font-family:'Space Mono',monospace;font-size:0.55rem;letter-spacing:0.16em;text-transform:uppercase;padding:3px 8px;border-radius:4px;border:1px solid rgba(255,255,255,0.15);color:var(--sub);}
@@ -1866,6 +1871,12 @@ document.querySelectorAll('#navMenuDropdown button').forEach(function(b) {
         <span class="ep-name">The 13 Colonies Edition</span>
         <span class="ep-desc">Nine colonies trade, build and grow from 1700 to 1784, with prices that follow real colonial history.</span>
         <span class="ep-go">Open the Colonies board →</span>
+      </a>
+      <a class="ep-card virtual" href="/virtual/" target="_blank" rel="noopener noreferrer" data-external data-ep-close>
+        <span class="ep-tag">Early Development</span>
+        <span class="ep-name">Virtual SimCivic</span>
+        <span class="ep-desc">Build a nation on a 3D map, trade and govern with classrooms around the world. Still being built, so explore and expect changes.</span>
+        <span class="ep-go">Explore Virtual SimCivic →</span>
       </a>
     </div>
     <p class="ep-note">Each edition has its own join codes.</p>
